@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Github, Linkedin, Mail } from "lucide-react";
+import { Github, Linkedin, Mail } from "lucide-react";
 import { HeroScene } from "@/components/3d-fallback/hero-scene";
 import { Suspense } from "react";
 
@@ -14,7 +14,7 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-8">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden snap-start snap-always">
       {/* 3D Background */}
       <Suspense
         fallback={
@@ -142,28 +142,6 @@ export function HeroSection() {
         </motion.div>
       </div>
 
-      {/* Scroll Indicator */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.8,
-          delay: 1.6,
-          repeat: Infinity,
-          repeatType: "reverse",
-          repeatDelay: 1,
-        }}
-      >
-        <button
-          onClick={scrollToProjects}
-          data-testid="button-scroll-down"
-          className="flex flex-col items-center gap-2 text-muted-foreground hover:text-chart-1 transition-colors group"
-        >
-          <span className="text-sm font-medium">Scroll Down</span>
-          <ChevronDown className="h-6 w-6 group-hover:glow-cyan transition-all" />
-        </button>
-      </motion.div>
     </section>
   );
 }

@@ -15,7 +15,7 @@ interface AboutSectionProps {
 export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
   if (isLoading) {
     return (
-      <section id="about" className="py-20 relative scroll-mt-20">
+      <section id="about" className="min-h-screen py-16 relative snap-start snap-always flex items-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div className="space-y-6">
@@ -36,7 +36,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
 
   if (!aboutInfo) {
     return (
-      <section id="about" className="py-20 relative scroll-mt-20">
+      <section id="about" className="min-h-screen py-16 relative snap-start snap-always flex items-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="glass rounded-lg border border-border/50 p-12 max-w-md mx-auto">
             <div className="text-6xl mb-4">👤</div>
@@ -59,14 +59,14 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
   ];
 
   return (
-    <section id="about" className="py-24 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="about" className="min-h-screen py-16 relative snap-start snap-always flex items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-4"
         >
           <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
             <span className="gradient-text-cyan-magenta">About Me</span>

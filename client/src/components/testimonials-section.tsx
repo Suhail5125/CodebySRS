@@ -57,14 +57,14 @@ const testimonials: Testimonial[] = [
 
 export function TestimonialsSection() {
   return (
-    <section id="testimonials" className="py-24 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="testimonials" className="min-h-screen py-16 relative snap-start snap-always flex items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-4"
         >
           <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
             <span className="gradient-text-cyan-purple">Client Testimonials</span>

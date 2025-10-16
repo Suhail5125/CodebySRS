@@ -41,14 +41,14 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
   };
 
   return (
-    <section id="contact" className="py-20 relative bg-gradient-to-b from-card/50 to-background scroll-mt-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="contact" className="min-h-screen py-16 relative bg-gradient-to-b from-card/50 to-background snap-start snap-always flex items-center">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-4"
         >
           <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
             <span className="gradient-text-spectrum">Get In Touch</span>

@@ -56,7 +56,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <main>
+      <main className="snap-y snap-mandatory h-screen overflow-y-scroll">
         <HeroSection />
         <ProjectsSection projects={projects} isLoading={projectsLoading} />
         <SkillsSection skills={skills} isLoading={skillsLoading} />
