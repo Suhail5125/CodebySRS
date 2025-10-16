@@ -41,7 +41,7 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
   };
 
   return (
-    <section id="contact" className="min-h-screen py-16 relative bg-gradient-to-b from-card/50 to-background snap-start snap-always flex items-center">
+    <section id="contact" className="min-h-screen pt-24 pb-16 relative bg-gradient-to-b from-card/50 to-background snap-start snap-always flex items-center">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

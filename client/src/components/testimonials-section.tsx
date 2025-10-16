@@ -57,7 +57,7 @@ const testimonials: Testimonial[] = [
 
 export function TestimonialsSection() {
   return (
-    <section id="testimonials" className="min-h-screen py-16 relative snap-start snap-always flex items-center">
+    <section id="testimonials" className="min-h-screen pt-24 pb-16 relative snap-start snap-always flex items-center">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
