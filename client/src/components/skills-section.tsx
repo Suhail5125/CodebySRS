@@ -36,7 +36,7 @@ export function SkillsSection({ skills, isLoading }: SkillsSectionProps) {
   }, {} as Record<string, Skill[]>);
 
   return (
-    <section id="skills" className="py-24 relative bg-gradient-to-b from-background to-card/50">
+    <section id="skills" className="py-20 relative bg-gradient-to-b from-background to-card/50 scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

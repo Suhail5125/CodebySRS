@@ -19,7 +19,7 @@ export function ProjectsSection({ projects, isLoading }: ProjectsSectionProps) {
   const displayProjects = projects.slice(0, 5);
 
   return (
-    <section id="projects" className="py-24 relative">
+    <section id="projects" className="py-20 relative scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

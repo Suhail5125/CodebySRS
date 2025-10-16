@@ -15,7 +15,7 @@ interface AboutSectionProps {
 export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
   if (isLoading) {
     return (
-      <section id="about" className="py-24 relative">
+      <section id="about" className="py-20 relative scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div className="space-y-6">
@@ -36,7 +36,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
 
   if (!aboutInfo) {
     return (
-      <section id="about" className="py-24 relative">
+      <section id="about" className="py-20 relative scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="glass rounded-lg border border-border/50 p-12 max-w-md mx-auto">
             <div className="text-6xl mb-4">👤</div>

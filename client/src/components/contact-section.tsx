@@ -41,7 +41,7 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
   };
 
   return (
-    <section id="contact" className="py-24 relative bg-gradient-to-b from-card/50 to-background">
+    <section id="contact" className="py-20 relative bg-gradient-to-b from-card/50 to-background scroll-mt-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
