@@ -136,7 +136,7 @@ ADMIN_EMAIL=admin@yourcompany.com
    ```bash
    # Clone repository
    git clone your-repo-url
-   cd portffolio
+   cd CodebySRS
    
    # Install dependencies
    npm install

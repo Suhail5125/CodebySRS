@@ -1,39 +1,26 @@
 # Dependencies
 node_modules/
-.pnp
-.pnp.js
 
-# Production
+# Build output
 dist/
 build/
-server/public/
+functions/lib/
 
 # Environment variables
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 
 # Database
 *.db
 *.db-journal
-portfolio.db
 
 # Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
 *.log
+npm-debug.log*
 
-# OS
+# OS files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
 # IDE
@@ -41,30 +28,13 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
-*~
-.local/
-
-# Replit-specific
-.config/
-attached_assets/
-
-# Build
-*.tar.gz
-vite.config.ts.*
-
-# User Uploads
-uploads/
-
-# Automation Scripts
-*.bat
-
-# Verification Reports
-docs/verification/
 
 # Firebase
 .firebase/
 functions/.env
-functions/lib/
+
+# Uploads (user-generated content)
+uploads/
 
 # Misc
 .cache/

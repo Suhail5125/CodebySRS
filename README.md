@@ -1,609 +1,184 @@
-# 🎨 Professional Portfolio Website
+# 🚀 CodebySRS | Futuristic Developer Portfolio
 
-A modern, full-stack portfolio website with 3D animations, admin panel, and comprehensive content management system.
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![React](https://img.shields.io/badge/React-18-blue?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)
+![Node.js](https://img.shields.io/badge/Node.js-18+-green?logo=node.js)
+![Firebase](https://img.shields.io/badge/Deployed_on-Firebase-orange?logo=firebase)
 
-![Portfolio Preview](https://via.placeholder.com/1200x600/0ea5e9/ffffff?text=Portfolio+Website)
-
-<!-- Badges will be added when CI/CD is configured -->
-<!-- [![Tests](https://github.com/username/repo/workflows/test/badge.svg)](https://github.com/username/repo/actions) -->
-<!-- [![Coverage](https://codecov.io/gh/username/repo/branch/main/graph/badge.svg)](https://codecov.io/gh/username/repo) -->
-
-## ✨ Features
-
-### **Frontend**
-- 🎭 Beautiful 3D animated hero section
-- 📱 Fully responsive design
-- 🌙 Dark mode support
-- ⚡ Smooth snap scrolling
-- 🎨 Glassmorphism effects
-- 🎬 Framer Motion animations
-- 📊 Interactive project carousel
-- 💼 Services & work process sections
-- 📝 Contact form with validation
-- 🎯 SEO optimized
-
-### **Admin Panel**
-- 🔐 Secure authentication
-- 📁 Project management (CRUD)
-- 🛠️ Skills management
-- 📧 Message inbox
-- 👤 About info editor
-- 📊 Dashboard with statistics
-- 🎨 Beautiful UI with animations
-
-### **Technical**
-- ⚛️ React 18 + TypeScript
-- 🎨 Tailwind CSS
-- 🎭 Framer Motion
-- 🔄 React Query
-- 🛣️ Wouter routing
-- 🗄️ PostgreSQL + Drizzle ORM
-- 🚀 Express.js backend
-- ✅ Zod validation
-- 🎯 Error boundaries
-- 📱 PWA ready
+A highly interactive, full-stack developer portfolio featuring 3D WebGL animations, a secure custom CMS, and a scalable Node.js/PostgreSQL backend. Designed for absolute performance, strict maintainability, and stunning visual fidelity.
 
 ---
 
-## 🚀 Quick Start
+## ✨ Key Features
 
-### **Prerequisites**
-- Node.js 18+ installed
-- npm or yarn package manager
-- PostgreSQL 14+ installed and running
+### 🎮 Immersive Frontend Experience
+- **Interactive 3D Hero:** Custom WebGL particle systems and interactive geometries powered by React Three Fiber.
+- **Glassmorphism UI:** Premium, modern aesthetic using advanced Tailwind CSS utilities.
+- **Fluid Animations:** Scroll-linked animations and smooth page transitions powered by Framer Motion.
+- **Responsive Design:** Pixel-perfect, high-density layouts optimized from mobile to ultra-wide displays.
+- **Dark Mode Native:** Deep integration of Shadcn/ui for consistent, toggleable theming.
 
-### **Installation**
+### 🛡️ Secure Admin Dashboard (CMS)
+- **Role-Based Authentication:** Protected routes using Passport.js and secure PostgreSQL-backed sessions.
+- **Project Management:** Full CRUD operations for portfolio items, including rich descriptions and image links.
+- **Skills Matrix:** Categorize and reorder skills dynamically with visual proficiency indicators.
+- **Message Center:** Read/Unread tracking for contact form submissions directly in the dashboard.
+- **Global Settings:** Live-update site configuration, including About text, Privacy Policies, and Terms of Service.
 
+### ⚡ Enterprise-Grade Backend
+- **Type-Safe ORM:** Drizzle ORM ensures compile-time safety for all SQL queries and schema definitions.
+- **Single Source of Truth:** End-to-end validation—Zod schemas are shared synchronously between the React frontend (React Hook Form) and Express backend (API Middleware).
+- **Rate Limiting:** IP-based DDoS and spam protection on critical routes (e.g., Contact Form submissions, Login).
+
+---
+
+## 🏗️ Architecture & Stack
+
+### Frontend Layer
+- **Framework:** React 18 (Bundled with Vite)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS + Shadcn/ui
+- **3D Graphics:** Three.js + React Three Fiber + Drei
+- **Animations:** Framer Motion
+- **State Management & Fetching:** React Query (TanStack) + Wouter (Routing)
+
+### Backend Layer
+- **Server:** Node.js + Express.js
+- **Database:** PostgreSQL (Optimized for Neon.tech)
+- **ORM:** Drizzle ORM
+- **Validation:** Zod
+- **Authentication:** Passport.js + express-session + connect-pg-simple
+
+### DevOps & Deployment
+- **Hosting:** Firebase Hosting (Client SPA)
+- **API Runtime:** Firebase Cloud Functions (Gen 2 Express Wrapper)
+- **Package Manager:** npm
+
+---
+
+## 📁 Directory Structure
+
+The repository follows a strict monorepo-style structure to ensure absolute decoupling of concerns.
+
+```text
+CodebySRS/
+├── client/                 # ⚛️ React Frontend Application
+│   └── src/
+│       ├── components/     # Reusable UI, 3D scenes, Layouts, Admin modules
+│       ├── hooks/          # Custom data-fetching & UI state hooks
+│       ├── pages/          # Route-level components mapping to URLs
+│       ├── types/          # Frontend-specific type definitions
+│       └── lib/            # Pure utility functions & API clients
+├── server/                 # ⚙️ Node.js Backend Application
+│   ├── config/             # Strict environment validation on startup
+│   ├── middleware/         # Express middlewares (Auth, Rate Limiting, Security)
+│   ├── routes/             # REST API controllers
+│   ├── storage.ts          # Drizzle ORM database queries and connections
+│   └── firebase-entry.ts   # Firebase Cloud Functions production wrapper
+├── shared/                 # 🤝 Cross-Boundary Code
+│   ├── schemas/            # Zod validation schemas (Used by both Client/Server)
+│   └── types/              # Shared Database Models & TS Interfaces
+├── drizzle.config.ts       # Drizzle ORM Migration Configuration
+└── firebase.json           # Firebase Deployment & Rewrite Rules
+```
+
+---
+
+## 🚀 Getting Started (Local Development)
+
+### 1. Prerequisites
+- Node.js (v18 or newer)
+- PostgreSQL (v14 or newer) installed locally or a [Neon.tech](https://neon.tech) cloud database URL.
+
+### 2. Installation
+
+Clone the repository and install dependencies:
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd portffolio
-
-# Install dependencies
+git clone https://github.com/Suhail5125/CodebySRS.git
+cd CodebySRS
 npm install
+```
 
-# Create PostgreSQL database
-createdb portfolio
+### 3. Environment Variables
 
-# Setup environment variables
-# Edit .env and set DATABASE_URL to your PostgreSQL connection string
-# Example: DATABASE_URL=postgresql://username:password@localhost:5432/portfolio
+Copy the example environment file:
+```bash
+cp .env.example .env
+```
 
-# Push database schema
+Populate the `.env` file. **You must generate a highly secure session secret:**
+```bash
+# Run this in your terminal to generate a secure 32-byte hex string
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+**`.env` Reference:**
+| Variable | Required | Description |
+|----------|:--------:|-------------|
+| `DATABASE_URL` | ✅ | PostgreSQL connection string |
+| `SESSION_SECRET` | ✅ | Secure 32+ character string for encrypting cookies |
+| `PORT` | ❌ | Development server port (Defaults to `5000`) |
+| `NODE_ENV` | ❌ | `development` or `production` |
+
+### 4. Database Setup
+
+Push the Drizzle schema directly to your PostgreSQL instance:
+```bash
 npm run db:push
+```
 
-# Seed database with sample data
+*(Optional)* Seed the database with sample portfolio projects, skills, and admin credentials:
+```bash
 npm run db:seed
+```
 
-# Start development server
+### 5. Run Development Server
+
+Start the Vite frontend and Express backend concurrently:
+```bash
 npm run dev
 ```
-
-Visit `http://localhost:5000` to see your portfolio!
-
----
-
-## 📁 Project Structure
-
-```
-portffolio/
-├── client/                      # Frontend React application
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── layout/         # Layout components (navigation, footer, theme)
-│   │   │   ├── sections/       # Page sections (hero, projects, skills, etc.)
-│   │   │   ├── admin/          # Admin dashboard components
-│   │   │   ├── ui/             # Reusable UI components (shadcn/ui)
-│   │   │   └── 3d/
-│   │   │       ├── core/       # Main 3D components (scenes, geometries)
-│   │   │       └── fallbacks/  # Fallback components for 3D scenes
-│   │   ├── pages/              # Page components (home, admin, etc.)
-│   │   ├── hooks/              # Custom React hooks
-│   │   ├── lib/                # Utility functions and helpers
-│   │   ├── types/              # Frontend-specific TypeScript types
-│   │   └── index.css           # Global styles
-│   └── public/                 # Static assets
-├── server/                      # Backend Express application
-│   ├── middleware/
-│   │   ├── auth.ts             # Authentication middleware (passport, session)
-│   │   └── upload.ts           # File upload configuration (multer)
-│   ├── routes/
-│   │   ├── index.ts            # Route aggregator (registers all routes)
-│   │   ├── auth.ts             # Authentication endpoints
-│   │   ├── projects.ts         # Project CRUD operations
-│   │   ├── skills.ts           # Skills CRUD and reordering
-│   │   ├── testimonials.ts     # Testimonials CRUD
-│   │   ├── contact.ts          # Contact message handling
-│   │   └── about.ts            # About info management
-│   ├── scripts/                # Database scripts and utilities
-│   │   ├── migrate.ts          # Database migrations
-│   │   ├── seed.ts             # Seed data
-│   │   └── migrate-*.ts        # Migration utilities
-│   ├── index.ts                # Server entry point
-│   ├── storage.ts              # Database operations (Drizzle ORM)
-│   └── vite.ts                 # Vite middleware configuration
-├── shared/                      # Shared code between client and server
-│   └── schema.ts               # Database schema and shared types
-├── uploads/                     # Uploaded files directory
-├── .env                        # Environment variables
-├── drizzle.config.ts           # Drizzle ORM configuration
-├── migrations/                 # Database migrations
-└── package.json                # Project dependencies and scripts
-```
-
-### Directory Purpose
-
-#### **Client Directories**
-
-- **`components/layout/`** - Components that define the page structure and layout
-  - Navigation bars, footers, theme providers, theme toggles
-  - Used across multiple pages
-
-- **`components/sections/`** - Self-contained page sections
-  - Hero, projects, skills, services, about, testimonials, contact, work process
-  - Each section is a complete feature with its own logic
-
-- **`components/admin/`** - Admin dashboard specific components
-  - Admin forms, tables, modals, and dashboard widgets
-  - Only used in admin pages
-
-- **`components/ui/`** - Reusable UI primitives (shadcn/ui)
-  - Buttons, inputs, cards, dialogs, etc.
-  - Generic components used throughout the app
-
-- **`components/3d/core/`** - Main 3D rendering components
-  - Three.js/React Three Fiber scenes and geometries
-  - Particle systems, animated objects
-
-- **`components/3d/fallbacks/`** - Fallback components for 3D scenes
-  - Static alternatives when WebGL is unavailable
-  - Lightweight versions for better performance
-
-- **`pages/`** - Top-level page components
-  - Each file represents a route in the application
-  - Composes sections and layout components
-
-- **`hooks/`** - Custom React hooks
-  - Reusable stateful logic
-  - API calls, form handling, etc.
-
-- **`lib/`** - Utility functions and helpers
-  - Pure functions, constants, configurations
-  - No React-specific code
-
-- **`types/`** - Frontend-specific TypeScript types
-  - API response types, component prop types
-  - Types not shared with the backend
-
-#### **Server Directories**
-
-- **`middleware/`** - Express middleware functions
-  - Authentication, authorization, file uploads
-  - Request processing before reaching routes
-
-- **`routes/`** - API endpoint definitions
-  - Each file handles a specific resource (projects, skills, etc.)
-  - Organized by feature/domain
-
-- **`scripts/`** - Database and utility scripts
-  - Migrations, seeding, data transformations
-  - Run independently from the main server
-
-#### **Shared Directory**
-
-- **`shared/`** - Code used by both client and server
-  - Database schema definitions
-  - Validation schemas (Zod)
-  - Type definitions used across the stack
-
-### Naming Conventions
-
-#### **Files**
-- **Components**: `kebab-case.tsx` (e.g., `hero-section.tsx`, `project-card.tsx`)
-- **Pages**: `kebab-case.tsx` (e.g., `home.tsx`, `admin-login.tsx`)
-- **Hooks**: `use-kebab-case.ts` (e.g., `use-projects.ts`, `use-auth.ts`)
-- **Utilities**: `kebab-case.ts` (e.g., `format-date.ts`, `api-client.ts`)
-- **Types**: `kebab-case.ts` or `PascalCase.ts` (e.g., `api.ts`, `Project.ts`)
-- **Routes**: `kebab-case.ts` (e.g., `projects.ts`, `auth.ts`)
-- **Middleware**: `kebab-case.ts` (e.g., `auth.ts`, `upload.ts`)
-
-#### **Directories**
-- **All lowercase with hyphens**: `kebab-case` (e.g., `components/`, `3d/`, `admin/`)
-
-#### **Components**
-- **React Components**: `PascalCase` (e.g., `HeroSection`, `ProjectCard`)
-- **Component files**: `kebab-case.tsx` matching the component name
-
-#### **Functions**
-- **camelCase** for all functions (e.g., `getUserProjects`, `formatDate`)
-
-#### **Constants**
-- **UPPER_SNAKE_CASE** for true constants (e.g., `API_BASE_URL`, `MAX_FILE_SIZE`)
-- **camelCase** for configuration objects (e.g., `dbConfig`, `authOptions`)
-
-### Where to Place New Code
-
-#### **Adding a New Page Section**
-1. Create component in `client/src/components/sections/`
-2. Import and use in `client/src/pages/home.tsx` or relevant page
-3. Add any section-specific types to `client/src/types/`
-
-#### **Adding a New Admin Feature**
-1. Create component in `client/src/components/admin/`
-2. Create page in `client/src/pages/admin/`
-3. Add API route in `server/routes/` (create new file if needed)
-4. Update `server/routes/index.ts` to register new routes
-5. Add database schema to `shared/schema.ts` if needed
-
-#### **Adding a New API Endpoint**
-1. Add route handler to appropriate file in `server/routes/`
-2. If it's a new resource, create a new route file (e.g., `server/routes/blog.ts`)
-3. Register new route file in `server/routes/index.ts`
-4. Add types to `shared/schema.ts` for shared types
-5. Add frontend types to `client/src/types/api.ts`
-
-#### **Adding a New Reusable Component**
-1. **UI primitive**: Add to `client/src/components/ui/`
-2. **Layout component**: Add to `client/src/components/layout/`
-3. **Feature component**: Add to `client/src/components/` root or create new category
-
-#### **Adding a New Hook**
-1. Create in `client/src/hooks/use-feature-name.ts`
-2. Export from the file
-3. Import where needed
-
-#### **Adding a New Utility Function**
-1. Create in `client/src/lib/feature-name.ts`
-2. Keep functions pure (no side effects)
-3. Export individual functions
-
-#### **Adding Middleware**
-1. Create in `server/middleware/feature-name.ts`
-2. Export middleware function
-3. Import and use in route files or `server/index.ts`
-
-#### **Adding a Database Migration**
-1. Create script in `server/scripts/migrate-feature-name.ts`
-2. Update `shared/schema.ts` with new schema
-3. Run migration script
-4. Update seed data in `server/scripts/seed.ts` if needed
-
-### Architecture Principles
-
-1. **Separation of Concerns**: Keep routes, middleware, and business logic separate
-2. **Feature-Based Organization**: Group related code by feature/domain
-3. **Shared Code**: Only put truly shared code in `shared/` directory
-4. **Type Safety**: Use TypeScript types throughout, define in appropriate locations
-5. **Reusability**: Extract common patterns into hooks, utilities, or components
-6. **Scalability**: Structure allows easy addition of new features without refactoring
+- **Public Site:** [http://localhost:5000](http://localhost:5000)
+- **Admin Panel:** [http://localhost:5000/admin/login](http://localhost:5000/admin/login)
+  - *Default Credentials:* `admin` / `admin123` *(Change immediately upon deployment)*
 
 ---
 
-## 🔐 Admin Access
+## 🌐 Production Deployment (Firebase + Neon)
 
-### **Default Credentials**
-- **URL**: `http://localhost:5000/admin/login`
-- **Username**: `admin`
-- **Password**: `admin123`
+This project is perfectly optimized for a Serverless deployment using Firebase. Static React files are served instantly via Firebase CDN Hosting, while the Express API is dynamically served via Firebase Cloud Functions.
 
-⚠️ **IMPORTANT**: Change these credentials before deployment!
-
-### **Admin Features**
-- ✅ Manage projects (add, edit, delete)
-- ✅ Manage skills by category
-- ✅ View contact form submissions
-- ✅ Update company information
-- ✅ Upload images via URL
-- ✅ Mark messages as read/unread
-
----
-
-## 📝 Available Scripts
-
+### Step 1: Firebase CLI Setup
 ```bash
-# Development
-npm run dev              # Start dev server (frontend + backend)
-
-# Database
-npm run db:push          # Push database schema
-npm run db:seed          # Populate with sample data
-
-# Testing
-npm run test             # Run all tests
-npm run test:unit        # Run unit tests only
-npm run test:integration # Run integration tests only
-npm run test:watch       # Run tests in watch mode
-npm run test:coverage    # Generate coverage report
-
-# Build
-npm run build            # Build for production
-npm start                # Start production server
-
-# Type checking
-npm run check            # Run TypeScript checks
-npm run lint             # Run linter
+npm install -g firebase-tools
+firebase login
 ```
 
-📚 **See [Testing Documentation](./docs/testing/README.md) for detailed testing guide**
-
----
-
-## 🎨 Customization
-
-### **1. Update Company Info**
-Login to admin panel → About → Update all fields
-
-### **2. Add Projects**
-Admin Panel → Projects → Add Project
-- Title, description, image URL
-- Technologies used
-- GitHub & live demo links
-- Mark as featured
-
-### **3. Add Skills**
-Admin Panel → Skills → Add Skill
-- Skill name & category
-- Proficiency level (0-100%)
-- Optional icon
-
-### **4. Customize Colors**
-Edit `client/src/index.css`:
-```css
-:root {
-  --chart-1: 200 100% 50%;  /* Cyan */
-  --chart-2: 300 100% 50%;  /* Magenta */
-  --chart-3: 270 100% 50%;  /* Purple */
-  --chart-4: 30 100% 50%;   /* Orange */
-}
-```
-
-### **5. Update Meta Tags**
-Edit `client/src/components/seo.tsx`:
-```typescript
-const defaultMeta = {
-  title: "Your Company Name",
-  description: "Your description",
-  keywords: "your, keywords",
-};
-```
-
----
-
-## 🌐 Deployment
-
-Comprehensive deployment guides are available for multiple platforms:
-
-- 📘 [Railway Deployment Guide](./docs/deployment/railway.md) - Full-stack deployment with PostgreSQL
-- 📗 [Render Deployment Guide](./docs/deployment/render.md) - Free tier available
-- 📙 [Vercel + Backend Guide](./docs/deployment/vercel.md) - Split deployment approach
-- 📕 [VPS Deployment Guide](./docs/deployment/vps.md) - Full control with Nginx & PM2
-
-**Additional Resources:**
-- [Environment Variables Configuration](./docs/configuration/environment-variables.md)
-- [Deployment Checklist](./docs/deployment/checklist.md)
-- [Backup & Recovery Procedures](./docs/operations/backup-recovery.md)
-
----
-
-## 📊 Database Schema
-
-### **Tables**
-- `projects` - Portfolio projects
-- `skills` - Technical skills
-- `contact_messages` - Form submissions
-- `about_info` - Company information
-- `users` - Admin users
-
-See [FEATURES.md](./FEATURES.md) for complete schema details.
-
----
-
-## 🛠️ Tech Stack
-
-### **Frontend**
-- React 18
-- TypeScript
-- Tailwind CSS
-- Framer Motion
-- React Query
-- Wouter
-- Shadcn/ui
-- Lucide Icons
-
-### **Backend**
-- Express.js
-- TypeScript
-- PostgreSQL
-- Drizzle ORM
-- Bcrypt.js
-- Express Session
-- Passport.js
-- Multer
-- Zod
-
----
-
-## 📱 Features in Detail
-
-### **Hero Section**
-- 3D animated background
-- Gradient text animations
-- Multiple CTA buttons
-- Social media links
-
-### **Projects**
-- Auto-rotating carousel
-- Featured projects
-- Technology tags
-- External links
-
-### **Skills**
-- Infinite tech slider
-- Grouped by categories
-- Proficiency visualization
-- Icon support
-
-### **Services** (NEW)
-- 6 service cards
-- Hover animations
-- Icon integration
-- Detailed descriptions
-
-### **Work Process** (NEW)
-- 6-step workflow
-- Visual connections
-- Numbered steps
-- Process descriptions
-
-### **Contact**
-- Form validation
-- Success/error states
-- Email integration ready
-- Animated background
-
-### **Footer**
-- Animated orbs
-- Grid pattern
-- Contact information
-- Availability status
-- Social links
-
----
-
-## 🧪 Testing
-
-This project includes comprehensive test coverage for core functionality:
-
-### **Test Suite**
-- ✅ Unit tests for validation schemas and utilities
-- ✅ Integration tests for all API endpoints
-- ✅ Authentication flow testing
-- ✅ Database operations testing
-- ✅ Test fixtures and helpers
-
-### **Running Tests**
+### Step 2: Set Cloud Functions Secrets
+Firebase Cloud Functions need secure access to your database URL and Session Secret. Set these via Firebase Secrets manager:
 ```bash
-npm run test             # Run all tests
-npm run test:unit        # Unit tests only
-npm run test:integration # Integration tests only
-npm run test:coverage    # Generate coverage report
+firebase functions:secrets:set DATABASE_URL
+firebase functions:secrets:set SESSION_SECRET
 ```
 
-### **Test Coverage**
-- Unit tests: 70%+ coverage for utilities and validation
-- Integration tests: 80%+ coverage for API endpoints
-- Critical paths: 100% coverage for authentication and data mutations
-
-📚 **See [Testing Documentation](./docs/testing/README.md) for complete testing guide**
-
----
-
-## 🔒 Security
-
-- ✅ Password hashing with bcrypt
-- ✅ Session-based authentication
-- ✅ Input validation with Zod
-- ✅ SQL injection prevention
-- ✅ XSS protection
-- ✅ CORS configuration
-- ✅ Environment variables
-- ✅ Rate limiting on API endpoints
-- ✅ Security headers (HSTS, CSP, X-Frame-Options)
-
----
-
-## 🎯 SEO Features
-
-- ✅ Dynamic meta tags
-- ✅ Open Graph support
-- ✅ Twitter Cards
-- ✅ Semantic HTML
-- ✅ Sitemap ready
-- ✅ Mobile-friendly
-- ✅ Fast loading
-
----
-
-## 🐛 Troubleshooting
-
-### **Port already in use**
+### Step 3: Build & Deploy
+This single command will type-check your code, build the React SPA, compile the Express server, and deploy everything to your Firebase project:
 ```bash
-# Kill process on port 5000
-npx kill-port 5000
+npm run firebase:deploy
 ```
-
-### **Database issues**
-```bash
-# Reset and recreate database
-npm run db:migrate
-npm run db:seed
-```
-
-### **Build errors**
-```bash
-# Clear cache and reinstall
-rm -rf node_modules dist
-npm install
-npm run build
-```
-
----
-
-## 📄 License
-
-MIT License - feel free to use this project for your own portfolio!
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](./docs/CONTRIBUTING.md) for details on:
-- Development setup
-- Code style and conventions
-- Git workflow and branching strategy
-- Pull request process
-- Testing requirements
+We enforce a strict code quality standard to maintain structural integrity. Before submitting a pull request:
+1. Ensure all TypeScript checks pass: `npm run check`.
+2. Ensure no validation logic is manually duplicated. Always define rules in `/shared/schemas/` and import them where needed.
+3. Keep route pages (`/client/src/pages/`) strictly for rendering components. All heavy logic belongs in `/components/` or `/hooks/`.
 
 ---
 
-## 📞 Support
+## 📄 License
 
-Having issues? Check out:
-- [API Documentation](./docs/api/README.md) - Complete API reference
-- [Architecture Documentation](./docs/architecture/README.md) - System overview
-- [Testing Documentation](./docs/testing/README.md) - Testing guide
-- [Deployment Guides](./docs/deployment/) - Platform-specific instructions
-- [Contributing Guide](./docs/CONTRIBUTING.md) - Development guidelines
-- GitHub Issues - Report bugs
-
----
-
-## 🎉 Acknowledgments
-
-- Shadcn/ui for beautiful components
-- Framer Motion for animations
-- Lucide for icons
-- Tailwind CSS for styling
-
----
-
-**Made with ❤️ using React, TypeScript, and modern web technologies**
-
----
-
-## 📸 Screenshots
-
-### Homepage
-![Homepage](https://via.placeholder.com/800x600/0ea5e9/ffffff?text=Homepage)
-
-### Admin Dashboard
-![Admin](https://via.placeholder.com/800x600/0ea5e9/ffffff?text=Admin+Dashboard)
-
-### Projects Section
-![Projects](https://via.placeholder.com/800x600/0ea5e9/ffffff?text=Projects)
-
----
-
-**Version**: 1.0.0  
-**Status**: Production Ready ✅  
-**Last Updated**: October 27, 2025
+This project is licensed under the MIT License. Feel free to use this architecture as the foundation for your own projects.
