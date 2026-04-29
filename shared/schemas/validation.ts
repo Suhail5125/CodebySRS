@@ -1,92 +1,80 @@
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { projects, skills, testimonials, contactMessages, aboutInfo, users } from "../types/models";
 
-// Helper function for URL validation
-const validateUrl = (url: string): boolean => {
-  if (!url) return true;
-  try {
-    new URL(url.startsWith('http') ? url : `https://${url}`);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-// Zod schemas for validation
-export const insertProjectSchema = createInsertSchema(projects).omit({
-  id: true,
-  createdAt: true,
-}).extend({
+// ─── Project Schema ────────────────────────────────────────────
+// Matches: projects table (omitting id, createdAt which are auto-generated)
+export const insertProjectSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  imageUrl: z.string().nullable().optional(),
+  githubUrl: z.string().nullable().optional(),
+  liveUrl: z.string().nullable().optional(),
   technologies: z.array(z.string()).min(1, "At least one technology is required"),
-  imageUrl: z.string().optional().or(z.literal("")),
-  githubUrl: z.string().url().optional().or(z.literal("")),
-  liveUrl: z.string().url().optional().or(z.literal("")),
+  featured: z.boolean().default(false),
+  order: z.number().int().default(0),
 });
 
-export const insertSkillSchema = createInsertSchema(skills).omit({
-  id: true,
-}).extend({
+// ─── Skill Schema ──────────────────────────────────────────────
+// Matches: skills table (omitting id which is auto-generated)
+export const insertSkillSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  category: z.string().min(1, "Category is required"),
   proficiency: z.number().min(1).max(100),
-  category: z.enum(["Frontend", "Backend", "3D/Graphics", "Tools", "Other"]),
+  icon: z.string().nullable().optional(),
+  order: z.number().int().default(0),
 });
 
-export const insertTestimonialSchema = createInsertSchema(testimonials).omit({
-  id: true,
-  createdAt: true,
-}).extend({
-  name: z.string().min(2).max(100),
-  role: z.string().max(100).optional().or(z.literal("")),
-  company: z.string().max(100).optional().or(z.literal("")),
-  content: z.string().min(10).max(1000),
-  rating: z.number().min(1).max(5),
-  avatarUrl: z.string().optional().or(z.literal("")),
-  isVisible: z.boolean().optional(),
+// ─── Testimonial Schema ────────────────────────────────────────
+// Matches: testimonials table (omitting id, createdAt which are auto-generated)
+export const insertTestimonialSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  role: z.string().nullable().optional(),
+  company: z.string().nullable().optional(),
+  content: z.string().min(10, "Content must be at least 10 characters").max(1000),
+  rating: z.number().min(1).max(5).default(5),
+  avatarUrl: z.string().nullable().optional(),
+  isVisible: z.boolean().default(false),
+  order: z.number().int().default(0),
 });
 
-export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({
-  id: true,
-  read: true,
-  starred: true,
-  createdAt: true,
-}).extend({
-  email: z.string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
-  name: z.string()
-    .min(2, "Name must be at least 2 characters")
-    .max(100, "Name must be less than 100 characters")
-    .regex(/^[a-zA-Z\s]+$/, "Name can only contain letters and spaces"),
-  message: z.string()
-    .min(10, "Message must be at least 10 characters")
-    .max(1000, "Message must be less than 1000 characters"),
-  subject: z.string()
-    .min(1, "Subject is required")
-    .max(200, "Subject must be less than 200 characters"),
-  projectType: z.string().min(1, "Project type is required"),
+// ─── Contact Message Schema ────────────────────────────────────
+// Matches: contactMessages table (omitting id, read, starred, createdAt)
+export const insertContactMessageSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+  email: z.string().email("Invalid email address"),
+  subject: z.string().nullable().optional(),
+  projectType: z.string().nullable().optional(),
+  message: z.string().min(1, "Message is required").max(500),
 });
 
-export const insertAboutInfoSchema = createInsertSchema(aboutInfo).omit({
-  id: true,
-  updatedAt: true,
-}).extend({
-  email: z.string().email().optional().or(z.literal("")),
-  avatarUrl: z.string().refine(validateUrl, "Invalid URL format").optional().or(z.literal("")),
-  resumeUrl: z.string().refine(validateUrl, "Invalid URL format").optional().or(z.literal("")),
-  githubUrl: z.string().refine(validateUrl, "Invalid URL format").optional().or(z.literal("")),
-  linkedinUrl: z.string().refine(validateUrl, "Invalid URL format").optional().or(z.literal("")),
-  twitterUrl: z.string().refine(validateUrl, "Invalid URL format").optional().or(z.literal("")),
-  instagramUrl: z.string().refine(validateUrl, "Invalid URL format").optional().or(z.literal("")),
-  responseTime: z.string().optional(),
-  workingHours: z.string().optional(),
+// ─── About Info Schema ─────────────────────────────────────────
+// Matches: aboutInfo table (omitting id, updatedAt which are auto-generated)
+export const insertAboutInfoSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  title: z.string().min(1, "Title is required"),
+  bio: z.string().min(1, "Bio is required"),
+  avatarUrl: z.string().nullable().optional(),
+  resumeUrl: z.string().nullable().optional(),
+  githubUrl: z.string().nullable().optional(),
+  linkedinUrl: z.string().nullable().optional(),
+  twitterUrl: z.string().nullable().optional(),
+  instagramUrl: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  availableForWork: z.boolean().nullable().optional(),
+  responseTime: z.string().nullable().optional(),
+  workingHours: z.string().nullable().optional(),
+  completedProjects: z.number().int().nullable().optional(),
+  totalClients: z.number().int().nullable().optional(),
+  yearsExperience: z.number().int().nullable().optional(),
+  technologiesCount: z.number().int().nullable().optional(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  isAdmin: true,
-}).pick({
-  username: true,
-  password: true,
+// ─── User Schema ───────────────────────────────────────────────
+// Matches: users table (only username and password for login/registration)
+export const insertUserSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 // TypeScript types inferred from schemas

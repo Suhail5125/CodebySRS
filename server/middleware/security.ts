@@ -1,8 +1,22 @@
-import { type Express } from 'express';
+import { type Express, type Request } from 'express';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 import { config } from '../config';
 import { logger } from '../logger';
+
+// Firebase Cloud Functions routes all requests through a proxy,
+// so all requests appear to come from the same IP.
+// Use X-Forwarded-For to identify real client IPs.
+function getClientIp(req: Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim();
+  }
+  if (Array.isArray(forwarded) && forwarded.length > 0) {
+    return forwarded[0].split(',')[0].trim();
+  }
+  return req.ip || req.socket.remoteAddress || 'unknown';
+}
 
 // Security headers middleware
 export function securityHeaders(app: Express) {
@@ -45,9 +59,10 @@ export const generalRateLimiter = rateLimit({
   message: 'Too many requests from this IP, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: getClientIp,
   handler: (req, res) => {
     logger.warn('Rate limit exceeded', {
-      ip: req.ip,
+      ip: getClientIp(req),
       path: req.path,
       method: req.method
     });
@@ -64,10 +79,11 @@ export const authRateLimiter = rateLimit({
   message: 'Too many login attempts, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: getClientIp,
   skipSuccessfulRequests: true, // Don't count successful logins
   handler: (req, res) => {
     logger.warn('Auth rate limit exceeded', {
-      ip: req.ip,
+      ip: getClientIp(req),
       path: req.path,
       username: req.body?.username
     });
@@ -80,13 +96,14 @@ export const authRateLimiter = rateLimit({
 // Rate limiter for contact form
 export const contactRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // 3 submissions per hour
+  max: 30, // 30 submissions per hour
   message: 'Too many contact form submissions, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: getClientIp,
   handler: (req, res) => {
     logger.warn('Contact form rate limit exceeded', {
-      ip: req.ip,
+      ip: getClientIp(req),
       email: req.body?.email
     });
     res.status(429).json({

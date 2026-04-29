@@ -48,8 +48,22 @@ export default function Home() {
       // No toast notification - success is shown in the form itself
     },
     onError: (error: Error) => {
-      // Silent error - form will handle display
       console.error("Failed to send message:", error);
+      // Show user-facing error message
+      const message = error.message || "";
+      if (message.includes("429")) {
+        toast({
+          title: "Too many requests",
+          description: "Please wait a while before sending another message.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Failed to send message",
+          description: "Something went wrong. Please try again later.",
+          variant: "destructive",
+        });
+      }
     },
   });
 

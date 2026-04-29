@@ -62,6 +62,7 @@ export function setupAuth(app: Express) {
   // Config validation ensures SESSION_SECRET is present and secure
   app.use(
     session({
+      name: "__session", // Required for Firebase Hosting to preserve the cookie
       secret: config.session.secret,
       resave: false,
       saveUninitialized: false,

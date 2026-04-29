@@ -270,11 +270,13 @@ export default function AdminMessages() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-lg">{message.name}</h3>
+                            <h3 className="font-semibold text-lg">{message.name || message.email}</h3>
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {message.email}
-                          </p>
+                          {message.name && (
+                            <p className="text-sm text-muted-foreground">
+                              {message.email}
+                            </p>
+                          )}
                         </div>
                       </div>
                       
@@ -337,7 +339,7 @@ export default function AdminMessages() {
                       <User className="h-3 w-3" />
                       Name
                     </Label>
-                    <p className="font-semibold">{selectedMessage.name}</p>
+                    <p className="font-semibold">{selectedMessage.name || "(No name provided)"}</p>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground mb-1 block flex items-center gap-1">

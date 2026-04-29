@@ -61,6 +61,11 @@ uploads/
 # Verification Reports
 docs/verification/
 
+# Firebase
+.firebase/
+functions/.env
+functions/lib/
+
 # Misc
 .cache/
 .temp/
