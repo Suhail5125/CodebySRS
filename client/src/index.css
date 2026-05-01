@@ -434,4 +434,56 @@ body::-webkit-scrollbar {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
+
+  /* ===== Hero (immersive 3D) HUD animations ===== */
+  @keyframes hud-scan {
+    0% { transform: translateY(-100%); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(120vh); opacity: 0; }
+  }
+  .hud-scan {
+    animation: hud-scan 7s linear infinite;
+  }
+
+  @keyframes hud-chip-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  .hud-chip-float {
+    animation: hud-chip-float 4s ease-in-out infinite;
+  }
+
+  @keyframes hud-flicker {
+    0%, 100% { opacity: 1; }
+    47% { opacity: 1; }
+    48% { opacity: 0.55; }
+    49% { opacity: 1; }
+    72% { opacity: 1; }
+    73% { opacity: 0.7; }
+    74% { opacity: 1; }
+  }
+  .hud-flicker {
+    animation: hud-flicker 6s ease-in-out infinite;
+  }
+
+  @keyframes hero-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero-fade-in {
+    opacity: 0;
+    animation: hero-fade-in 0.8s ease-out forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hud-scan,
+    .hud-chip-float,
+    .hud-flicker,
+    .hero-fade-in {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
 }

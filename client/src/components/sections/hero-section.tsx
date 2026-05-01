@@ -1,5 +1,5 @@
-import { motion, useReducedMotion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { useReducedMotion } from "framer-motion";
 import {
   Github,
   Linkedin,
@@ -8,12 +8,25 @@ import {
   ArrowUpRight,
   Instagram,
   Twitter,
-  MapPin,
-  Sparkles,
+  ChevronDown,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
 import type { AboutInfo } from "@shared";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GlitchText } from "./hero/glitch-text";
+import { HoloButton } from "./hero/holo-button";
+import {
+  CornerBrackets,
+  ScanLines,
+  StatusPanel,
+  Terminal,
+  TechChips,
+} from "./hero/hud";
+import { SceneErrorBoundary, detectWebGL } from "./hero/scene-boundary";
+import { SceneCssFallback } from "./hero/scene-css-fallback";
+
+// Lazy-load the heavy 3D scene so it doesn't block first paint.
+// Uses the manual chunk split (`3d-vendor`) configured in vite.config.ts.
+const HeroScene = lazy(() => import("./hero/scene"));
 
 interface HeroSectionProps {
   aboutInfo: AboutInfo | null;
@@ -23,21 +36,64 @@ interface HeroSectionProps {
 const ROLES = [
   "Creative Developer",
   "3D Enthusiast",
-  "UI/UX Designer",
+  "UI / UX Designer",
   "Full-Stack Engineer",
 ];
 
+const TECH = [
+  "React",
+  "TypeScript",
+  "Three.js",
+  "Node",
+  "WebGL",
+  "Tailwind",
+];
+
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
+  const reducedMotion = !!useReducedMotion();
+  const isMobile = useIsMobile();
   const [roleIndex, setRoleIndex] = useState(0);
-  const prefersReducedMotion = useReducedMotion();
+  const [scenePaused, setScenePaused] = useState(false);
+  const [webglOk, setWebglOk] = useState<boolean | null>(null);
+
+  // Detect WebGL support on mount (client only). Skip mounting <Canvas>
+  // entirely if not supported — saves the 3D bundle download too.
+  useEffect(() => {
+    setWebglOk(detectWebGL());
+  }, []);
 
   useEffect(() => {
-    if (prefersReducedMotion) return;
-    const id = setInterval(() => {
-      setRoleIndex((i) => (i + 1) % ROLES.length);
-    }, 3200);
+    if (reducedMotion) return;
+    const id = setInterval(
+      () => setRoleIndex((i) => (i + 1) % ROLES.length),
+      3400,
+    );
     return () => clearInterval(id);
-  }, [prefersReducedMotion]);
+  }, [reducedMotion]);
+
+  // Pause the WebGL canvas (visibility:hidden) once the user has scrolled past the
+  // hero, to free GPU. R3F internally throttles offscreen, but this is belt+braces.
+  useEffect(() => {
+    const onScroll = () => {
+      const past = window.scrollY > window.innerHeight * 1.2;
+      setScenePaused(past);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const scrollTo = (id: string) =>
     document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
@@ -52,12 +108,12 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       ].filter((l): l is { icon: typeof Github; href: string; label: string } => Boolean(l))
     : [];
 
-  const firstName = aboutInfo?.name?.split(" ")[0] ?? null;
+  const firstName = aboutInfo?.name?.split(" ")[0] ?? "DEVELOPER";
   const fullName = aboutInfo?.name ?? "Welcome";
   const bio =
     aboutInfo?.bio ??
     "I design and build modern web experiences — interfaces, interactions, and the systems that hold them together.";
-  const location = aboutInfo?.location;
+  const location = aboutInfo?.location ?? "EARTH / GLOBAL";
   const available = aboutInfo?.availableForWork ?? true;
 
   const stats = [
@@ -68,202 +124,174 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   ];
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-background">
-      {/* --- Background: subtle, refined, no neon noise --- */}
-      <div className="pointer-events-none absolute inset-0">
-        {/* Soft radial wash */}
-        <div
-          className="absolute inset-0 opacity-70"
-          style={{
-            background:
-              "radial-gradient(60% 50% at 15% 10%, hsl(var(--chart-1) / 0.12), transparent 60%), radial-gradient(50% 40% at 90% 80%, hsl(var(--chart-3) / 0.10), transparent 60%)",
-          }}
-        />
-        {/* Faint dot grid */}
-        <div
-          className="absolute inset-0 opacity-[0.18]"
-          style={{
-            backgroundImage:
-              "radial-gradient(hsl(var(--foreground) / 0.18) 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-            maskImage:
-              "radial-gradient(ellipse 80% 60% at 50% 40%, black 40%, transparent 80%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse 80% 60% at 50% 40%, black 40%, transparent 80%)",
-          }}
-        />
-        {/* Decorative blurred orb */}
-        {!prefersReducedMotion && (
-          <motion.div
-            aria-hidden
-            className="absolute -top-32 -right-32 h-[28rem] w-[28rem] rounded-full blur-3xl"
-            style={{
-              background:
-                "conic-gradient(from 90deg at 50% 50%, hsl(var(--chart-1) / 0.25), hsl(var(--chart-3) / 0.18), hsl(var(--chart-2) / 0.18), hsl(var(--chart-1) / 0.25))",
-            }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-          />
+    <section className="relative min-h-screen w-full overflow-hidden bg-[#070512] text-white">
+      {/* ============== 3D SCENE LAYER ============== */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{ visibility: scenePaused ? "hidden" : "visible" }}
+        aria-hidden
+      >
+        {webglOk === false || reducedMotion ? (
+          <SceneCssFallback />
+        ) : webglOk === true ? (
+          <SceneErrorBoundary fallback={<SceneCssFallback />}>
+            <Suspense fallback={<SceneLoading />}>
+              <HeroScene isMobile={isMobile} reducedMotion={reducedMotion} />
+            </Suspense>
+          </SceneErrorBoundary>
+        ) : (
+          <SceneLoading />
         )}
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-6 pt-32 pb-20 lg:px-10">
-        <div className="grid grid-cols-1 gap-14 lg:grid-cols-12 lg:gap-12">
-          {/* ============== LEFT COLUMN ============== */}
-          <div className="lg:col-span-7 xl:col-span-7">
-            {/* Status pill */}
+      {/* Vignette gradient over the canvas to anchor text */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-[1]"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 50% at 30% 50%, rgba(7,5,18,0.85) 0%, rgba(7,5,18,0.55) 35%, rgba(7,5,18,0) 70%), linear-gradient(180deg, rgba(7,5,18,0.55) 0%, rgba(7,5,18,0) 30%, rgba(7,5,18,0) 70%, rgba(7,5,18,0.95) 100%)",
+        }}
+      />
+
+      {/* HUD: corner brackets + scanlines (decorative) */}
+      <div className="pointer-events-none absolute inset-0 z-[2]">
+        <CornerBrackets />
+        <ScanLines reducedMotion={reducedMotion} />
+        {/* fixed-position label markers */}
+        <div className="absolute left-4 top-20 -translate-y-7 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-300/50">
+          ◢ NODE-01 / HERO
+        </div>
+        <div className="absolute right-4 top-20 -translate-y-7 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-300/50">
+          REC ● {new Date().getFullYear()}.{String(new Date().getMonth() + 1).padStart(2, "0")} ◣
+        </div>
+      </div>
+
+      {/* ============== CONTENT ============== */}
+      <div className="relative z-[3] mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 pb-16 pt-32 lg:px-10 lg:pt-36">
+        <div className="grid flex-1 grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
+          {/* ===== LEFT: HEADLINE ===== */}
+          <div className="lg:col-span-8">
+            {/* Tag line */}
             {isLoading ? (
-              <Skeleton className="mb-8 h-7 w-48 rounded-full" />
+              <Skeleton className="mb-6 h-5 w-64 bg-white/10" />
             ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="mb-8 inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-3 py-1.5 backdrop-blur-md"
-                data-testid="hero-status-pill"
-              >
-                <span className="relative flex h-2 w-2 shrink-0">
-                  {available && !prefersReducedMotion && (
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  )}
-                  <span
-                    className={`relative inline-flex h-2 w-2 rounded-full ${
-                      available ? "bg-emerald-500" : "bg-amber-500"
-                    }`}
-                  />
-                </span>
-                <span className="whitespace-nowrap text-xs font-medium tracking-wide text-foreground/80">
-                  {available ? "Available for new projects" : "Currently booked"}
-                </span>
-                {location && (
-                  <>
-                    <span className="text-border">•</span>
-                    <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{location}</span>
-                    </span>
-                  </>
-                )}
-              </motion.div>
+              <p className="hero-fade-in mb-5 font-mono text-xs uppercase tracking-[0.4em] text-cyan-300/80">
+                <span className="text-cyan-400">[</span> hello.world{" "}
+                <span className="text-cyan-400">::</span> identity ={" "}
+                <span className="text-fuchsia-300">"{fullName}"</span>{" "}
+                <span className="text-cyan-400">]</span>
+              </p>
             )}
 
-            {/* Greeting */}
-            {isLoading ? (
-              <Skeleton className="mb-4 h-6 w-40" />
-            ) : (
-              <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.05 }}
-                className="mb-3 font-mono text-sm text-muted-foreground"
-              >
-                <span className="text-chart-1">$</span> hello world — I'm
-              </motion.p>
-            )}
-
-            {/* Name */}
+            {/* Glitch headline */}
             {isLoading ? (
               <div className="space-y-3">
-                <Skeleton className="h-16 w-3/4" />
-                <Skeleton className="h-16 w-1/2" />
+                <Skeleton className="h-16 w-3/4 bg-white/10" />
+                <Skeleton className="h-16 w-1/2 bg-white/10" />
               </div>
             ) : (
-              <motion.h1
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="font-display text-5xl font-bold leading-[0.95] tracking-tight text-foreground sm:text-6xl md:text-7xl xl:text-[5.5rem]"
+              <h1
                 data-testid="hero-name"
+                className="font-display text-5xl font-bold uppercase leading-[0.95] tracking-tight sm:text-6xl md:text-7xl xl:text-[6rem]"
+                style={{ textShadow: "0 0 30px rgba(0, 240, 255, 0.18)" }}
               >
-                {firstName && <>{firstName}.{" "}</>}
-                <span className="inline-block bg-gradient-to-r from-chart-1 via-chart-3 to-chart-2 bg-clip-text text-transparent">
-                  Building
+                <span className="block text-white">
+                  <GlitchText
+                    text={firstName.toUpperCase()}
+                    duration={1100}
+                    reducedMotion={reducedMotion}
+                  />
                 </span>
-                <br />
-                things for the web.
-              </motion.h1>
+                <span
+                  className="block bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-purple-300 bg-clip-text text-transparent"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 24px rgba(0, 240, 255, 0.35)) drop-shadow(0 0 40px rgba(255, 92, 240, 0.25))",
+                  }}
+                >
+                  <GlitchText
+                    text="// CONSTRUCT"
+                    duration={1300}
+                    reducedMotion={reducedMotion}
+                  />
+                </span>
+              </h1>
             )}
 
-            {/* Rotating role */}
+            {/* Rotating role decode */}
             {!isLoading && (
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="mt-6 flex items-center gap-3"
-              >
-                <span className="h-px w-10 bg-foreground/30" />
-                <span className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
-                  Currently
+              <div className="hero-fade-in mt-6 flex items-center gap-3 font-mono text-sm">
+                <span className="h-px w-10 bg-cyan-300/60" />
+                <span className="uppercase tracking-[0.25em] text-cyan-300/70">
+                  Mode
                 </span>
-                <span className="relative inline-block h-6 overflow-hidden text-sm font-medium text-foreground">
-                  <motion.span
+                <span
+                  className="text-cyan-50"
+                  style={{ textShadow: "0 0 12px rgba(0,240,255,0.5)" }}
+                >
+                  <GlitchText
                     key={roleIndex}
-                    initial={{ y: 22, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -22, opacity: 0 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="block"
-                  >
-                    {ROLES[roleIndex]}
-                  </motion.span>
+                    text={ROLES[roleIndex]}
+                    duration={700}
+                    reducedMotion={reducedMotion}
+                  />
                 </span>
-              </motion.div>
+              </div>
             )}
 
             {/* Bio */}
             {isLoading ? (
               <div className="mt-8 space-y-2">
-                <Skeleton className="h-4 w-full max-w-xl" />
-                <Skeleton className="h-4 w-4/5 max-w-xl" />
+                <Skeleton className="h-4 w-full max-w-xl bg-white/10" />
+                <Skeleton className="h-4 w-4/5 max-w-xl bg-white/10" />
               </div>
             ) : (
-              <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="mt-8 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
+              <p
                 data-testid="hero-bio"
+                className="hero-fade-in mt-8 max-w-xl text-base leading-relaxed text-cyan-50/80 sm:text-lg"
+                style={{ animationDelay: "0.15s" }}
               >
                 {bio}
-              </motion.p>
+              </p>
             )}
 
             {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="mt-10 flex flex-wrap items-center gap-3"
+            <div
+              className="hero-fade-in mt-10 flex flex-wrap items-center gap-3"
+              style={{ animationDelay: "0.3s" }}
             >
-              <Button
-                size="lg"
+              <HoloButton
                 onClick={() => scrollTo("#contact")}
                 data-testid="button-lets-work-together"
-                className="group h-12 gap-2 rounded-full bg-foreground px-6 text-background hover:bg-foreground/90"
+                variant="primary"
               >
                 Start a project
                 <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="ghost"
+              </HoloButton>
+              <HoloButton
                 onClick={() => scrollTo("#projects")}
                 data-testid="button-view-work"
-                className="group h-12 gap-2 rounded-full px-6 text-foreground hover:bg-foreground/5"
+                variant="ghost"
               >
                 View work
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Button>
-            </motion.div>
+              </HoloButton>
+            </div>
+
+            {/* Tech chips */}
+            <div
+              className="hero-fade-in mt-8 max-w-2xl"
+              style={{ animationDelay: "0.45s" }}
+            >
+              <TechChips items={TECH} reducedMotion={reducedMotion} />
+            </div>
 
             {/* Social row */}
             {socialLinks.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="mt-10 flex items-center gap-1"
+              <div
+                className="hero-fade-in mt-8 flex items-center gap-1"
+                style={{ animationDelay: "0.55s" }}
               >
                 {socialLinks.map(({ icon: Icon, href, label }) => (
                   <a
@@ -273,201 +301,77 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                     rel="noopener noreferrer"
                     aria-label={label}
                     data-testid={`link-${label.toLowerCase()}`}
-                    className="group inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+                    className="group inline-flex h-10 w-10 items-center justify-center rounded-sm border border-cyan-300/0 text-cyan-200/70 transition-all hover:border-cyan-300/50 hover:bg-cyan-400/5 hover:text-cyan-100 hover:shadow-[0_0_15px_rgba(0,240,255,0.35)]"
                   >
                     <Icon className="h-[18px] w-[18px]" />
                   </a>
                 ))}
-              </motion.div>
+              </div>
             )}
           </div>
 
-          {/* ============== RIGHT COLUMN ============== */}
-          <div className="lg:col-span-5 xl:col-span-5">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-              className="relative"
-            >
-              {/* Code card */}
-              <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/70 shadow-2xl backdrop-blur-xl">
-                {/* Window chrome */}
-                <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-3 w-3 rounded-full bg-red-400/80" />
-                    <span className="h-3 w-3 rounded-full bg-yellow-400/80" />
-                    <span className="h-3 w-3 rounded-full bg-emerald-400/80" />
-                  </div>
-                  <span className="font-mono text-[11px] text-muted-foreground">
-                    ~/about-me.ts
-                  </span>
-                  <Sparkles className="h-3.5 w-3.5 text-chart-1" />
-                </div>
+          {/* ===== RIGHT: HUD STACK ===== */}
+          <div className="hero-fade-in space-y-4 lg:col-span-4" style={{ animationDelay: "0.4s" }}>
+            <StatusPanel
+              available={available}
+              location={location}
+              role={ROLES[roleIndex]}
+              reducedMotion={reducedMotion}
+            />
+            <Terminal reducedMotion={reducedMotion} />
 
-                {/* Code body */}
-                <div className="px-5 py-5 font-mono text-[13px] leading-relaxed">
-                  <CodeLine n={1}>
-                    <span className="text-chart-3">const</span>{" "}
-                    <span className="text-chart-1">developer</span>{" "}
-                    <span className="text-foreground/60">=</span>{" "}
-                    <span className="text-foreground/60">{"{"}</span>
-                  </CodeLine>
-                  <CodeLine n={2}>
-                    {"  "}
-                    <span className="text-chart-2">name</span>
-                    <span className="text-foreground/60">:</span>{" "}
-                    <span className="text-emerald-400">"{fullName}"</span>
-                    <span className="text-foreground/60">,</span>
-                  </CodeLine>
-                  <CodeLine n={3}>
-                    {"  "}
-                    <span className="text-chart-2">role</span>
-                    <span className="text-foreground/60">:</span>{" "}
-                    <span className="text-emerald-400">"{ROLES[roleIndex]}"</span>
-                    <span className="text-foreground/60">,</span>
-                  </CodeLine>
-                  <CodeLine n={4}>
-                    {"  "}
-                    <span className="text-chart-2">stack</span>
-                    <span className="text-foreground/60">:</span>{" "}
-                    <span className="text-foreground/60">[</span>
-                  </CodeLine>
-                  <CodeLine n={5}>
-                    {"    "}
-                    <span className="text-emerald-400">"React"</span>
-                    <span className="text-foreground/60">,</span>{" "}
-                    <span className="text-emerald-400">"TypeScript"</span>
-                    <span className="text-foreground/60">,</span>
-                  </CodeLine>
-                  <CodeLine n={6}>
-                    {"    "}
-                    <span className="text-emerald-400">"Three.js"</span>
-                    <span className="text-foreground/60">,</span>{" "}
-                    <span className="text-emerald-400">"Node"</span>
-                    <span className="text-foreground/60">,</span>
-                  </CodeLine>
-                  <CodeLine n={7}>
-                    {"  "}
-                    <span className="text-foreground/60">],</span>
-                  </CodeLine>
-                  <CodeLine n={8}>
-                    {"  "}
-                    <span className="text-chart-2">available</span>
-                    <span className="text-foreground/60">:</span>{" "}
-                    <span className="text-amber-400">{String(available)}</span>
-                    <span className="text-foreground/60">,</span>
-                  </CodeLine>
-                  <CodeLine n={9}>
-                    <span className="text-foreground/60">{"};"}</span>
-                  </CodeLine>
-                  <CodeLine n={10}>
-                    <span
-                      className={`inline-block h-4 w-2 translate-y-0.5 bg-chart-1 ${
-                        prefersReducedMotion ? "" : "animate-pulse"
-                      }`}
-                    />
-                  </CodeLine>
-                </div>
-              </div>
-
-              {/* Floating tech chips */}
-              {!prefersReducedMotion && (
-                <>
-                  <FloatingChip
-                    label="React"
-                    className="-left-4 top-10 hidden md:flex"
-                    delay={0}
-                  />
-                  <FloatingChip
-                    label="TypeScript"
-                    className="-right-3 top-24 hidden md:flex"
-                    delay={1}
-                  />
-                  <FloatingChip
-                    label="Three.js"
-                    className="-left-3 bottom-32 hidden md:flex"
-                    delay={2}
-                  />
-                </>
-              )}
-            </motion.div>
-
-            {/* Stats strip */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.55 }}
-              className="mt-6 grid grid-cols-2 divide-border/60 overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md sm:grid-cols-4 sm:divide-x"
-            >
+            {/* Stats grid */}
+            <div className="grid grid-cols-2 gap-2">
               {stats.map((s) => (
                 <div
                   key={s.label}
-                  className="px-3 py-4 text-center"
                   data-testid={`hero-stat-${s.label.toLowerCase()}`}
+                  className="rounded-md border border-cyan-300/25 bg-black/40 p-3 backdrop-blur-md shadow-[inset_0_0_15px_rgba(0,240,255,0.06)]"
                 >
-                  <div className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-                    {s.value}
-                    <span className="text-chart-1">+</span>
-                  </div>
-                  <div className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-400/70">
                     {s.label}
+                  </div>
+                  <div className="mt-1 font-display text-2xl font-bold text-cyan-50 tabular-nums">
+                    {String(s.value).padStart(2, "0")}
+                    <span className="text-fuchsia-300">+</span>
                   </div>
                 </div>
               ))}
-            </motion.div>
+            </div>
           </div>
         </div>
 
         {/* Scroll affordance */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.8 }}
-          className="mt-16 flex items-center gap-3 text-xs uppercase tracking-[0.25em] text-muted-foreground lg:mt-20"
-        >
-          <span className="h-px w-10 bg-foreground/20" />
-          Scroll to explore
-        </motion.div>
+        <div className="hero-fade-in mt-10 flex items-center justify-between" style={{ animationDelay: "0.7s" }}>
+          <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-300/60">
+            <span className="h-px w-10 bg-cyan-300/40" />
+            Scroll :: descend
+            <ChevronDown className="h-3 w-3 motion-safe:animate-bounce" />
+          </div>
+          <div className="hidden font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-300/40 md:block">
+            cursor.move :: parallax_active
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
-function CodeLine({
-  n,
-  children,
-}: {
-  n: number;
-  children: ReactNode;
-}) {
+/** Spinner shown while the WebGL bundle is being downloaded. */
+function SceneLoading() {
   return (
-    <div className="flex">
-      <span className="mr-4 w-5 select-none text-right text-foreground/30">
-        {n}
-      </span>
-      <span className="text-foreground/90">{children}</span>
+    <div className="absolute inset-0 flex items-center justify-center bg-[#070512]">
+      <div className="relative h-64 w-64">
+        <div
+          className="absolute inset-0 animate-pulse rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(0,240,255,0.4) 0%, rgba(255,92,240,0.2) 40%, transparent 70%)",
+            filter: "blur(40px)",
+          }}
+        />
+        <div className="absolute inset-8 animate-spin rounded-full border border-cyan-300/30 border-t-cyan-300 [animation-duration:3s]" />
+      </div>
     </div>
-  );
-}
-
-function FloatingChip({
-  label,
-  className,
-  delay = 0,
-}: {
-  label: string;
-  className?: string;
-  delay?: number;
-}) {
-  return (
-    <motion.div
-      animate={{ y: [0, -8, 0] }}
-      transition={{ duration: 4, repeat: Infinity, delay, ease: "easeInOut" }}
-      className={`absolute z-10 inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium text-foreground shadow-lg backdrop-blur-md ${className ?? ""}`}
-    >
-      <span className="h-1.5 w-1.5 rounded-full bg-chart-1" />
-      {label}
-    </motion.div>
   );
 }
