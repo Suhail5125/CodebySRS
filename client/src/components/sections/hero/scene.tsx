@@ -219,6 +219,10 @@ function StarsField({ count }: { count: number }) {
   );
 }
 
+// Module-level singleton: the postprocessing ChromaticAberration shader expects
+// a real THREE.Vector2 instance for its `offset` uniform.
+const chromaOffset = new THREE.Vector2(0.0012, 0.0008);
+
 export default function HeroScene({
   isMobile = false,
   reducedMotion = false,
@@ -310,7 +314,7 @@ export default function HeroScene({
           />
           <ChromaticAberration
             blendFunction={BlendFunction.NORMAL}
-            offset={[0.0012, 0.0008] as unknown as THREE.Vector2}
+            offset={chromaOffset}
             radialModulation={false}
             modulationOffset={0}
           />
