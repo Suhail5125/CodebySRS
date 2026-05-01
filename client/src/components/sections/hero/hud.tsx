@@ -291,30 +291,42 @@ export function TechChips({ items, reducedMotion }: TechChipsProps) {
         const scale = 1 + s.proximity * 0.08;
         const glowAlpha = 0.08 + s.proximity * 0.4;
         const borderAlpha = 0.3 + s.proximity * 0.6;
-        const style = reducedMotion
-          ? { animationDelay: `${(i % 4) * 0.4}s` }
+
+        // Outer wrapper owns the float CSS animation (transform target).
+        const outerStyle = { animationDelay: `${(i % 4) * 0.4}s` };
+
+        // Inner element owns cursor-proximity transform + glow.
+        // Splitting these onto separate elements prevents the CSS animation
+        // from clobbering the inline transform (CSS animations win the
+        // cascade for animated properties).
+        const innerStyle = reducedMotion
+          ? undefined
           : {
-              animationDelay: `${(i % 4) * 0.4}s`,
               transform: `translate3d(${s.dx * lift}px, ${s.dy * lift}px, 0) scale(${scale})`,
               transition: "transform 200ms ease-out, box-shadow 200ms ease-out, border-color 200ms ease-out",
               borderColor: `rgba(0, 240, 255, ${borderAlpha})`,
               boxShadow: `inset 0 0 10px rgba(0,240,255,${glowAlpha}), 0 0 ${s.proximity * 24}px rgba(0,240,255,${s.proximity * 0.55})`,
             };
+
         return (
           <span
             key={label}
-            ref={(el) => {
-              chipRefs.current[i] = el;
-            }}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-sm border border-cyan-300/30 bg-cyan-400/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-100 will-change-transform",
-              "shadow-[inset_0_0_10px_rgba(0,240,255,0.08)]",
-              !reducedMotion && "hud-chip-float",
-            )}
-            style={style}
+            className={cn("inline-block will-change-transform", !reducedMotion && "hud-chip-float")}
+            style={outerStyle}
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_6px_rgba(0,240,255,0.9)]" />
-            {label}
+            <span
+              ref={(el) => {
+                chipRefs.current[i] = el;
+              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-sm border border-cyan-300/30 bg-cyan-400/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-100 will-change-transform",
+                "shadow-[inset_0_0_10px_rgba(0,240,255,0.08)]",
+              )}
+              style={innerStyle}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_6px_rgba(0,240,255,0.9)]" />
+              {label}
+            </span>
           </span>
         );
       })}

@@ -21,6 +21,9 @@ import * as THREE from "three";
 interface HeroSceneProps {
   isMobile?: boolean;
   reducedMotion?: boolean;
+  /** When true, R3F switches to `frameloop="never"` and stops invoking
+   * useFrame callbacks — frees the GPU when the hero is off-screen. */
+  paused?: boolean;
 }
 
 function CameraRig({ reducedMotion }: { reducedMotion?: boolean }) {
@@ -226,6 +229,7 @@ const chromaOffset = new THREE.Vector2(0.0012, 0.0008);
 export default function HeroScene({
   isMobile = false,
   reducedMotion = false,
+  paused = false,
 }: HeroSceneProps) {
   const dpr: [number, number] = isMobile ? [1, 1.25] : [1, 1.75];
   const sparkleCount = isMobile ? 50 : 140;
@@ -241,6 +245,7 @@ export default function HeroScene({
       dpr={dpr}
       camera={{ position: [0, 0, 6], fov: 50 }}
       style={{ background: "transparent" }}
+      frameloop={paused ? "never" : "always"}
     >
       <Suspense fallback={null}>
         <color attach="background" args={["#070512"]} />

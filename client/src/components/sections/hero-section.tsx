@@ -172,7 +172,11 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
         ) : webglOk === true ? (
           <SceneErrorBoundary fallback={<SceneCssFallback />}>
             <Suspense fallback={<SceneLoading />}>
-              <HeroScene isMobile={isMobile} reducedMotion={reducedMotion} />
+              <HeroScene
+                isMobile={isMobile}
+                reducedMotion={reducedMotion}
+                paused={scenePaused}
+              />
             </Suspense>
           </SceneErrorBoundary>
         ) : (
