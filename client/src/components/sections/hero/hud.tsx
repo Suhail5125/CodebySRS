@@ -228,23 +228,96 @@ interface TechChipsProps {
   reducedMotion?: boolean;
 }
 
+interface ChipState {
+  /** 0..1, 1 = cursor right on top of chip, 0 = far away */
+  proximity: number;
+  /** unit vector from chip center → cursor (used for tilt) */
+  dx: number;
+  dy: number;
+}
+
+/**
+ * Tech chips that gently react to cursor proximity:
+ *  - within ~180px the chip glows + lifts toward the cursor.
+ *  - reducedMotion disables all per-frame work.
+ */
 export function TechChips({ items, reducedMotion }: TechChipsProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chipRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  const [states, setStates] = useState<ChipState[]>(() =>
+    items.map(() => ({ proximity: 0, dx: 0, dy: 0 })),
+  );
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    const RADIUS = 180; // px — proximity falloff
+    let raf = 0;
+    let mouse = { x: -9999, y: -9999 };
+
+    const onMove = (e: MouseEvent) => {
+      mouse = { x: e.clientX, y: e.clientY };
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    const update = () => {
+      raf = 0;
+      const next: ChipState[] = chipRefs.current.map((el) => {
+        if (!el) return { proximity: 0, dx: 0, dy: 0 };
+        const r = el.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const ddx = mouse.x - cx;
+        const ddy = mouse.y - cy;
+        const dist = Math.sqrt(ddx * ddx + ddy * ddy);
+        if (dist > RADIUS) return { proximity: 0, dx: 0, dy: 0 };
+        const proximity = 1 - dist / RADIUS;
+        const inv = dist || 1;
+        return { proximity, dx: ddx / inv, dy: ddy / inv };
+      });
+      setStates(next);
+    };
+
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [reducedMotion]);
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {items.map((label, i) => (
-        <span
-          key={label}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-sm border border-cyan-300/30 bg-cyan-400/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-100",
-            "shadow-[inset_0_0_10px_rgba(0,240,255,0.08)]",
-            !reducedMotion && "hud-chip-float",
-          )}
-          style={{ animationDelay: `${(i % 4) * 0.4}s` }}
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_6px_rgba(0,240,255,0.9)]" />
-          {label}
-        </span>
-      ))}
+    <div ref={containerRef} className="flex flex-wrap gap-2">
+      {items.map((label, i) => {
+        const s = states[i] ?? { proximity: 0, dx: 0, dy: 0 };
+        const lift = s.proximity * 6; // px toward cursor
+        const scale = 1 + s.proximity * 0.08;
+        const glowAlpha = 0.08 + s.proximity * 0.4;
+        const borderAlpha = 0.3 + s.proximity * 0.6;
+        const style = reducedMotion
+          ? { animationDelay: `${(i % 4) * 0.4}s` }
+          : {
+              animationDelay: `${(i % 4) * 0.4}s`,
+              transform: `translate3d(${s.dx * lift}px, ${s.dy * lift}px, 0) scale(${scale})`,
+              transition: "transform 200ms ease-out, box-shadow 200ms ease-out, border-color 200ms ease-out",
+              borderColor: `rgba(0, 240, 255, ${borderAlpha})`,
+              boxShadow: `inset 0 0 10px rgba(0,240,255,${glowAlpha}), 0 0 ${s.proximity * 24}px rgba(0,240,255,${s.proximity * 0.55})`,
+            };
+        return (
+          <span
+            key={label}
+            ref={(el) => {
+              chipRefs.current[i] = el;
+            }}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-sm border border-cyan-300/30 bg-cyan-400/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-100 will-change-transform",
+              "shadow-[inset_0_0_10px_rgba(0,240,255,0.08)]",
+              !reducedMotion && "hud-chip-float",
+            )}
+            style={style}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_6px_rgba(0,240,255,0.9)]" />
+            {label}
+          </span>
+        );
+      })}
     </div>
   );
 }

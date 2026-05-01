@@ -61,12 +61,44 @@ function useIsMobile(breakpoint = 640) {
   return isMobile;
 }
 
+/**
+ * Returns 0..1 scroll progress through the hero (0 = top, 1 = scrolled
+ * one full viewport). Used to dim HUD overlays as the next section approaches.
+ */
+function useHeroScrollProgress() {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const vh = Math.max(window.innerHeight, 1);
+      const p = Math.min(Math.max(window.scrollY / vh, 0), 1);
+      setProgress(p);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+  return progress;
+}
+
 export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   const reducedMotion = !!useReducedMotion();
   const isMobile = useIsMobile();
   const [roleIndex, setRoleIndex] = useState(0);
   const [scenePaused, setScenePaused] = useState(false);
   const [webglOk, setWebglOk] = useState<boolean | null>(null);
+  const scrollProgress = useHeroScrollProgress();
+  // HUD opacity: full at top, ~0.05 at bottom of hero (reduced-motion stays full).
+  const hudOpacity = reducedMotion ? 1 : Math.max(0.05, 1 - scrollProgress * 1.1);
+  // Scene gets a slight darken too as user descends.
+  const sceneOpacity = reducedMotion ? 1 : Math.max(0.4, 1 - scrollProgress * 0.55);
 
   // Detect WebGL support on mount (client only). Skip mounting <Canvas>
   // entirely if not supported — saves the 3D bundle download too.
@@ -128,7 +160,11 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       {/* ============== 3D SCENE LAYER ============== */}
       <div
         className="absolute inset-0 z-0"
-        style={{ visibility: scenePaused ? "hidden" : "visible" }}
+        style={{
+          visibility: scenePaused ? "hidden" : "visible",
+          opacity: sceneOpacity,
+          transition: "opacity 200ms linear",
+        }}
         aria-hidden
       >
         {webglOk === false || reducedMotion ? (
@@ -154,8 +190,11 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
         }}
       />
 
-      {/* HUD: corner brackets + scanlines (decorative) */}
-      <div className="pointer-events-none absolute inset-0 z-[2]">
+      {/* HUD: corner brackets + scanlines (decorative) — fades on scroll */}
+      <div
+        className="pointer-events-none absolute inset-0 z-[2]"
+        style={{ opacity: hudOpacity, transition: "opacity 150ms linear" }}
+      >
         <CornerBrackets />
         <ScanLines reducedMotion={reducedMotion} />
         {/* fixed-position label markers */}
@@ -310,8 +349,15 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             )}
           </div>
 
-          {/* ===== RIGHT: HUD STACK ===== */}
-          <div className="hero-fade-in space-y-4 lg:col-span-4" style={{ animationDelay: "0.4s" }}>
+          {/* ===== RIGHT: HUD STACK ===== fades on scroll */}
+          <div
+            className="hero-fade-in space-y-4 lg:col-span-4"
+            style={{
+              animationDelay: "0.4s",
+              opacity: hudOpacity,
+              transition: "opacity 150ms linear",
+            }}
+          >
             <StatusPanel
               available={available}
               location={location}
