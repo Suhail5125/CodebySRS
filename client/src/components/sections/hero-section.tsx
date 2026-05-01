@@ -1,7 +1,17 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Github, Linkedin, Mail, Send, ArrowDown, Sparkles, Instagram, Twitter } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Github,
+  Linkedin,
+  Mail,
+  Send,
+  ArrowUpRight,
+  Instagram,
+  Twitter,
+  MapPin,
+  Sparkles,
+} from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { AboutInfo } from "@shared";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -10,257 +20,454 @@ interface HeroSectionProps {
   isLoading: boolean;
 }
 
-export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
-  const [currentRole, setCurrentRole] = useState(0);
+const ROLES = [
+  "Creative Developer",
+  "3D Enthusiast",
+  "UI/UX Designer",
+  "Full-Stack Engineer",
+];
 
-  const roles = [
-    "Creative Developer",
-    "3D Enthusiast",
-    "UI/UX Designer",
-    "Full-Stack Engineer"
-  ];
+export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
+  const [roleIndex, setRoleIndex] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentRole((prev) => (prev + 1) % roles.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [roles.length]);
+    if (prefersReducedMotion) return;
+    const id = setInterval(() => {
+      setRoleIndex((i) => (i + 1) % ROLES.length);
+    }, 3200);
+    return () => clearInterval(id);
+  }, [prefersReducedMotion]);
 
-  const scrollToProjects = () => {
-    document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const scrollToContact = () => {
-    document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const scrollToFooter = () => {
-    document.querySelector("#footer")?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollTo = (id: string) =>
+    document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
 
   const socialLinks = aboutInfo
     ? [
-      aboutInfo.githubUrl && { icon: Github, href: aboutInfo.githubUrl, label: "GitHub" },
-      aboutInfo.linkedinUrl && { icon: Linkedin, href: aboutInfo.linkedinUrl, label: "LinkedIn" },
-      aboutInfo.email && { icon: Mail, href: `mailto:${aboutInfo.email}`, label: "Email" },
-      aboutInfo.twitterUrl && { icon: Twitter, href: aboutInfo.twitterUrl, label: "Twitter" },
-      aboutInfo.instagramUrl && { icon: Instagram, href: aboutInfo.instagramUrl, label: "Instagram" },
-    ].filter((link): link is { icon: typeof Github; href: string; label: string } => Boolean(link))
+        aboutInfo.githubUrl && { icon: Github, href: aboutInfo.githubUrl, label: "GitHub" },
+        aboutInfo.linkedinUrl && { icon: Linkedin, href: aboutInfo.linkedinUrl, label: "LinkedIn" },
+        aboutInfo.email && { icon: Mail, href: `mailto:${aboutInfo.email}`, label: "Email" },
+        aboutInfo.twitterUrl && { icon: Twitter, href: aboutInfo.twitterUrl, label: "Twitter" },
+        aboutInfo.instagramUrl && { icon: Instagram, href: aboutInfo.instagramUrl, label: "Instagram" },
+      ].filter((l): l is { icon: typeof Github; href: string; label: string } => Boolean(l))
     : [];
 
+  const firstName = aboutInfo?.name?.split(" ")[0] ?? null;
+  const fullName = aboutInfo?.name ?? "Welcome";
+  const bio =
+    aboutInfo?.bio ??
+    "I design and build modern web experiences — interfaces, interactions, and the systems that hold them together.";
+  const location = aboutInfo?.location;
+  const available = aboutInfo?.availableForWork ?? true;
+
+  const stats = [
+    { value: aboutInfo?.yearsExperience ?? 0, label: "Years" },
+    { value: aboutInfo?.completedProjects ?? 0, label: "Projects" },
+    { value: aboutInfo?.totalClients ?? 0, label: "Clients" },
+    { value: aboutInfo?.technologiesCount ?? 0, label: "Stack" },
+  ];
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Enhanced Animated Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-card/20 to-background" />
-
-        {/* Matrix-style Grid */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div className="h-full w-full" style={{
-            backgroundImage: `
-              linear-gradient(hsl(var(--chart-1)) 1px, transparent 1px),
-              linear-gradient(90deg, hsl(var(--chart-1)) 1px, transparent 1px)
-            `,
-            backgroundSize: '80px 80px'
-          }} />
-        </div>
-
-        {/* Floating Code Symbols */}
-        {Array.from({ length: 30 }).map((_, i) => {
-          const symbols = ['<>', '{}', '[]', '/>', '()', '&&', '||', '=>', 'fn', 'var', 'let', 'const', 'if', 'else', 'for', 'while', 'try', 'catch', 'class', 'import', 'export', 'async', 'await', 'return', 'null', 'true', 'false', '===', '!==', '++', '--', '+=', '-=', '*=', '/=', '??', '?.', '...', 'new', 'this', 'super', 'extends', 'implements'];
-          return (
-            <motion.div
-              key={i}
-              className="absolute font-mono font-bold"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                fontSize: `${Math.random() * 20 + 16}px`,
-                color: `hsl(var(--chart-${(i % 4) + 1}))`,
-                opacity: 0.1,
-              }}
-              animate={{
-                y: [0, -30, 0],
-              }}
-              transition={{
-                duration: 4 + Math.random() * 2,
-                repeat: Infinity,
-                delay: i * 0.1,
-                ease: "easeInOut",
-              }}
-            >
-              {symbols[i % symbols.length]}
-            </motion.div>
-          );
-        })}
+    <section className="relative min-h-screen w-full overflow-hidden bg-background">
+      {/* --- Background: subtle, refined, no neon noise --- */}
+      <div className="pointer-events-none absolute inset-0">
+        {/* Soft radial wash */}
+        <div
+          className="absolute inset-0 opacity-70"
+          style={{
+            background:
+              "radial-gradient(60% 50% at 15% 10%, hsl(var(--chart-1) / 0.12), transparent 60%), radial-gradient(50% 40% at 90% 80%, hsl(var(--chart-3) / 0.10), transparent 60%)",
+          }}
+        />
+        {/* Faint dot grid */}
+        <div
+          className="absolute inset-0 opacity-[0.18]"
+          style={{
+            backgroundImage:
+              "radial-gradient(hsl(var(--foreground) / 0.18) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            maskImage:
+              "radial-gradient(ellipse 80% 60% at 50% 40%, black 40%, transparent 80%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 80% 60% at 50% 40%, black 40%, transparent 80%)",
+          }}
+        />
+        {/* Decorative blurred orb */}
+        {!prefersReducedMotion && (
+          <motion.div
+            aria-hidden
+            className="absolute -top-32 -right-32 h-[28rem] w-[28rem] rounded-full blur-3xl"
+            style={{
+              background:
+                "conic-gradient(from 90deg at 50% 50%, hsl(var(--chart-1) / 0.25), hsl(var(--chart-3) / 0.18), hsl(var(--chart-2) / 0.18), hsl(var(--chart-1) / 0.25))",
+            }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+          />
+        )}
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-32 text-center">
-        {isLoading ? (
-          // Loading state skeleton
-          <div className="space-y-8">
-            <motion.div className="mx-auto max-w-md" animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }}>
-              <div className="h-8 bg-muted rounded-full w-48 mx-auto mb-4" />
-              <div className="h-24 bg-muted rounded-xl w-full" />
-            </motion.div>
-            <div className="space-y-4">
-              <div className="h-4 bg-muted rounded-full w-3/4 mx-auto" />
-              <div className="h-4 bg-muted rounded-full w-1/2 mx-auto" />
-            </div>
-            <div className="flex justify-center gap-4">
-              <div className="h-12 w-32 bg-muted rounded-full" />
-              <div className="h-12 w-32 bg-muted rounded-full" />
-            </div>
-          </div>
-        ) : !aboutInfo ? (
-          // No data state
-          <div className="text-center">
-            <motion.div
-              className="inline-block mb-6 px-6 py-3 rounded-full border border-chart-1/30"
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <span className="text-sm font-medium text-muted-foreground">
-                Content Coming Soon
-              </span>
-            </motion.div>
-            <h1 className="font-display text-4xl font-bold mb-4">
-              Welcome
-            </h1>
-            <p className="text-muted-foreground">
-              The content for this section will be available shortly.
-            </p>
-          </div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <motion.div
-              className="inline-block mb-6"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <div className="glass px-6 py-3 rounded-full border border-chart-1/30 relative overflow-hidden group">
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-chart-1/10 to-chart-2/10"
-                  animate={{ x: ["-100%", "100%"] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                />
-                <span className="text-sm font-medium text-muted-foreground relative z-10 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-chart-1" />
-                  Welcome to CodebySRS
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-6 pt-32 pb-20 lg:px-10">
+        <div className="grid grid-cols-1 gap-14 lg:grid-cols-12 lg:gap-12">
+          {/* ============== LEFT COLUMN ============== */}
+          <div className="lg:col-span-7 xl:col-span-7">
+            {/* Status pill */}
+            {isLoading ? (
+              <Skeleton className="mb-8 h-7 w-48 rounded-full" />
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-8 inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-3 py-1.5 backdrop-blur-md"
+                data-testid="hero-status-pill"
+              >
+                <span className="relative flex h-2 w-2 shrink-0">
+                  {available && !prefersReducedMotion && (
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  )}
+                  <span
+                    className={`relative inline-flex h-2 w-2 rounded-full ${
+                      available ? "bg-emerald-500" : "bg-amber-500"
+                    }`}
+                  />
                 </span>
+                <span className="whitespace-nowrap text-xs font-medium tracking-wide text-foreground/80">
+                  {available ? "Available for new projects" : "Currently booked"}
+                </span>
+                {location && (
+                  <>
+                    <span className="text-border">•</span>
+                    <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{location}</span>
+                    </span>
+                  </>
+                )}
+              </motion.div>
+            )}
+
+            {/* Greeting */}
+            {isLoading ? (
+              <Skeleton className="mb-4 h-6 w-40" />
+            ) : (
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.05 }}
+                className="mb-3 font-mono text-sm text-muted-foreground"
+              >
+                <span className="text-chart-1">$</span> hello world — I'm
+              </motion.p>
+            )}
+
+            {/* Name */}
+            {isLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-16 w-3/4" />
+                <Skeleton className="h-16 w-1/2" />
               </div>
+            ) : (
+              <motion.h1
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="font-display text-5xl font-bold leading-[0.95] tracking-tight text-foreground sm:text-6xl md:text-7xl xl:text-[5.5rem]"
+                data-testid="hero-name"
+              >
+                {firstName && <>{firstName}.{" "}</>}
+                <span className="inline-block bg-gradient-to-r from-chart-1 via-chart-3 to-chart-2 bg-clip-text text-transparent">
+                  Building
+                </span>
+                <br />
+                things for the web.
+              </motion.h1>
+            )}
+
+            {/* Rotating role */}
+            {!isLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="mt-6 flex items-center gap-3"
+              >
+                <span className="h-px w-10 bg-foreground/30" />
+                <span className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+                  Currently
+                </span>
+                <span className="relative inline-block h-6 overflow-hidden text-sm font-medium text-foreground">
+                  <motion.span
+                    key={roleIndex}
+                    initial={{ y: 22, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -22, opacity: 0 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="block"
+                  >
+                    {ROLES[roleIndex]}
+                  </motion.span>
+                </span>
+              </motion.div>
+            )}
+
+            {/* Bio */}
+            {isLoading ? (
+              <div className="mt-8 space-y-2">
+                <Skeleton className="h-4 w-full max-w-xl" />
+                <Skeleton className="h-4 w-4/5 max-w-xl" />
+              </div>
+            ) : (
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="mt-8 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
+                data-testid="hero-bio"
+              >
+                {bio}
+              </motion.p>
+            )}
+
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="mt-10 flex flex-wrap items-center gap-3"
+            >
+              <Button
+                size="lg"
+                onClick={() => scrollTo("#contact")}
+                data-testid="button-lets-work-together"
+                className="group h-12 gap-2 rounded-full bg-foreground px-6 text-background hover:bg-foreground/90"
+              >
+                Start a project
+                <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </Button>
+              <Button
+                size="lg"
+                variant="ghost"
+                onClick={() => scrollTo("#projects")}
+                data-testid="button-view-work"
+                className="group h-12 gap-2 rounded-full px-6 text-foreground hover:bg-foreground/5"
+              >
+                View work
+                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </Button>
             </motion.div>
 
-            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black tracking-tight mb-8">
-              <motion.span
-                className="block gradient-text-cyan-magenta"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
+            {/* Social row */}
+            {socialLinks.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="mt-10 flex items-center gap-1"
               >
-                <motion.span
-                  key={currentRole}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  {roles[currentRole]}
-                </motion.span>
-              </motion.span>
-              <motion.span
-                className="block mt-2 text-foreground/80"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
-              >
-                Crafting Digital Experiences
-              </motion.span>
-            </h1>
+                {socialLinks.map(({ icon: Icon, href, label }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    data-testid={`link-${label.toLowerCase()}`}
+                    className="group inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+                  >
+                    <Icon className="h-[18px] w-[18px]" />
+                  </a>
+                ))}
+              </motion.div>
+            )}
+          </div>
 
-            <motion.p
-              className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 1 }}
-            >
-              Transforming ideas into stunning digital realities with modern web technologies, 3D graphics, and innovative user experiences that captivate and engage.
-            </motion.p>
-
+          {/* ============== RIGHT COLUMN ============== */}
+          <div className="lg:col-span-5 xl:col-span-5">
             <motion.div
-              className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mb-12 w-full md:w-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.2 }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+              className="relative"
             >
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  size="lg"
-                  onClick={scrollToContact}
-                  data-testid="button-lets-work-together"
-                  className="relative overflow-hidden group bg-gradient-to-r from-chart-1 to-chart-2 hover:from-chart-2 hover:to-chart-1 transition-all duration-300 px-4 py-2 md:px-8 md:py-4 text-sm md:text-lg font-semibold"
-                >
-                  <span className="relative z-10 flex items-center gap-2">
-                    <Send className="h-4 w-4 md:h-5 md:w-5" />
-                    Let's Work Together
+              {/* Code card */}
+              <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/70 shadow-2xl backdrop-blur-xl">
+                {/* Window chrome */}
+                <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-3 w-3 rounded-full bg-red-400/80" />
+                    <span className="h-3 w-3 rounded-full bg-yellow-400/80" />
+                    <span className="h-3 w-3 rounded-full bg-emerald-400/80" />
+                  </div>
+                  <span className="font-mono text-[11px] text-muted-foreground">
+                    ~/about-me.ts
                   </span>
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={scrollToProjects}
-                  data-testid="button-view-work"
-                  className="glass border-chart-1/30 hover:border-chart-1/60 px-4 py-2 md:px-8 md:py-4 text-sm md:text-lg font-semibold group"
-                >
-                  <span className="flex items-center gap-2">
-                    View Our Work
-                    <ArrowDown className="h-3 w-3 md:h-4 md:w-4 group-hover:translate-y-1 transition-transform" />
-                  </span>
-                </Button>
-              </motion.div>
+                  <Sparkles className="h-3.5 w-3.5 text-chart-1" />
+                </div>
+
+                {/* Code body */}
+                <div className="px-5 py-5 font-mono text-[13px] leading-relaxed">
+                  <CodeLine n={1}>
+                    <span className="text-chart-3">const</span>{" "}
+                    <span className="text-chart-1">developer</span>{" "}
+                    <span className="text-foreground/60">=</span>{" "}
+                    <span className="text-foreground/60">{"{"}</span>
+                  </CodeLine>
+                  <CodeLine n={2}>
+                    {"  "}
+                    <span className="text-chart-2">name</span>
+                    <span className="text-foreground/60">:</span>{" "}
+                    <span className="text-emerald-400">"{fullName}"</span>
+                    <span className="text-foreground/60">,</span>
+                  </CodeLine>
+                  <CodeLine n={3}>
+                    {"  "}
+                    <span className="text-chart-2">role</span>
+                    <span className="text-foreground/60">:</span>{" "}
+                    <span className="text-emerald-400">"{ROLES[roleIndex]}"</span>
+                    <span className="text-foreground/60">,</span>
+                  </CodeLine>
+                  <CodeLine n={4}>
+                    {"  "}
+                    <span className="text-chart-2">stack</span>
+                    <span className="text-foreground/60">:</span>{" "}
+                    <span className="text-foreground/60">[</span>
+                  </CodeLine>
+                  <CodeLine n={5}>
+                    {"    "}
+                    <span className="text-emerald-400">"React"</span>
+                    <span className="text-foreground/60">,</span>{" "}
+                    <span className="text-emerald-400">"TypeScript"</span>
+                    <span className="text-foreground/60">,</span>
+                  </CodeLine>
+                  <CodeLine n={6}>
+                    {"    "}
+                    <span className="text-emerald-400">"Three.js"</span>
+                    <span className="text-foreground/60">,</span>{" "}
+                    <span className="text-emerald-400">"Node"</span>
+                    <span className="text-foreground/60">,</span>
+                  </CodeLine>
+                  <CodeLine n={7}>
+                    {"  "}
+                    <span className="text-foreground/60">],</span>
+                  </CodeLine>
+                  <CodeLine n={8}>
+                    {"  "}
+                    <span className="text-chart-2">available</span>
+                    <span className="text-foreground/60">:</span>{" "}
+                    <span className="text-amber-400">{String(available)}</span>
+                    <span className="text-foreground/60">,</span>
+                  </CodeLine>
+                  <CodeLine n={9}>
+                    <span className="text-foreground/60">{"};"}</span>
+                  </CodeLine>
+                  <CodeLine n={10}>
+                    <span
+                      className={`inline-block h-4 w-2 translate-y-0.5 bg-chart-1 ${
+                        prefersReducedMotion ? "" : "animate-pulse"
+                      }`}
+                    />
+                  </CodeLine>
+                </div>
+              </div>
+
+              {/* Floating tech chips */}
+              {!prefersReducedMotion && (
+                <>
+                  <FloatingChip
+                    label="React"
+                    className="-left-4 top-10 hidden md:flex"
+                    delay={0}
+                  />
+                  <FloatingChip
+                    label="TypeScript"
+                    className="-right-3 top-24 hidden md:flex"
+                    delay={1}
+                  />
+                  <FloatingChip
+                    label="Three.js"
+                    className="-left-3 bottom-32 hidden md:flex"
+                    delay={2}
+                  />
+                </>
+              )}
             </motion.div>
 
+            {/* Stats strip */}
             <motion.div
-              className="flex w-full max-w-xl flex-wrap items-center justify-center gap-6 mx-auto"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 1.4 }}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.55 }}
+              className="mt-6 grid grid-cols-2 divide-border/60 overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md sm:grid-cols-4 sm:divide-x"
             >
-              {socialLinks.map(({ icon: Icon, href, label }, index) => (
-                <motion.a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-testid={`link-${label.toLowerCase()}`}
-                  className="p-3 md:p-4 rounded-full glass border border-border/50 hover-elevate active-elevate-2 transition-all group relative overflow-hidden"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  whileTap={{ scale: 0.9 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.6 + index * 0.1 }}
+              {stats.map((s) => (
+                <div
+                  key={s.label}
+                  className="px-3 py-4 text-center"
+                  data-testid={`hero-stat-${s.label.toLowerCase()}`}
                 >
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-chart-1/20 to-chart-2/20 opacity-0 group-hover:opacity-100 transition-opacity"
-                    initial={false}
-                  />
-                  <Icon className="h-5 w-5 md:h-6 md:w-6 transition-colors group-hover:text-chart-1 relative z-10" />
-                </motion.a>
+                  <div className="font-display text-2xl font-bold text-foreground sm:text-3xl">
+                    {s.value}
+                    <span className="text-chart-1">+</span>
+                  </div>
+                  <div className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    {s.label}
+                  </div>
+                </div>
               ))}
             </motion.div>
-          </motion.div>
-        )
-        }
-      </div >
-    </section >
+          </div>
+        </div>
+
+        {/* Scroll affordance */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.8 }}
+          className="mt-16 flex items-center gap-3 text-xs uppercase tracking-[0.25em] text-muted-foreground lg:mt-20"
+        >
+          <span className="h-px w-10 bg-foreground/20" />
+          Scroll to explore
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function CodeLine({
+  n,
+  children,
+}: {
+  n: number;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex">
+      <span className="mr-4 w-5 select-none text-right text-foreground/30">
+        {n}
+      </span>
+      <span className="text-foreground/90">{children}</span>
+    </div>
+  );
+}
+
+function FloatingChip({
+  label,
+  className,
+  delay = 0,
+}: {
+  label: string;
+  className?: string;
+  delay?: number;
+}) {
+  return (
+    <motion.div
+      animate={{ y: [0, -8, 0] }}
+      transition={{ duration: 4, repeat: Infinity, delay, ease: "easeInOut" }}
+      className={`absolute z-10 inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium text-foreground shadow-lg backdrop-blur-md ${className ?? ""}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-chart-1" />
+      {label}
+    </motion.div>
   );
 }
