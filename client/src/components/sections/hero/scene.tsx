@@ -69,7 +69,7 @@ function GlassCore({ reducedMotion }: { reducedMotion?: boolean }) {
       floatIntensity={reducedMotion ? 0 : 0.6}
     >
       <mesh ref={meshRef} position={[0.4, 0.1, 0]}>
-        <icosahedronGeometry args={[1.35, 12]} />
+        <icosahedronGeometry args={[1.35, 2]} />
         <MeshTransmissionMaterial
           backside
           samples={6}
