@@ -82,12 +82,14 @@ function Telemetry({ reducedMotion }: { reducedMotion?: boolean }) {
     const start = performance.now();
     const loop = (now: number) => {
       frames++;
+      // Only commit React state at ~1Hz, not every frame. fps + uptime
+      // share the same gate so the panel re-renders once per second.
       if (now - last >= 1000) {
         setFps(Math.min(120, frames));
+        setUptime(Math.floor((now - start) / 1000));
         frames = 0;
         last = now;
       }
-      setUptime(Math.floor((now - start) / 1000));
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
