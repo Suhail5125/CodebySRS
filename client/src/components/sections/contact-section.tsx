@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertContactMessageSchema, type InsertContactMessage } from "@shared";
 import { CheckCircle2, Send, ArrowUpRight } from "lucide-react";
+import { Reveal } from "@/components/reveal";
 
 const BG = "#0A0A0A";
 const INK = "#F2EFE6";
@@ -45,17 +46,19 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
   return (
     <section
       id="contact"
-      className="relative px-6 py-24 lg:px-10"
+      className="snap-screen relative flex min-h-screen flex-col justify-center px-6 py-20 lg:px-10"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
-      <div className="mx-auto max-w-[1400px]">
-        <SectionHeader
-          num="08"
-          name="CONTACT"
-          kicker="// OPEN A TICKET"
-          headline="LET'S BUILD SOMETHING THAT SHIPS"
-          right="USUALLY REPLIES IN < 24H"
-        />
+      <div className="mx-auto w-full max-w-[1400px]">
+        <Reveal>
+          <SectionHeader
+            num="08"
+            name="CONTACT"
+            kicker="// OPEN A TICKET"
+            headline="LET'S BUILD SOMETHING THAT SHIPS"
+            right="USUALLY REPLIES IN < 24H"
+          />
+        </Reveal>
 
         <div
           className="mt-10 grid grid-cols-1 gap-0 lg:grid-cols-12"

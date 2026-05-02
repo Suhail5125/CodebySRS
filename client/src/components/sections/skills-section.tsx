@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Skill } from "@shared";
+import { Reveal } from "@/components/reveal";
 
 const BG = "#0A0A0A";
 const INK = "#F2EFE6";
@@ -30,17 +31,19 @@ export function SkillsSection({ skills, isLoading }: SkillsSectionProps) {
   return (
     <section
       id="skills"
-      className="relative px-6 py-24 lg:px-10"
+      className="snap-screen relative flex min-h-screen flex-col justify-center px-6 py-20 lg:px-10"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
-      <div className="mx-auto max-w-[1400px]">
-        <SectionHeader
-          num="03"
-          name="SKILLS"
-          kicker="// CAPABILITY MATRIX"
-          headline="STACK INVENTORY"
-          right={`${skills.length} TECHNOLOGIES`}
-        />
+      <div className="mx-auto w-full max-w-[1400px]">
+        <Reveal>
+          <SectionHeader
+            num="03"
+            name="SKILLS"
+            kicker="// CAPABILITY MATRIX"
+            headline="STACK INVENTORY"
+            right={`${skills.length} TECHNOLOGIES`}
+          />
+        </Reveal>
 
         {/* Category tabs */}
         <div

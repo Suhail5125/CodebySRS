@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ProjectCard } from "@/components/project-card";
 import type { Project } from "@shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Reveal } from "@/components/reveal";
 
 const BG = "#0A0A0A";
 const INK = "#F2EFE6";
@@ -47,19 +48,22 @@ export function ProjectsSection({ projects, isLoading }: ProjectsSectionProps) {
   return (
     <section
       id="projects"
-      className="relative px-6 py-24 lg:px-10"
+      className="snap-screen relative flex min-h-screen flex-col justify-center px-6 py-20 lg:px-10"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
-      <div className="mx-auto max-w-[1400px]">
-        <SectionHeader
-          num="02"
-          name="PROJECTS"
-          kicker="// SHIPPED ARTIFACTS"
-          headline="WORK THAT RUNS IN PRODUCTION"
-          right={`${display.length} ENTRIES`}
-        />
+      <div className="mx-auto w-full max-w-[1400px]">
+        <Reveal>
+          <SectionHeader
+            num="02"
+            name="PROJECTS"
+            kicker="// SHIPPED ARTIFACTS"
+            headline="WORK THAT RUNS IN PRODUCTION"
+            right={`${display.length} ENTRIES`}
+          />
+        </Reveal>
 
         {/* Controls bar */}
+        <Reveal delay={120} variant="fade">
         <div
           className="mb-0 mt-10 flex items-center justify-between px-4 py-3 font-mono text-[11px] uppercase tracking-[0.2em]"
           style={{ border: `2px solid ${INK}`, borderBottom: "none" }}
@@ -185,6 +189,7 @@ export function ProjectsSection({ projects, isLoading }: ProjectsSectionProps) {
             </div>
           </div>
         )}
+        </Reveal>
       </div>
     </section>
   );

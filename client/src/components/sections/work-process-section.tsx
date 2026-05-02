@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Lightbulb, FileSearch, Palette, Code, TestTube, Rocket } from "lucide-react";
+import { Reveal } from "@/components/reveal";
 
 const BG = "#0A0A0A";
 const INK = "#F2EFE6";
@@ -85,17 +86,19 @@ export function WorkProcessSection() {
   return (
     <section
       id="process"
-      className="relative px-6 py-24 lg:px-10"
+      className="snap-screen relative flex min-h-screen flex-col justify-center px-6 py-20 lg:px-10"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
-      <div className="mx-auto max-w-[1400px]">
-        <SectionHeader
-          num="05"
-          name="PROCESS"
-          kicker="// DELIVERY PIPELINE"
-          headline="HOW THE WORK GETS SHIPPED"
-          right="06 PHASES · ~12 WEEKS"
-        />
+      <div className="mx-auto w-full max-w-[1400px]">
+        <Reveal>
+          <SectionHeader
+            num="05"
+            name="PROCESS"
+            kicker="// DELIVERY PIPELINE"
+            headline="HOW THE WORK GETS SHIPPED"
+            right="06 PHASES · ~12 WEEKS"
+          />
+        </Reveal>
 
         {/* Phase rail */}
         <div

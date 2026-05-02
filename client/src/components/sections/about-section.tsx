@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { AboutInfo } from "@shared";
 import { Github, Linkedin, Twitter, Instagram, Download, ArrowUpRight } from "lucide-react";
+import { Reveal } from "@/components/reveal";
 
 const BG = "#0A0A0A";
 const INK = "#F2EFE6";
@@ -16,7 +17,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
     return (
       <section
         id="about"
-        className="px-6 py-24 lg:px-10"
+        className="snap-screen flex min-h-screen flex-col justify-center px-6 py-20 lg:px-10"
         style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
       >
         <div className="mx-auto max-w-[1400px] font-mono text-[11px] uppercase tracking-[0.2em] opacity-60">
@@ -50,17 +51,19 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
   return (
     <section
       id="about"
-      className="relative px-6 py-24 lg:px-10"
+      className="snap-screen relative flex min-h-screen flex-col justify-center px-6 py-20 lg:px-10"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
-      <div className="mx-auto max-w-[1400px]">
-        <SectionHeader
-          num="06"
-          name="ABOUT"
-          kicker="// OPERATOR PROFILE"
-          headline="THE PERSON BEHIND THE COMMITS"
-          right={aboutInfo.location ?? undefined}
-        />
+      <div className="mx-auto w-full max-w-[1400px]">
+        <Reveal>
+          <SectionHeader
+            num="06"
+            name="ABOUT"
+            kicker="// OPERATOR PROFILE"
+            headline="THE PERSON BEHIND THE COMMITS"
+            right={aboutInfo.location ?? undefined}
+          />
+        </Reveal>
 
         {/* Identity strip */}
         <div

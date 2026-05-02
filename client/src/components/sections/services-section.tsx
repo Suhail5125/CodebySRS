@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Code2, Palette, Smartphone, Rocket, Globe, Zap, ArrowUpRight } from "lucide-react";
+import { Reveal } from "@/components/reveal";
 
 const BG = "#0A0A0A";
 const INK = "#F2EFE6";
@@ -60,17 +61,19 @@ export function ServicesSection() {
   return (
     <section
       id="services"
-      className="relative px-6 py-24 lg:px-10"
+      className="snap-screen relative flex min-h-screen flex-col justify-center px-6 py-20 lg:px-10"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
-      <div className="mx-auto max-w-[1400px]">
-        <SectionHeader
-          num="04"
-          name="SERVICES"
-          kicker="// PRODUCTION SCOPE"
-          headline="WHAT I BUILD FOR CLIENTS"
-          right={`${String(services.length).padStart(2, "0")} OFFERINGS`}
-        />
+      <div className="mx-auto w-full max-w-[1400px]">
+        <Reveal>
+          <SectionHeader
+            num="04"
+            name="SERVICES"
+            kicker="// PRODUCTION SCOPE"
+            headline="WHAT I BUILD FOR CLIENTS"
+            right={`${String(services.length).padStart(2, "0")} OFFERINGS`}
+          />
+        </Reveal>
 
         {/* Grid */}
         <div

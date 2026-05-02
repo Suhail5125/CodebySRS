@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Quote } from "lucide-react";
 import type { Testimonial as TestimonialRecord } from "@shared";
+import { Reveal } from "@/components/reveal";
 
 const BG = "#0A0A0A";
 const INK = "#F2EFE6";
@@ -47,17 +48,19 @@ export function TestimonialsSection({
   return (
     <section
       id="testimonials"
-      className="relative overflow-hidden px-6 py-24 lg:px-10"
+      className="snap-screen relative flex min-h-screen flex-col justify-center overflow-hidden px-6 py-20 lg:px-10"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
-      <div className="mx-auto max-w-[1400px]">
-        <SectionHeader
-          num="07"
-          name="TESTIMONIALS"
-          kicker="// FIELD REPORTS"
-          headline="WHAT THE PEOPLE I SHIPPED FOR SAY"
-          right={`${dataset.length} ON RECORD`}
-        />
+      <div className="mx-auto w-full max-w-[1400px]">
+        <Reveal>
+          <SectionHeader
+            num="07"
+            name="TESTIMONIALS"
+            kicker="// FIELD REPORTS"
+            headline="WHAT THE PEOPLE I SHIPPED FOR SAY"
+            right={`${dataset.length} ON RECORD`}
+          />
+        </Reveal>
 
         {/* Marquee shell */}
         <div

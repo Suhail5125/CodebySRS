@@ -19,6 +19,23 @@ body {
   overflow-x: hidden;
 }
 
+/* Brutalist scroll-snap: each top-level section snaps to viewport. */
+html.snap-sections {
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 0;
+  scroll-behavior: smooth;
+}
+html.snap-sections .snap-screen {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+@media (prefers-reduced-motion: reduce) {
+  html.snap-sections {
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+  }
+}
+
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
