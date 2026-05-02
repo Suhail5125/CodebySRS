@@ -6,6 +6,9 @@ import {
   Mail,
   Twitter,
   Instagram,
+  Dribbble,
+  Codepen,
+  Youtube,
   ArrowUpRight,
   ArrowDown,
 } from "lucide-react";
@@ -26,7 +29,31 @@ const ROLES = [
   "3D Generalist",
   "UI / UX Designer",
   "Full-Stack Engineer",
+  "Motion Designer",
+  "Product Engineer",
 ];
+
+const FOCUS_KEYWORDS = [
+  "INTERFACES",
+  "MOTION",
+  "3D / WEBGL",
+  "DESIGN SYSTEMS",
+  "DX",
+];
+
+/** Fallback social channels — used when `aboutInfo` is empty so the
+ *  hero never collapses to "no socials". Real URLs from the admin
+ *  override the matching label. */
+const FALLBACK_SOCIAL = {
+  github: "https://github.com",
+  linkedin: "https://linkedin.com",
+  twitter: "https://twitter.com",
+  instagram: "https://instagram.com",
+  email: "hello@codebysrs.dev",
+  dribbble: "https://dribbble.com",
+  codepen: "https://codepen.io",
+  youtube: "https://youtube.com",
+};
 
 const TECH = [
   "REACT",
@@ -91,17 +118,18 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   // Width of the longest role string in characters — locks the slot.
   const roleSlotCh = Math.max(...ROLES.map((r) => r.length));
 
-  const socialLinks = aboutInfo
-    ? [
-        aboutInfo.githubUrl && { Icon: Github, href: aboutInfo.githubUrl, label: "GitHub" },
-        aboutInfo.linkedinUrl && { Icon: Linkedin, href: aboutInfo.linkedinUrl, label: "LinkedIn" },
-        aboutInfo.twitterUrl && { Icon: Twitter, href: aboutInfo.twitterUrl, label: "Twitter" },
-        aboutInfo.instagramUrl && { Icon: Instagram, href: aboutInfo.instagramUrl, label: "Instagram" },
-        aboutInfo.email && { Icon: Mail, href: `mailto:${aboutInfo.email}`, label: "Email" },
-      ].filter(
-        (l): l is { Icon: typeof Github; href: string; label: string } => Boolean(l),
-      )
-    : [];
+  // Always render a full row of channels — real URLs override the
+  // brand fallbacks so the visual never collapses while data loads.
+  const socialLinks: { Icon: typeof Github; href: string; label: string }[] = [
+    { Icon: Github, href: aboutInfo?.githubUrl || FALLBACK_SOCIAL.github, label: "GitHub" },
+    { Icon: Linkedin, href: aboutInfo?.linkedinUrl || FALLBACK_SOCIAL.linkedin, label: "LinkedIn" },
+    { Icon: Twitter, href: aboutInfo?.twitterUrl || FALLBACK_SOCIAL.twitter, label: "Twitter" },
+    { Icon: Instagram, href: aboutInfo?.instagramUrl || FALLBACK_SOCIAL.instagram, label: "Instagram" },
+    { Icon: Mail, href: aboutInfo?.email ? `mailto:${aboutInfo.email}` : `mailto:${FALLBACK_SOCIAL.email}`, label: "Email" },
+    { Icon: Dribbble, href: FALLBACK_SOCIAL.dribbble, label: "Dribbble" },
+    { Icon: Codepen, href: FALLBACK_SOCIAL.codepen, label: "Codepen" },
+    { Icon: Youtube, href: FALLBACK_SOCIAL.youtube, label: "YouTube" },
+  ];
 
   const scrollTo = (id: string) =>
     document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
@@ -164,11 +192,13 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       </div>
 
       {/* ==========  MAIN GRID ========== */}
-      <main className="relative z-[3] mx-auto w-full max-w-[1600px] px-6 pt-16 pb-12 lg:px-10 lg:pt-24">
+      <main className="relative z-[3] mx-auto w-full max-w-[1600px] px-6 pt-6 pb-12 lg:px-10 lg:pt-10">
         <div className="grid grid-cols-12 gap-x-6 gap-y-10">
-          {/* Left aside — section index + manifesto */}
+          {/* Left aside — section index, manifesto + telemetry stack.
+              Brutalist sidebar: reads like a system console column. */}
           <aside className="col-span-12 lg:col-span-2">
             <div className="font-mono text-[10px] uppercase tracking-[0.22em]">
+              {/* Section index */}
               <div className="opacity-50">SECTION</div>
               <div
                 className="mt-1 text-[28px] font-bold leading-none tabular-nums"
@@ -178,17 +208,81 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
               </div>
               <div className="mt-1 opacity-50">/ HERO</div>
 
-              <div className="mt-10 hidden h-px w-12 bg-[#F2EFE6]/30 lg:block" />
+              <div className="mt-8 hidden h-px w-12 bg-[#F2EFE6]/30 lg:block" />
 
-              <div className="mt-6 hidden lg:block">
+              {/* Manifesto */}
+              <div className="mt-5 hidden lg:block">
                 <div className="opacity-50">MANIFESTO</div>
-                <p className="mt-2 max-w-[160px] leading-snug opacity-75">
+                <p className="mt-2 max-w-[160px] leading-snug opacity-80">
                   Build sharp.
                   <br />
                   Ship loud.
                   <br />
                   Cut the fluff.
                 </p>
+              </div>
+
+              <div className="mt-6 hidden h-px w-12 bg-[#F2EFE6]/30 lg:block" />
+
+              {/* Local time — re-uses the 1Hz hero clock */}
+              <div className="mt-5 hidden lg:block">
+                <div className="opacity-50">LOCAL</div>
+                <div className="mt-2 flex items-center gap-2">
+                  <span
+                    className="inline-block h-1.5 w-1.5 brut-blink"
+                    style={{ background: ACCENT }}
+                    aria-hidden
+                  />
+                  <span className="tabular-nums opacity-90">{now}</span>
+                  <span className="opacity-50">IST</span>
+                </div>
+              </div>
+
+              {/* Coords — static placeholder, easily swapped via aboutInfo later */}
+              <div className="mt-5 hidden lg:block">
+                <div className="opacity-50">COORDS</div>
+                <div className="mt-2 leading-snug opacity-90">
+                  <div className="tabular-nums">13.0827° N</div>
+                  <div className="tabular-nums">80.2707° E</div>
+                </div>
+              </div>
+
+              <div className="mt-6 hidden h-px w-12 bg-[#F2EFE6]/30 lg:block" />
+
+              {/* Status block */}
+              <div className="mt-5 hidden lg:block">
+                <div className="opacity-50">STATUS</div>
+                <div className="mt-2 flex items-center gap-2">
+                  <span
+                    className="inline-block h-1.5 w-1.5 brut-blink"
+                    style={{ background: available ? ACCENT : "#666" }}
+                    aria-hidden
+                  />
+                  <span className="opacity-90">
+                    {available ? "BUILDING" : "BOOKED"}
+                  </span>
+                </div>
+                <div className="mt-1 opacity-60">→ CODEBYSRS</div>
+              </div>
+
+              {/* Stack mini-list */}
+              <div className="mt-5 hidden lg:block">
+                <div className="opacity-50">STACK</div>
+                <div className="mt-2 leading-snug opacity-90">
+                  <div>TS · REACT</div>
+                  <div>NODE · PG</div>
+                  <div>R3F · GSAP</div>
+                </div>
+              </div>
+
+              {/* Version pill */}
+              <div className="mt-6 hidden lg:flex items-center gap-2">
+                <span
+                  className="inline-block h-2 w-2"
+                  style={{ background: ACCENT }}
+                  aria-hidden
+                />
+                <span className="tabular-nums opacity-70">v2026.05</span>
               </div>
             </div>
           </aside>
@@ -199,7 +293,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             {isLoading ? (
               <Skeleton className="mb-6 h-4 w-72 bg-white/10" />
             ) : (
-              <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.32em] opacity-70 brut-fade">
+              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.32em] opacity-70 brut-fade">
                 <span style={{ color: ACCENT }}>{"//"}</span> identity ={" "}
                 <span className="text-[#F2EFE6]">"{fullName}"</span>
               </p>
@@ -296,6 +390,29 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                   {String(roleIndex + 1).padStart(2, "0")}/
                   {String(ROLES.length).padStart(2, "0")}
                 </span>
+              </div>
+            )}
+
+            {/* FOCUS keywords — secondary tagline below the role cycler */}
+            {!isLoading && (
+              <div
+                className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.22em] brut-fade"
+                style={{ animationDelay: "0.28s" }}
+              >
+                <span className="opacity-50">FOCUS</span>
+                <span className="opacity-30">·</span>
+                {FOCUS_KEYWORDS.map((kw, i) => (
+                  <span key={kw} className="inline-flex items-center gap-2">
+                    <span style={{ color: INK }} className="opacity-90">
+                      {kw}
+                    </span>
+                    {i < FOCUS_KEYWORDS.length - 1 && (
+                      <span style={{ color: ACCENT }} className="opacity-70">
+                        /
+                      </span>
+                    )}
+                  </span>
+                ))}
               </div>
             )}
 
@@ -447,14 +564,11 @@ interface BrutButtonProps {
   "data-testid"?: string;
 }
 /**
- * Brutalist primary CTA with three layered hover effects:
- *   1. Accent block sweeps up from the bottom (color invert)
- *   2. Label "swap" — current label rises out, duplicate rises in
- *      (single fixed-height window prevents any layout shift)
- *   3. Arrow translates up-right
+ * Brutalist primary CTA — STATIC by request: hard-bordered block,
+ * no animation, instant color invert on hover (transition: none).
  *
- * Solid variant = cream BG → accent on hover.
- * Ghost variant = transparent BG → cream on hover (inverse).
+ * Solid variant = cream BG → accent BG on hover.
+ * Ghost variant = transparent BG → cream BG on hover (inverse).
  */
 function BrutButton({
   label,
@@ -464,11 +578,12 @@ function BrutButton({
 }: BrutButtonProps) {
   const [hover, setHover] = useState(false);
   const isSolid = variant === "solid";
-  // Resting / hover swatches per variant.
-  const restBg = isSolid ? INK : "transparent";
-  const restFg = isSolid ? BG : INK;
-  const sweepBg = isSolid ? ACCENT : INK;
-  const sweepFg = isSolid ? INK : BG;
+  const bg = isSolid
+    ? hover ? ACCENT : INK
+    : hover ? INK : "transparent";
+  const fg = isSolid
+    ? hover ? INK : BG
+    : hover ? BG : INK;
   return (
     <button
       type="button"
@@ -478,64 +593,16 @@ function BrutButton({
       onMouseLeave={() => setHover(false)}
       onFocus={() => setHover(true)}
       onBlur={() => setHover(false)}
-      className="group relative inline-flex items-center gap-3 overflow-hidden px-5 py-3 font-mono text-[12px] font-bold uppercase tracking-[0.22em] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
+      className="inline-flex items-center gap-3 px-5 py-3 font-mono text-[12px] font-bold uppercase tracking-[0.22em] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
       style={{
-        background: restBg,
-        color: restFg,
+        background: bg,
+        color: fg,
         border: `2px solid ${INK}`,
+        transition: "none",
       }}
     >
-      {/* (1) Sweeping accent block — bottom → top on hover */}
-      <span
-        aria-hidden
-        className="absolute inset-x-0 bottom-0"
-        style={{
-          height: "100%",
-          background: sweepBg,
-          transform: hover ? "translateY(0%)" : "translateY(101%)",
-          transition: "transform 0.34s cubic-bezier(0.2,0.8,0.2,1)",
-        }}
-      />
-      {/* (2) Label-swap stack — fixed-height window, two stacked spans.
-              The second span is purely decorative (mirrors the first for
-              the rise-in effect), so it's hidden from assistive tech to
-              prevent screen readers from announcing the label twice. */}
-      <span
-        className="relative inline-block overflow-hidden"
-        style={{ height: "1em", lineHeight: "1em" }}
-      >
-        <span
-          className="block whitespace-nowrap"
-          style={{
-            color: hover ? sweepFg : restFg,
-            transform: hover ? "translateY(-100%)" : "translateY(0%)",
-            transition:
-              "transform 0.28s cubic-bezier(0.2,0.8,0.2,1), color 0.05s 0.14s linear",
-          }}
-        >
-          {label}
-        </span>
-        <span
-          aria-hidden="true"
-          className="block whitespace-nowrap"
-          style={{
-            color: sweepFg,
-            transform: hover ? "translateY(-100%)" : "translateY(0%)",
-            transition: "transform 0.28s 0.06s cubic-bezier(0.2,0.8,0.2,1)",
-          }}
-        >
-          {label}
-        </span>
-      </span>
-      {/* (3) Arrow — translate up-right on hover */}
-      <ArrowUpRight
-        className="relative h-4 w-4"
-        style={{
-          color: hover ? sweepFg : restFg,
-          transform: hover ? "translate(2px,-2px)" : "translate(0,0)",
-          transition: "transform 0.22s cubic-bezier(0.2,0.8,0.2,1), color 0.05s 0.14s linear",
-        }}
-      />
+      <span>{label}</span>
+      <ArrowUpRight className="h-4 w-4" />
     </button>
   );
 }
