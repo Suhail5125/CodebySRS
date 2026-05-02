@@ -461,6 +461,21 @@ body::-webkit-scrollbar {
     animation: brut-fade 0.6s ease-out backwards;
   }
 
+  /* Reverse-direction marquee for the bottom statement lane. */
+  @keyframes brut-marquee-rev {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0);    }
+  }
+  .brut-marquee-rev {
+    animation: brut-marquee-rev 38s linear infinite;
+  }
+
+  /* Subtle magnetic-snap transition for CTA wrappers. */
+  .brut-magnet {
+    transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: transform;
+  }
+
   /* Continuous tech-stack marquee. Pair with a duplicated child
      and translate by -50% for a seamless loop. */
   @keyframes brut-marquee {
@@ -497,11 +512,14 @@ body::-webkit-scrollbar {
     .brut-rise,
     .brut-fade,
     .brut-marquee,
+    .brut-marquee-rev,
     .brut-scan,
-    .brut-blink {
+    .brut-blink,
+    .brut-magnet {
       animation: none !important;
       opacity: 1 !important;
       transform: none !important;
+      transition: none !important;
     }
   }
 }

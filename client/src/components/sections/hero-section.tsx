@@ -39,6 +39,26 @@ const TECH = [
   "FRAMER",
 ];
 
+const STATEMENTS = [
+  "DESIGN SYSTEMS",
+  "MOTION FIRST",
+  "PIXEL PERFECT",
+  "PERFORMANCE BUDGET",
+  "SHIP > PERFECT",
+  "ACCESSIBILITY",
+  "TYPE-SAFE",
+  "EDGE-NATIVE",
+];
+
+const DATA_FEED = [
+  "BUILD #1024",
+  "UPTIME 99.98%",
+  "NODE v22",
+  "RESPONSE <24H",
+  "TZ UTC+05",
+  "STACK TS+RS",
+];
+
 export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   const reducedMotion = !!useReducedMotion();
 
@@ -89,8 +109,15 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   // Live clock for the top status bar (1Hz, fixed-width slot).
   const now = useNowEverySecond();
 
+  // Live data-feed item rotates every 2.4s in the top status bar.
+  const feedItem = useRotator(DATA_FEED, 2400, reducedMotion);
+
+  // Scoped cursor crosshair tracks the mouse only inside this section.
+  const sectionRef = useRef<HTMLElement>(null);
+
   return (
     <section
+      ref={sectionRef}
       className="relative min-h-screen w-full overflow-hidden"
       style={{ background: BG, color: INK, fontFamily: "var(--font-sans)" }}
     >
@@ -98,6 +125,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       <NoiseOverlay />
       <GridLines />
       {!reducedMotion && <Scanline />}
+      {!reducedMotion && <HeroCursor container={sectionRef} />}
 
       {/* ==========  TOP STATUS BAR ========== */}
       <div
@@ -114,7 +142,12 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           <span className="opacity-30">/</span>
           <span className="opacity-80">CodebySRS · DEV-OS</span>
           <span className="opacity-30">/</span>
-          <span className="opacity-50">v2.0</span>
+          <span
+            className="tabular-nums opacity-60"
+            style={{ minWidth: "16ch", display: "inline-block" }}
+          >
+            <ScrambleText text={feedItem} runKey={feedItem} durationMs={420} />
+          </span>
         </div>
         <div className="hidden items-center gap-3 md:flex">
           <span className="opacity-50">{location}</span>
@@ -196,7 +229,11 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                       : { animationDelay: "0.05s" }
                   }
                 >
-                  {firstName}
+                  <ScrambleText
+                    text={firstName}
+                    paused={reducedMotion}
+                    durationMs={950}
+                  />
                 </span>
                 <span
                   className={
@@ -216,7 +253,11 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                       className="inline-block h-[0.5em] w-[0.5em] translate-y-[-0.05em]"
                       style={{ background: ACCENT }}
                     />
-                    {lastName}
+                    <ScrambleText
+                      text={lastName}
+                      paused={reducedMotion}
+                      durationMs={1100}
+                    />
                   </span>
                 </span>
               </h1>
@@ -231,15 +272,18 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                 <span className="opacity-50">ROLE</span>
                 <span className="opacity-30">[</span>
                 <span
-                  key={roleIndex}
-                  className="inline-block uppercase brut-fade"
+                  className="inline-block uppercase"
                   style={{
                     minWidth: `${roleSlotCh}ch`,
                     color: INK,
-                    animationDuration: "0.45s",
                   }}
                 >
-                  {ROLES[roleIndex].toUpperCase()}
+                  <ScrambleText
+                    text={ROLES[roleIndex].toUpperCase()}
+                    runKey={roleIndex}
+                    paused={reducedMotion}
+                    durationMs={520}
+                  />
                 </span>
                 <span className="opacity-30">]</span>
                 <span className="opacity-30">·</span>
@@ -276,27 +320,31 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
               </div>
             )}
 
-            {/* CTAs — hard borders, hover inverts */}
+            {/* CTAs — hard borders, hover inverts, magnetic-pull on cursor proximity */}
             <div
               className="mt-10 flex flex-wrap items-stretch gap-3 brut-fade"
               style={{ animationDelay: "0.4s" }}
             >
-              <BrutButton
-                onClick={() => scrollTo("#contact")}
-                data-testid="button-lets-work-together"
-                variant="solid"
-              >
-                START PROJECT
-                <ArrowUpRight className="h-4 w-4" />
-              </BrutButton>
-              <BrutButton
-                onClick={() => scrollTo("#projects")}
-                data-testid="button-view-work"
-                variant="ghost"
-              >
-                VIEW WORK
-                <ArrowUpRight className="h-4 w-4" />
-              </BrutButton>
+              <Magnetic strength={0.35} disabled={reducedMotion}>
+                <BrutButton
+                  onClick={() => scrollTo("#contact")}
+                  data-testid="button-lets-work-together"
+                  variant="solid"
+                >
+                  START PROJECT
+                  <ArrowUpRight className="h-4 w-4" />
+                </BrutButton>
+              </Magnetic>
+              <Magnetic strength={0.35} disabled={reducedMotion}>
+                <BrutButton
+                  onClick={() => scrollTo("#projects")}
+                  data-testid="button-view-work"
+                  variant="ghost"
+                >
+                  VIEW WORK
+                  <ArrowUpRight className="h-4 w-4" />
+                </BrutButton>
+              </Magnetic>
             </div>
 
             {/* Social row */}
@@ -328,18 +376,30 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* ==========  TECH MARQUEE ========== */}
-        <div className="relative mt-20 border-y-2 border-[#F2EFE6] py-4 lg:mt-28">
-          <Marquee items={TECH} reducedMotion={reducedMotion} />
+        {/* ==========  DUAL-LANE MARQUEE — opposite directions, brutalist tape-deck feel ========== */}
+        <div className="relative mt-20 border-y-2 border-[#F2EFE6] lg:mt-28">
+          <div className="py-3">
+            <Marquee items={TECH} reducedMotion={reducedMotion} />
+          </div>
+          <div className="h-px w-full bg-[#F2EFE6]/30" />
+          <div className="py-3 opacity-80">
+            <Marquee
+              items={STATEMENTS}
+              reducedMotion={reducedMotion}
+              reverse
+              accentColor={INK}
+            />
+          </div>
         </div>
 
-        {/* ==========  STATS ROW ========== */}
+        {/* ==========  STATS ROW (with normalized progress bars) ========== */}
         <div className="mt-10 grid grid-cols-2 gap-px border border-[#F2EFE6]/20 bg-[#F2EFE6]/20 sm:grid-cols-4">
           {stats.map((s) => (
             <Stat
               key={s.label}
               value={s.value}
               label={s.label}
+              maxValue={Math.max(1, ...stats.map((x) => x.value))}
               reducedMotion={reducedMotion}
             />
           ))}
@@ -462,23 +522,29 @@ function Stat({ value, label, reducedMotion }: StatProps) {
 interface MarqueeProps {
   items: string[];
   reducedMotion?: boolean;
+  reverse?: boolean;
+  /** Color for the bullet/divider between items. Defaults to ACCENT. */
+  accentColor?: string;
 }
-/** Continuous horizontal ticker. Duplicates content for seamless loop. */
-function Marquee({ items, reducedMotion }: MarqueeProps) {
+/** Continuous horizontal ticker. Duplicates content for seamless loop.
+ *  When `reverse`, scrolls right→left's mirror (left→right) using a
+ *  separate keyframe so the two stacked lanes move in opposite directions. */
+function Marquee({ items, reducedMotion, reverse, accentColor }: MarqueeProps) {
+  const dot = accentColor ?? ACCENT;
   const content = (
     <div
       className="flex shrink-0 items-center gap-10 pr-10 text-2xl uppercase sm:text-3xl lg:text-5xl"
       style={{
         fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-        fontWeight: 800,
+        fontWeight: reverse ? 600 : 800,
         letterSpacing: "-0.02em",
       }}
     >
       {items.map((item, i) => (
         <span key={`${item}-${i}`} className="inline-flex items-center gap-10">
           <span>{item}</span>
-          <span style={{ color: ACCENT }} aria-hidden>
-            ●
+          <span style={{ color: dot }} aria-hidden>
+            {reverse ? "◆" : "●"}
           </span>
         </span>
       ))}
@@ -495,7 +561,7 @@ function Marquee({ items, reducedMotion }: MarqueeProps) {
 
   return (
     <div className="flex w-full overflow-hidden whitespace-nowrap">
-      <div className="flex brut-marquee">
+      <div className={`flex ${reverse ? "brut-marquee-rev" : "brut-marquee"}`}>
         {content}
         <div aria-hidden>{content}</div>
       </div>
