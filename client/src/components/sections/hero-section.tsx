@@ -145,6 +145,10 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   // Live data-feed item rotates every 2.4s in the top status bar.
   const feedItem = useRotator(DATA_FEED, 2400, reducedMotion);
 
+  // Rotating headline for the right-rail "NOW" card. Reuses the
+  // STATEMENTS array so we don't introduce a parallel data source.
+  const nowStatement = useRotator(STATEMENTS, 2200, reducedMotion);
+
   // Scoped cursor crosshair tracks the mouse only inside this section.
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -245,8 +249,11 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             </div>
           </aside>
 
-          {/* Main column */}
-          <div className="col-span-12 lg:col-span-10">
+          {/* Center column — identity, headline, role, FOCUS, CTAs.
+              Trimmed from `col-span-10` to `col-span-7` so the
+              right rail can carry CHANNELS + NOW, distributing
+              hero content across the full screen. */}
+          <div className="col-span-12 lg:col-span-7">
             {/* Tag */}
             {isLoading ? (
               <Skeleton className="mb-6 h-4 w-72 bg-white/10" />
@@ -404,10 +411,16 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
               />
             </div>
 
-            {/* ============ Social tiles — bold square cells ============ */}
+          </div>
+
+          {/* Right rail — CHANNELS + NOW card. On mobile it stacks
+              under the center column so reading order stays
+              top-to-bottom. */}
+          <div className="col-span-12 lg:col-span-3">
+            {/* ============ CHANNELS panel ============ */}
             {socialLinks.length > 0 && (
               <div
-                className="mt-6 brut-fade"
+                className="brut-fade"
                 style={{ animationDelay: "0.4s" }}
               >
                 <div className="mb-4 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.32em] opacity-60">
@@ -419,7 +432,9 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                   </span>
                   <div className="ml-2 h-px flex-1 bg-[#F2EFE6]/15" />
                 </div>
-                <div className="flex flex-wrap gap-3">
+                {/* 3-col grid keeps 5 tiles in two clean rows
+                    (3 + 2) with no orphan row of 1. */}
+                <div className="grid grid-cols-3 gap-3">
                   {socialLinks.map(({ Icon, href, label }, i) => (
                     <SocialTile
                       key={label}
@@ -429,6 +444,46 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                       index={i}
                     />
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* ============ NOW card — rotating statement ============ */}
+            {!isLoading && (
+              <div
+                className="mt-6 brut-fade"
+                style={{
+                  animationDelay: "0.5s",
+                  border: `2px solid ${INK}`,
+                }}
+              >
+                <div
+                  className="flex items-center justify-between border-b border-[#F2EFE6]/20 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.32em] opacity-60"
+                >
+                  <span>
+                    <span style={{ color: ACCENT }}>{"//"}</span> NOW
+                  </span>
+                  <span
+                    aria-hidden
+                    className="inline-block h-1.5 w-1.5 brut-blink"
+                    style={{ background: ACCENT }}
+                  />
+                </div>
+                <div
+                  className="px-4 py-4 font-bold uppercase tracking-tight"
+                  style={{
+                    fontFamily:
+                      "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                    fontSize: "clamp(1rem, 1.6vw, 1.35rem)",
+                    lineHeight: 1.05,
+                  }}
+                >
+                  <ScrambleText
+                    text={nowStatement}
+                    runKey={nowStatement}
+                    paused={reducedMotion}
+                    durationMs={420}
+                  />
                 </div>
               </div>
             )}

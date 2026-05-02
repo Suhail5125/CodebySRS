@@ -9,6 +9,7 @@ import { TestimonialsSection } from "@/components/sections/testimonials-section"
 import { ContactSection } from "@/components/sections/contact-section";
 import { Footer } from "@/components/layout/footer";
 import { SEO } from "@/components/seo";
+import { BootPreloader } from "@/components/boot-preloader";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Skill, AboutInfo, InsertContactMessage, Testimonial } from "@shared";
@@ -74,6 +75,12 @@ export default function Home() {
     <div className="min-h-screen bg-background relative">
       <SEO />
       <ScrollIndicator />
+
+      {/* Section 00 / BOOT — first-visit splash. Mounted as a sibling
+          (not a wrapper) so React Query fetches and the rest of the
+          page mount in parallel behind it. Self-gates via
+          sessionStorage and unmounts itself after the wipe. */}
+      <BootPreloader />
 
       <main>
         {/* Brutalist top nav now sits ABOVE the hero (not overlaid),
