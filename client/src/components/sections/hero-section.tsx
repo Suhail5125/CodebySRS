@@ -31,6 +31,16 @@ const ROLES = [
   "Full-Stack Engineer",
   "Motion Designer",
   "Product Engineer",
+  "Frontend Architect",
+  "Interaction Designer",
+  "WebGL Specialist",
+  "Brand Engineer",
+  "Systems Designer",
+  "Generative Artist",
+  "Prototyper",
+  "React Specialist",
+  "Type-Safe Builder",
+  "Performance Nerd",
 ];
 
 const FOCUS_KEYWORDS = [
@@ -112,7 +122,9 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   const [roleIndex, setRoleIndex] = useState(0);
   useEffect(() => {
     if (reducedMotion) return;
-    const id = setInterval(() => setRoleIndex((i) => (i + 1) % ROLES.length), 2800);
+    // Faster cycle (1.6s) so the role keyword visibly changes
+    // multiple times even within the first hero glance.
+    const id = setInterval(() => setRoleIndex((i) => (i + 1) % ROLES.length), 1600);
     return () => clearInterval(id);
   }, [reducedMotion]);
   // Width of the longest role string in characters — locks the slot.
@@ -192,8 +204,8 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       </div>
 
       {/* ==========  MAIN GRID ========== */}
-      <main className="relative z-[3] mx-auto w-full max-w-[1600px] px-6 pt-6 pb-12 lg:px-10 lg:pt-10">
-        <div className="grid grid-cols-12 gap-x-6 gap-y-10">
+      <main className="relative z-[3] mx-auto w-full max-w-[1600px] px-6 pt-4 pb-8 lg:px-10 lg:pt-6">
+        <div className="grid grid-cols-12 gap-x-6 gap-y-6">
           {/* Left aside — section index, manifesto + telemetry stack.
               Brutalist sidebar: reads like a system console column. */}
           <aside className="col-span-12 lg:col-span-2">
@@ -265,16 +277,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                 <div className="mt-1 opacity-60">→ CODEBYSRS</div>
               </div>
 
-              {/* Stack mini-list */}
-              <div className="mt-5 hidden lg:block">
-                <div className="opacity-50">STACK</div>
-                <div className="mt-2 leading-snug opacity-90">
-                  <div>TS · REACT</div>
-                  <div>NODE · PG</div>
-                  <div>R3F · GSAP</div>
-                </div>
-              </div>
-
               {/* Version pill */}
               <div className="mt-6 hidden lg:flex items-center gap-2">
                 <span
@@ -312,7 +314,10 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                 style={{
                   fontFamily:
                     "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                  fontSize: "clamp(3.5rem, 11vw, 11rem)",
+                  // Reduced from `clamp(3.5rem, 11vw, 11rem)` so the
+                  // header + hero + CTAs + socials + AVAILABLE FOR WORK
+                  // + scroll indicator all fit a 1080p viewport.
+                  fontSize: "clamp(2.5rem, 8vw, 8rem)",
                   fontWeight: 800,
                   lineHeight: 0.9,
                   color: INK,
@@ -365,7 +370,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             {/* Role cycler — FIXED-WIDTH SLOT, no layout shift */}
             {!isLoading && (
               <div
-                className="mt-8 flex flex-wrap items-center gap-3 font-mono text-[12px] uppercase tracking-[0.22em] brut-fade"
+                className="mt-4 flex flex-wrap items-center gap-3 font-mono text-[12px] uppercase tracking-[0.22em] brut-fade"
                 style={{ animationDelay: "0.2s" }}
               >
                 <span className="opacity-50">ROLE</span>
@@ -416,60 +421,38 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
               </div>
             )}
 
-            {/* Bio */}
-            {isLoading ? (
-              <div className="mt-10 space-y-2">
-                <Skeleton className="h-4 w-full max-w-2xl bg-white/10" />
-                <Skeleton className="h-4 w-4/5 max-w-2xl bg-white/10" />
-              </div>
-            ) : (
-              <div
-                className="mt-10 flex max-w-2xl gap-4 brut-fade"
-                style={{ animationDelay: "0.3s" }}
-              >
-                <span
-                  className="mt-1 inline-block h-[1.6em] w-[3px] flex-none"
-                  style={{ background: ACCENT }}
-                  aria-hidden
-                />
-                <p
-                  data-testid="hero-bio"
-                  className="text-base leading-relaxed sm:text-lg"
-                  style={{ color: "rgba(242,239,230,0.82)" }}
-                >
-                  {bio}
-                </p>
-              </div>
+            {/* Bio — visually hidden by user request (the About section
+                below already carries this copy), but the `hero-bio`
+                test-id is preserved for the data-testid contract. */}
+            {!isLoading && (
+              <p data-testid="hero-bio" className="sr-only">
+                {bio}
+              </p>
             )}
 
-            {/* CTAs — hard borders, hover inverts, magnetic-pull on cursor proximity */}
-            <div
-              className="mt-10 flex flex-wrap items-stretch gap-3 brut-fade"
-              style={{ animationDelay: "0.4s" }}
-            >
-              <Magnetic strength={0.35} disabled={reducedMotion}>
-                <BrutButton
-                  label="START PROJECT"
-                  onClick={() => scrollTo("#contact")}
-                  data-testid="button-lets-work-together"
-                  variant="solid"
-                />
-              </Magnetic>
-              <Magnetic strength={0.35} disabled={reducedMotion}>
-                <BrutButton
-                  label="VIEW WORK"
-                  onClick={() => scrollTo("#projects")}
-                  data-testid="button-view-work"
-                  variant="ghost"
-                />
-              </Magnetic>
+            {/* CTAs — fully STATIC by user request: no entrance fade,
+                no magnetic cursor pull. Buttons themselves use
+                `transition: none` (see BrutButton). */}
+            <div className="mt-6 flex flex-wrap items-stretch gap-3">
+              <BrutButton
+                label="START PROJECT"
+                onClick={() => scrollTo("#contact")}
+                data-testid="button-lets-work-together"
+                variant="solid"
+              />
+              <BrutButton
+                label="VIEW WORK"
+                onClick={() => scrollTo("#projects")}
+                data-testid="button-view-work"
+                variant="ghost"
+              />
             </div>
 
             {/* ============ Social tiles — bold square cells ============ */}
             {socialLinks.length > 0 && (
               <div
-                className="mt-12 brut-fade"
-                style={{ animationDelay: "0.5s" }}
+                className="mt-6 brut-fade"
+                style={{ animationDelay: "0.4s" }}
               >
                 <div className="mb-4 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.32em] opacity-60">
                   <span style={{ color: ACCENT }}>{"//"}</span>
@@ -497,7 +480,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
         </div>
 
         {/* ==========  DUAL-LANE MARQUEE — opposite directions, brutalist tape-deck feel ========== */}
-        <div className="relative mt-20 border-y-2 border-[#F2EFE6] lg:mt-28">
+        <div className="relative mt-8 border-y-2 border-[#F2EFE6] lg:mt-10">
           <div className="py-3">
             <Marquee items={TECH} reducedMotion={reducedMotion} />
           </div>
@@ -513,7 +496,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
         </div>
 
         {/* ==========  STATS ROW (with normalized progress bars) ========== */}
-        <div className="mt-10 grid grid-cols-2 gap-px border border-[#F2EFE6]/20 bg-[#F2EFE6]/20 sm:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-px border border-[#F2EFE6]/20 bg-[#F2EFE6]/20 sm:grid-cols-4">
           {stats.map((s) => (
             <Stat
               key={s.label}
@@ -526,7 +509,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
         </div>
 
         {/* ==========  BOTTOM STRIP ========== */}
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 font-mono text-[11px] uppercase tracking-[0.22em]">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 font-mono text-[11px] uppercase tracking-[0.22em]">
           <div className="flex items-center gap-3">
             <span
               className="inline-block h-2 w-2 brut-blink"
