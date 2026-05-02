@@ -146,7 +146,12 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             className="tabular-nums opacity-60"
             style={{ minWidth: "16ch", display: "inline-block" }}
           >
-            <ScrambleText text={feedItem} runKey={feedItem} durationMs={420} />
+            <ScrambleText
+              text={feedItem}
+              runKey={feedItem}
+              durationMs={420}
+              paused={reducedMotion}
+            />
           </span>
         </div>
         <div className="hidden items-center gap-3 md:flex">
@@ -488,17 +493,21 @@ function BrutButton({
 interface StatProps {
   value: number;
   label: string;
+  /** Max value across the row — used to normalize the progress bar width. */
+  maxValue?: number;
   reducedMotion?: boolean;
 }
-/** Big number + label cell with count-up animation in a fixed-width slot. */
-function Stat({ value, label, reducedMotion }: StatProps) {
+/** Big number + label cell with count-up + a normalized progress bar
+ * that fills from 0 → (value / maxValue) over the same duration. */
+function Stat({ value, label, maxValue = 100, reducedMotion }: StatProps) {
   const display = useCountUp(value, 1200, reducedMotion);
   // Fixed slot: always 3 digits — prevents layout shift during count-up.
   const padded = String(display).padStart(3, "0");
+  const pct = Math.min(100, (display / Math.max(1, maxValue)) * 100);
   return (
     <div
       data-testid={`hero-stat-${label.toLowerCase()}`}
-      className="flex flex-col gap-2 bg-[#0A0A0A] p-5 lg:p-6"
+      className="flex flex-col gap-3 bg-[#0A0A0A] p-5 lg:p-6"
     >
       <div
         className="tabular-nums leading-none"
@@ -512,8 +521,27 @@ function Stat({ value, label, reducedMotion }: StatProps) {
         {padded}
         <span style={{ color: ACCENT }}>+</span>
       </div>
-      <div className="font-mono text-[10px] uppercase tracking-[0.28em] opacity-60">
-        {label}
+      {/* normalized progress bar */}
+      <div
+        className="relative h-[3px] w-full overflow-hidden bg-[#F2EFE6]/15"
+        aria-hidden
+      >
+        <div
+          className="absolute inset-y-0 left-0"
+          style={{
+            width: `${pct}%`,
+            background: ACCENT,
+            transition: reducedMotion
+              ? "none"
+              : "width 1.2s cubic-bezier(0.2, 0.8, 0.2, 1)",
+          }}
+        />
+      </div>
+      <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.28em] opacity-60">
+        <span>{label}</span>
+        <span className="tabular-nums opacity-60">
+          {String(Math.round(pct)).padStart(2, "0")}%
+        </span>
       </div>
     </div>
   );
@@ -655,4 +683,194 @@ function useNowEverySecond() {
 function fmtClock(d: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+/* ==================== Advanced animation helpers ==================== */
+
+/** Character-scramble decoder — cycles random glyphs into the target string,
+ *  revealing characters left-to-right. The natural fallback (paused / done)
+ *  is always the full target string, so content is never invisible. */
+function useScramble(
+  target: string,
+  durationMs: number,
+  runKey: number | string,
+  paused: boolean,
+) {
+  const [out, setOut] = useState<string>(target);
+  useEffect(() => {
+    if (paused) {
+      setOut(target);
+      return;
+    }
+    const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789█▓▒░<>/\\\\";
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      // Reveal slightly past the end so the trailing chars settle smoothly.
+      const revealHead = Math.floor(t * (target.length + 4));
+      let s = "";
+      for (let i = 0; i < target.length; i++) {
+        const ch = target[i];
+        if (i < revealHead - 4) s += ch;
+        else if (ch === " ") s += " ";
+        else s += glyphs[Math.floor(Math.random() * glyphs.length)];
+      }
+      setOut(s);
+      if (t < 1) raf = requestAnimationFrame(tick);
+      else setOut(target);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, durationMs, runKey, paused]);
+  return out;
+}
+
+interface ScrambleTextProps {
+  text: string;
+  /** Change to re-trigger the scramble. */
+  runKey?: number | string;
+  durationMs?: number;
+  paused?: boolean;
+}
+/** Renders a string with a character-scramble decode-in effect. */
+function ScrambleText({
+  text,
+  runKey = 0,
+  durationMs = 900,
+  paused = false,
+}: ScrambleTextProps) {
+  const out = useScramble(text, durationMs, runKey, paused);
+  return (
+    <span style={{ display: "inline-block", whiteSpace: "pre" }}>
+      {out || "\u00A0"}
+    </span>
+  );
+}
+
+interface MagneticProps {
+  children: React.ReactNode;
+  /** 0..1 — how strongly the wrapper drifts toward the cursor. */
+  strength?: number;
+  /** Activation radius multiplier × the wrapper's max dimension. */
+  radiusMul?: number;
+  disabled?: boolean;
+}
+/** Magnetic wrapper — drifts toward the cursor when nearby, snaps back on leave. */
+function Magnetic({
+  children,
+  strength = 0.35,
+  radiusMul = 1.6,
+  disabled = false,
+}: MagneticProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (disabled) return;
+    const el = ref.current;
+    if (!el) return;
+    const onMove = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const radius = Math.max(rect.width, rect.height) * radiusMul;
+      const dist = Math.hypot(dx, dy);
+      if (dist < radius) {
+        el.style.transform = `translate(${dx * strength}px, ${dy * strength}px)`;
+      } else {
+        el.style.transform = "translate(0,0)";
+      }
+    };
+    const onLeave = () => {
+      el.style.transform = "translate(0,0)";
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    el.addEventListener("mouseleave", onLeave);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      el.removeEventListener("mouseleave", onLeave);
+    };
+  }, [strength, radiusMul, disabled]);
+  return (
+    <div ref={ref} className={disabled ? "inline-flex" : "inline-flex brut-magnet"}>
+      {children}
+    </div>
+  );
+}
+
+/** Cycles through `items` every `intervalMs` — used by the live data feed. */
+function useRotator<T>(items: T[], intervalMs: number, paused: boolean) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (paused || items.length <= 1) return;
+    const id = setInterval(() => setI((n) => (n + 1) % items.length), intervalMs);
+    return () => clearInterval(id);
+  }, [items.length, intervalMs, paused]);
+  return items[i];
+}
+
+interface HeroCursorProps {
+  container: React.RefObject<HTMLElement | null>;
+}
+/** Brutalist square crosshair that tracks the mouse — only inside the hero. */
+function HeroCursor({ container }: HeroCursorProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const root = container.current;
+    if (!root) return;
+    let raf = 0;
+    let pending = { x: 0, y: 0 };
+    const apply = () => {
+      raf = 0;
+      if (!ref.current) return;
+      ref.current.style.transform = `translate(${pending.x - 14}px, ${pending.y - 14}px)`;
+    };
+    const onMove = (e: MouseEvent) => {
+      const rect = root.getBoundingClientRect();
+      pending = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    const onEnter = () => setVisible(true);
+    const onLeave = () => setVisible(false);
+    root.addEventListener("mousemove", onMove, { passive: true });
+    root.addEventListener("mouseenter", onEnter);
+    root.addEventListener("mouseleave", onLeave);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      root.removeEventListener("mousemove", onMove);
+      root.removeEventListener("mouseenter", onEnter);
+      root.removeEventListener("mouseleave", onLeave);
+    };
+  }, [container]);
+  return (
+    <div
+      ref={ref}
+      aria-hidden
+      className="pointer-events-none absolute left-0 top-0 z-[6] h-7 w-7"
+      style={{
+        opacity: visible ? 1 : 0,
+        transition: "opacity 0.2s ease-out",
+        willChange: "transform",
+        mixBlendMode: "difference",
+      }}
+    >
+      {/* Square ring */}
+      <span
+        className="absolute inset-0 border"
+        style={{ borderColor: ACCENT }}
+      />
+      {/* Crosshair lines */}
+      <span
+        className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2"
+        style={{ background: ACCENT, opacity: 0.7 }}
+      />
+      <span
+        className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2"
+        style={{ background: ACCENT, opacity: 0.7 }}
+      />
+    </div>
+  );
 }
