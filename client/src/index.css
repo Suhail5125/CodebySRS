@@ -518,6 +518,18 @@ body::-webkit-scrollbar {
     will-change: clip-path, opacity;
   }
 
+  /* Floating project preview card entrance — scale + rise. */
+  @keyframes brut-preview-in {
+    from { opacity: 0; transform: scale(0.93) translateY(12px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* Slow Ken-Burns drift on the preview image while card is visible. */
+  @keyframes brut-img-drift {
+    from { transform: scale(1);    }
+    to   { transform: scale(1.07); }
+  }
+
   /* Reverse-direction marquee for the bottom statement lane. */
   @keyframes brut-marquee-rev {
     from { transform: translateX(-50%); }

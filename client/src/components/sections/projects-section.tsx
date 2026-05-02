@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, forwardRef } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ExternalLink, Github } from "lucide-react";
 import { Reveal, useReveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
 import type { Project } from "@shared";
@@ -85,61 +85,135 @@ export function ProjectsSection({ projects, isLoading }: ProjectsSectionProps) {
           {/* Floating image preview — desktop only */}
           {activeProject && (
             <div
-              className="pointer-events-none absolute hidden lg:block"
+              className="absolute hidden lg:block"
               style={{
-                right: 220,
+                right: 160,
                 top: imgOffset,
                 zIndex: 30,
-                width: 258,
+                width: 320,
+                animation: "brut-preview-in 0.2s ease-out forwards",
+                pointerEvents: "none",
               }}
             >
               <div style={{ border: `2px solid ${INK}`, background: BG }}>
-                {activeProject.imageUrl ? (
-                  <img
-                    src={activeProject.imageUrl}
-                    alt={activeProject.title}
-                    style={{
-                      width: "100%",
-                      height: 172,
-                      objectFit: "cover",
-                      display: "block",
-                      filter: "grayscale(10%) contrast(1.05)",
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: "100%",
-                      height: 172,
-                      background: ACCENT,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <span
+
+                {/* Header bar: number + link/github if provided */}
+                <div
+                  className="flex items-center justify-between px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em]"
+                  style={{ borderBottom: `2px solid ${INK}` }}
+                >
+                  <span style={{ color: ACCENT }}>
+                    P-{String((hovered ?? 0) + 1).padStart(3, "0")}
+                  </span>
+                  <div className="flex items-center gap-2" style={{ pointerEvents: "auto" }}>
+                    {activeProject.liveUrl && (
+                      <a
+                        href={activeProject.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-2 py-1"
+                        style={{
+                          border: `1.5px solid ${INK}`,
+                          color: INK,
+                          transition: "none",
+                          textDecoration: "none",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = ACCENT;
+                          e.currentTarget.style.borderColor = ACCENT;
+                          e.currentTarget.style.color = BG;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.borderColor = INK;
+                          e.currentTarget.style.color = INK;
+                        }}
+                      >
+                        <ExternalLink className="h-3 w-3" strokeWidth={2.5} />
+                        <span>LIVE</span>
+                      </a>
+                    )}
+                    {activeProject.githubUrl && (
+                      <a
+                        href={activeProject.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-2 py-1"
+                        style={{
+                          border: `1.5px solid ${INK}`,
+                          color: INK,
+                          transition: "none",
+                          textDecoration: "none",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = INK;
+                          e.currentTarget.style.color = BG;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = INK;
+                        }}
+                      >
+                        <Github className="h-3 w-3" strokeWidth={2} />
+                        <span>REPO</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* Image with Ken-Burns drift */}
+                <div style={{ overflow: "hidden", height: 210 }}>
+                  {activeProject.imageUrl ? (
+                    <img
+                      src={activeProject.imageUrl}
+                      alt={activeProject.title}
                       style={{
-                        fontFamily: "Inter, sans-serif",
-                        fontWeight: 800,
-                        fontSize: 80,
-                        color: BG,
-                        lineHeight: 1,
-                        letterSpacing: "-0.04em",
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block",
+                        filter: "grayscale(8%) contrast(1.05)",
+                        animation: "brut-img-drift 7s ease-in-out infinite alternate",
+                        transformOrigin: "center center",
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        background: ACCENT,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      {String((hovered ?? 0) + 1).padStart(2, "0")}
-                    </span>
-                  </div>
-                )}
+                      <span
+                        style={{
+                          fontFamily: "Inter, sans-serif",
+                          fontWeight: 800,
+                          fontSize: 100,
+                          color: BG,
+                          lineHeight: 1,
+                          letterSpacing: "-0.04em",
+                        }}
+                      >
+                        {String((hovered ?? 0) + 1).padStart(2, "0")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tech stack tags — only if admin added technologies */}
                 {parseTech(activeProject.technologies).length > 0 && (
                   <div
-                    className="flex flex-wrap gap-1 p-2"
+                    className="flex flex-wrap gap-1.5 p-3"
                     style={{ borderTop: `2px solid ${INK}` }}
                   >
-                    {parseTech(activeProject.technologies).slice(0, 5).map((tag) => (
+                    {parseTech(activeProject.technologies).slice(0, 6).map((tag) => (
                       <span
                         key={tag}
-                        className="px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.16em]"
+                        className="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em]"
                         style={{ border: `1.5px solid ${INK}`, color: INK }}
                       >
                         {tag}
@@ -147,6 +221,7 @@ export function ProjectsSection({ projects, isLoading }: ProjectsSectionProps) {
                     ))}
                   </div>
                 )}
+
               </div>
             </div>
           )}
