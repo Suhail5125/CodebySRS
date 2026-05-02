@@ -62,4 +62,15 @@ Visual language:
 
 All animations respect `prefers-reduced-motion` (CSS `@media` override forces opacity 1 + no transform). The `useNowEverySecond` hook ticks at 1 Hz only. The 3D vendor chunk dropped from ~256 kB → 0.49 kB gzip after this rewrite (Three.js / R3F are no longer imported by the hero).
 
-Brutalist keyframes (`brut-rise`, `brut-fade`, `brut-marquee`, `brut-scan`, `brut-blink`) live in `client/src/index.css` under `@layer utilities`.
+Brutalist keyframes (`brut-rise`, `brut-fade`, `brut-marquee`, `brut-marquee-rev`, `brut-magnet`, `brut-scan`, `brut-blink`) live in `client/src/index.css` under `@layer utilities`.
+
+### Advanced animation layer
+
+Layered on top of the brutalist base (all gated by `useReducedMotion`):
+
+- **`ScrambleText` + `useScramble`** — character-scramble decode-in for the headline name (`firstName` ~950 ms, `lastName` ~1.1 s), the role cycler (~520 ms on each rotation), and the rotating live-data feed in the top status bar (~420 ms). Natural state is always the full target string, so content can never get stuck invisible.
+- **`Magnetic`** — wraps both CTA buttons (`START PROJECT` / `VIEW WORK`). Uses a single `requestAnimationFrame`-batched `mousemove` listener to drift the wrapper toward the cursor when within `radiusMul × max(width,height)` and snap back on leave.
+- **`useRotator` + `DATA_FEED`** — cycles a brutalist telemetry feed (`BUILD #1024`, `LATENCY 12ms`, `UPTIME 99.98%`, …) through the status bar at a fixed 16-char slot.
+- **`HeroCursor`** — square crosshair with `mix-blend-mode: difference` that tracks the mouse only inside the hero `sectionRef` (rAF-batched, scoped listeners).
+- **Dual-lane `Marquee`** — TECH lane scrolls forward (`brut-marquee`, accent `●`), STATEMENTS lane below scrolls reverse (`brut-marquee-rev`, ink `◆`) for a tape-deck feel.
+- **`Stat` progress bars** — each stat now has a normalized accent bar (`width = value / max(stats) × 100%`) and a `NN%` readout, animated in lockstep with the existing `useCountUp`.

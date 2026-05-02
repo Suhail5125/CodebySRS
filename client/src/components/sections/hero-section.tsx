@@ -769,12 +769,16 @@ function Magnetic({
     if (disabled) return;
     const el = ref.current;
     if (!el) return;
-    const onMove = (e: MouseEvent) => {
+    let raf = 0;
+    let lastEvent: MouseEvent | null = null;
+    const apply = () => {
+      raf = 0;
+      if (!lastEvent) return;
       const rect = el.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
-      const dx = e.clientX - cx;
-      const dy = e.clientY - cy;
+      const dx = lastEvent.clientX - cx;
+      const dy = lastEvent.clientY - cy;
       const radius = Math.max(rect.width, rect.height) * radiusMul;
       const dist = Math.hypot(dx, dy);
       if (dist < radius) {
@@ -783,12 +787,17 @@ function Magnetic({
         el.style.transform = "translate(0,0)";
       }
     };
+    const onMove = (e: MouseEvent) => {
+      lastEvent = e;
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
     const onLeave = () => {
       el.style.transform = "translate(0,0)";
     };
     window.addEventListener("mousemove", onMove, { passive: true });
     el.addEventListener("mouseleave", onLeave);
     return () => {
+      if (raf) cancelAnimationFrame(raf);
       window.removeEventListener("mousemove", onMove);
       el.removeEventListener("mouseleave", onLeave);
     };
