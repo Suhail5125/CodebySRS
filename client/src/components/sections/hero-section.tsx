@@ -39,23 +39,6 @@ const TECH = [
   "FRAMER",
 ];
 
-/* ---------- Engineering / instrument constants ---------- */
-
-const FAKE_FILE = "~/codebysrs/src/components/sections/hero-section.tsx";
-
-const KEYS: { k: string; action: string; target: string | null }[] = [
-  { k: "J", action: "PROJECTS", target: "#projects" },
-  { k: "K", action: "SERVICES", target: "#services" },
-  { k: "L", action: "CONTACT", target: "#contact" },
-  { k: "/", action: "SEARCH", target: null },
-];
-
-const COMMITS: { hash: string; msg: string; time: string }[] = [
-  { hash: "a8f3b1c", msg: "feat(hero): brutalist instruments", time: "32m" },
-  { hash: "f4e92d1", msg: "perf: drop 3d-vendor chunk -255kB", time: "1h" },
-  { hash: "c1b7a40", msg: "chore: tighten reveal delays", time: "2h" },
-];
-
 export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   const reducedMotion = !!useReducedMotion();
 
@@ -106,12 +89,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   // Live clock for the top status bar (1Hz, fixed-width slot).
   const now = useNowEverySecond();
 
-  // ============== Engineering telemetry (live, but stable under reduced-motion) ==============
-  const uptime = useUptime();
-  const latency = useFakeMetric(28, 12, 48, 1400, reducedMotion);
-  const latencyHistory = useHistory(latency, 32);
-  const memPct = useFakeMetric(58, 32, 82, 1800, reducedMotion);
-
   return (
     <section
       className="relative min-h-screen w-full overflow-hidden"
@@ -138,21 +115,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           <span className="opacity-80">CodebySRS · DEV-OS</span>
           <span className="opacity-30">/</span>
           <span className="opacity-50">v2.0</span>
-          <span className="hidden opacity-30 lg:inline">/</span>
-          <span className="hidden items-center gap-1.5 lg:inline-flex">
-            <span
-              className="inline-block h-2 w-2"
-              style={{ background: "#3FFF7A" }}
-              aria-hidden
-            />
-            <span className="opacity-80">BUILD</span>
-            <span className="opacity-30">·</span>
-            <span className="tabular-nums" style={{ color: ACCENT }}>
-              a8f3b1c
-            </span>
-            <span className="opacity-30">·</span>
-            <span className="opacity-50">1.8s</span>
-          </span>
         </div>
         <div className="hidden items-center gap-3 md:flex">
           <span className="opacity-50">{location}</span>
@@ -189,34 +151,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                   <br />
                   Cut the fluff.
                 </p>
-              </div>
-
-              {/* Engineering: SYS panel — live uptime + git/env/node */}
-              <div className="mt-10 hidden lg:block">
-                <div className="opacity-50">SYS</div>
-                <dl className="mt-2 space-y-1 leading-snug">
-                  <div className="flex items-center justify-between gap-2">
-                    <dt className="opacity-50">UPTIME</dt>
-                    <dd
-                      className="tabular-nums"
-                      style={{ color: INK, minWidth: "8ch", textAlign: "right" }}
-                    >
-                      {uptime}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <dt className="opacity-50">GIT</dt>
-                    <dd className="opacity-80">main</dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <dt className="opacity-50">ENV</dt>
-                    <dd className="opacity-80">prod</dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <dt className="opacity-50">NODE</dt>
-                    <dd className="opacity-80">20.x</dd>
-                  </div>
-                </dl>
               </div>
             </div>
           </aside>
@@ -316,11 +250,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
               </div>
             )}
 
-            {/* Engineering: NOW EDITING — file path + line:col + INSERT pill + cursor */}
-            {!isLoading && (
-              <NowEditingLine file={FAKE_FILE} line={142} col={8} />
-            )}
-
             {/* Bio */}
             {isLoading ? (
               <div className="mt-10 space-y-2">
@@ -396,108 +325,8 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                 ))}
               </div>
             )}
-
-            {/* Engineering: keyboard shortcut hints */}
-            {!isLoading && (
-              <div
-                className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3 font-mono text-[10px] uppercase tracking-[0.22em] brut-fade"
-                style={{ animationDelay: "0.6s" }}
-              >
-                <span className="opacity-50">SHORTCUTS</span>
-                <span className="opacity-30">/</span>
-                {KEYS.map(({ k, action, target }) => (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => target && scrollTo(target)}
-                    className="group inline-flex items-center gap-1.5"
-                  >
-                    <KeyCap>{k}</KeyCap>
-                    <span className="opacity-70 group-hover:opacity-100">
-                      {action}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
-
-        {/* ==========  ENGINEERING TELEMETRY ========== */}
-        {!isLoading && (
-          <div
-            className="mt-12 grid grid-cols-2 gap-px border border-[#F2EFE6]/20 bg-[#F2EFE6]/20 brut-fade lg:grid-cols-4"
-            style={{ animationDelay: "0.55s" }}
-          >
-            {/* LATENCY with live SVG sparkline */}
-            <TelemetryCell label="LATENCY">
-              <div className="flex items-baseline justify-between gap-2">
-                <span
-                  className="text-[22px] font-bold tabular-nums"
-                  style={{ color: INK }}
-                >
-                  {Math.round(latency)}
-                  <span className="ml-0.5 text-[10px] opacity-60">ms</span>
-                </span>
-                <span className="opacity-50">P50</span>
-              </div>
-              <div className="mt-2">
-                <Sparkline data={latencyHistory} />
-              </div>
-            </TelemetryCell>
-
-            {/* MEMORY ASCII bar */}
-            <TelemetryCell label="MEMORY">
-              <div className="flex items-baseline justify-between gap-2">
-                <span
-                  className="text-[22px] font-bold tabular-nums"
-                  style={{ color: INK }}
-                >
-                  {Math.round(memPct)}
-                  <span className="ml-0.5 text-[10px] opacity-60">%</span>
-                </span>
-                <span className="opacity-50">v8 heap</span>
-              </div>
-              <div className="mt-2 text-[11px]">
-                <AsciiBar value={memPct} />
-              </div>
-            </TelemetryCell>
-
-            {/* DEPLOY status */}
-            <TelemetryCell label="DEPLOY">
-              <div className="flex items-center gap-2">
-                <span
-                  className="inline-block h-2 w-2 brut-blink"
-                  style={{ background: "#3FFF7A" }}
-                  aria-hidden
-                />
-                <span style={{ color: INK }}>LIVE</span>
-                <span className="opacity-30">·</span>
-                <span className="opacity-70">prod</span>
-              </div>
-              <div className="mt-2 opacity-60">edge · iad1 · 32 ms</div>
-            </TelemetryCell>
-
-            {/* LAST COMMIT */}
-            <TelemetryCell label="LAST COMMIT">
-              <div className="flex items-center gap-2">
-                <span
-                  className="tabular-nums"
-                  style={{ color: ACCENT }}
-                >
-                  {COMMITS[0].hash}
-                </span>
-                <span className="opacity-30">·</span>
-                <span className="tabular-nums opacity-50">
-                  {COMMITS[0].time} ago
-                </span>
-              </div>
-              <div className="mt-2 truncate opacity-80">
-                {COMMITS[0].msg}
-              </div>
-            </TelemetryCell>
-          </div>
-        )}
 
         {/* ==========  TECH MARQUEE ========== */}
         <div className="relative mt-20 border-y-2 border-[#F2EFE6] py-4 lg:mt-28">
@@ -760,184 +589,4 @@ function useNowEverySecond() {
 function fmtClock(d: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-
-/* ==================== Engineering instruments ==================== */
-
-/** Counts seconds since mount, returns a fixed-width "HH:MM:SS" string. */
-function useUptime() {
-  const [s, setS] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setS((v) => v + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
-}
-
-/** Random-walk fake metric clamped to [min,max]. Locked to seed under reduced motion. */
-function useFakeMetric(
-  seed: number,
-  min: number,
-  max: number,
-  intervalMs = 1500,
-  reducedMotion = false,
-) {
-  const [v, setV] = useState(seed);
-  useEffect(() => {
-    if (reducedMotion) {
-      setV(seed);
-      return;
-    }
-    const id = setInterval(() => {
-      setV((prev) => {
-        const delta = (Math.random() - 0.5) * (max - min) * 0.18;
-        return Math.max(min, Math.min(max, prev + delta));
-      });
-    }, intervalMs);
-    return () => clearInterval(id);
-  }, [seed, min, max, intervalMs, reducedMotion]);
-  return v;
-}
-
-/** Rolling buffer of the last `len` values of `current`. */
-function useHistory(current: number, len = 32) {
-  const [hist, setHist] = useState<number[]>(() => Array(len).fill(current));
-  useEffect(() => {
-    setHist((prev) => {
-      const next = prev.slice(1);
-      next.push(current);
-      return next;
-    });
-  }, [current]);
-  return hist;
-}
-
-/* ---------- Instrument sub-components ---------- */
-
-/** Brutalist SVG sparkline: 1px polyline, no fill, no smoothing. */
-function Sparkline({ data, height = 24 }: { data: number[]; height?: number }) {
-  const w = 100;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const points = data
-    .map((v, i) => {
-      const x = (i / Math.max(1, data.length - 1)) * w;
-      const y = height - ((v - min) / range) * height;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
-  return (
-    <svg
-      viewBox={`0 0 ${w} ${height}`}
-      preserveAspectRatio="none"
-      className="block h-6 w-full"
-      aria-hidden
-    >
-      <polyline
-        points={points}
-        fill="none"
-        stroke={INK}
-        strokeWidth={1}
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
-  );
-}
-
-/** ASCII-style horizontal bar: [██████░░░░] */
-function AsciiBar({
-  value,
-  max = 100,
-  cells = 14,
-}: {
-  value: number;
-  max?: number;
-  cells?: number;
-}) {
-  const filled = Math.max(0, Math.min(cells, Math.round((value / max) * cells)));
-  return (
-    <span className="font-mono">
-      <span className="opacity-50">[</span>
-      <span style={{ color: ACCENT }}>{"\u2588".repeat(filled)}</span>
-      <span className="opacity-30">{"\u2591".repeat(cells - filled)}</span>
-      <span className="opacity-50">]</span>
-    </span>
-  );
-}
-
-/** Hard-bordered keycap. */
-function KeyCap({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      className="inline-flex h-6 min-w-[24px] items-center justify-center border px-1.5 font-mono text-[10px] font-bold tabular-nums"
-      style={{ borderColor: INK, color: INK }}
-    >
-      {children}
-    </span>
-  );
-}
-
-/** "NOW EDITING" line: file path + line:col + INSERT pill + blinking caret. */
-function NowEditingLine({
-  file,
-  line,
-  col,
-}: {
-  file: string;
-  line: number;
-  col: number;
-}) {
-  return (
-    <div
-      className="mt-6 flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] brut-fade"
-      style={{ animationDelay: "0.25s" }}
-    >
-      <span className="opacity-50">EDITING</span>
-      <span className="opacity-30">/</span>
-      <span className="truncate" style={{ color: INK }}>
-        {file}
-      </span>
-      <span className="opacity-30">:</span>
-      <span className="tabular-nums" style={{ color: ACCENT }}>
-        {line}
-      </span>
-      <span className="opacity-30">:</span>
-      <span className="tabular-nums" style={{ color: ACCENT }}>
-        {col}
-      </span>
-      <span
-        className="inline-flex h-4 items-center border px-1.5 text-[9px] tracking-[0.22em]"
-        style={{ borderColor: INK, color: INK }}
-      >
-        INSERT
-      </span>
-      <span
-        className="brut-blink inline-block h-3 w-2"
-        style={{ background: INK }}
-        aria-hidden
-      />
-    </div>
-  );
-}
-
-/** Hard-bordered telemetry cell, used in the 4-up engineering strip. */
-function TelemetryCell({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-2 bg-[#0A0A0A] p-4 lg:p-5">
-      <div className="font-mono text-[9px] uppercase tracking-[0.28em] opacity-50">
-        {label}
-      </div>
-      <div className="font-mono text-[11px] uppercase tracking-[0.16em]">
-        {children}
-      </div>
-    </div>
-  );
 }
