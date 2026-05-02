@@ -4,8 +4,8 @@ import { Reveal, useReveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
 import type { Project } from "@shared";
 
-const BG    = "#0A0A0A";
-const INK   = "#F2EFE6";
+const BG  = "#0A0A0A";
+const INK = "#F2EFE6";
 const ACCENT = "#FF3D00";
 
 function parseTech(raw: string): string[] {
@@ -24,6 +24,29 @@ function useReducedMotionCheck() {
     return () => mq.removeEventListener("change", h);
   }, []);
   return v;
+}
+
+function useRotator<T>(items: T[], ms: number, paused: boolean) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (paused || items.length <= 1) return;
+    const id = setInterval(() => setI((n) => (n + 1) % items.length), ms);
+    return () => clearInterval(id);
+  }, [items.length, ms, paused]);
+  return items[i];
+}
+
+function useNow() {
+  const fmt = (d: Date) => {
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  };
+  const [s, setS] = useState(() => fmt(new Date()));
+  useEffect(() => {
+    const id = setInterval(() => setS(fmt(new Date())), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return s;
 }
 
 function useScramble(target: string, ms: number, runKey: number | string, paused: boolean) {
@@ -77,44 +100,34 @@ function NoiseOverlay() {
   );
 }
 
-/** Column lines that slowly breathe opacity — staggered per line. */
-function GridLines({ reduced }: { reduced: boolean }) {
-  const positions = [16.66, 33.33, 50, 66.66, 83.33];
+function GridLines() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-[1]">
-      {positions.map((x, i) => (
+      {[16.66, 33.33, 50, 66.66, 83.33].map((x) => (
         <div
           key={x}
           className="absolute inset-y-0 w-px"
-          style={{
-            left: `${x}%`,
-            background: INK,
-            animation: reduced
-              ? undefined
-              : `brut-grid-pulse ${3.2 + i * 0.45}s ease-in-out ${i * 0.55}s infinite alternate`,
-            opacity: reduced ? 0.035 : undefined,
-          }}
+          style={{ left: `${x}%`, background: "rgba(242,239,230,0.035)" }}
         />
       ))}
     </div>
   );
 }
 
-/** Cursor HUD data shown beside the crosshair when hovering a project. */
-interface HudData { num: string; year: number; tech: string }
+function Scanline() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
+      <div
+        className="absolute inset-x-0 h-px brut-scan"
+        style={{ background: ACCENT, opacity: 0.38, boxShadow: `0 0 6px ${ACCENT}` }}
+      />
+    </div>
+  );
+}
 
-/** Square crosshair that tracks mouse inside the section.
- *  When `hud` is provided it renders a small data card to the right. */
-function SectionCursor({
-  container,
-  hud,
-}: {
-  container: React.RefObject<HTMLElement | null>;
-  hud: HudData | null;
-}) {
-  const outerRef = useRef<HTMLDivElement>(null);
+function SectionCursor({ container }: { container: React.RefObject<HTMLElement | null> }) {
+  const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
-
   useEffect(() => {
     const root = container.current;
     if (!root) return;
@@ -122,8 +135,8 @@ function SectionCursor({
     let pending = { x: 0, y: 0 };
     const apply = () => {
       raf = 0;
-      if (!outerRef.current) return;
-      outerRef.current.style.transform = `translate(${pending.x - 14}px, ${pending.y - 14}px)`;
+      if (!ref.current) return;
+      ref.current.style.transform = `translate(${pending.x - 14}px, ${pending.y - 14}px)`;
     };
     const onMove = (e: MouseEvent) => {
       const rect = root.getBoundingClientRect();
@@ -142,59 +155,21 @@ function SectionCursor({
       root.removeEventListener("mouseleave", onLeave);
     };
   }, [container]);
-
   return (
     <div
-      ref={outerRef}
+      ref={ref}
       aria-hidden
-      className="pointer-events-none absolute left-0 top-0 z-[6]"
+      className="pointer-events-none absolute left-0 top-0 z-[6] h-7 w-7"
       style={{
         opacity: visible ? 1 : 0,
         transition: "opacity 0.2s ease-out",
         willChange: "transform",
-        mixBlendMode: "normal",
+        mixBlendMode: "difference",
       }}
     >
-      {/* crosshair square */}
-      <div className="absolute h-7 w-7">
-        <span className="absolute inset-0 border" style={{ borderColor: ACCENT }} />
-        <span
-          className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2"
-          style={{ background: ACCENT, opacity: 0.7 }}
-        />
-        <span
-          className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2"
-          style={{ background: ACCENT, opacity: 0.7 }}
-        />
-      </div>
-
-      {/* HUD card — appears beside the crosshair when hovering a row */}
-      <div
-        className="absolute font-mono uppercase"
-        style={{
-          left: 36,
-          top: -2,
-          minWidth: 140,
-          border: `1px solid ${ACCENT}`,
-          background: BG,
-          padding: "5px 10px",
-          color: INK,
-          lineHeight: 1.55,
-          opacity: hud ? 1 : 0,
-          transition: "opacity 0.14s ease-out",
-          pointerEvents: "none",
-        }}
-      >
-        <div
-          className="text-[9px] tracking-[0.22em]"
-          style={{ color: ACCENT }}
-        >
-          {hud?.num ?? "P-000"}
-        </div>
-        <div className="text-[9px] tracking-[0.18em] opacity-60">
-          {hud ? `${hud.year} · ${hud.tech || "—"}` : ""}
-        </div>
-      </div>
+      <span className="absolute inset-0 border" style={{ borderColor: ACCENT }} />
+      <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2" style={{ background: ACCENT, opacity: 0.7 }} />
+      <span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2" style={{ background: ACCENT, opacity: 0.7 }} />
     </div>
   );
 }
@@ -202,13 +177,24 @@ function SectionCursor({
 /* ─── main section ──────────────────────────────────────────────────────── */
 
 export function ProjectsSection({ projects, isLoading }: { projects: Project[]; isLoading: boolean }) {
-  const reduced  = useReducedMotionCheck();
-  const display  = useMemo(() => [...projects].sort((a, b) => a.order - b.order), [projects]);
-  const [hovered, setHovered]     = useState<number | null>(null);
+  const reduced   = useReducedMotionCheck();
+  const display   = useMemo(() => [...projects].sort((a, b) => a.order - b.order), [projects]);
+  const [hovered, setHovered]   = useState<number | null>(null);
   const [imgOffset, setImgOffset] = useState(0);
   const rowEls    = useRef<(HTMLDivElement | null)[]>([]);
   const listRef   = useRef<HTMLDivElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
+
+  const FEED = useMemo(() => [
+    `${display.length} ENTRIES`,
+    "FEED://projects",
+    "STATUS: SHIPPED",
+    "HOVER TO PREVIEW",
+    "STACK: REACT + TS",
+  ], [display.length]);
+
+  const feedItem = useRotator(FEED, 2200, reduced);
+  const now = useNow();
 
   const handleEnter = useCallback((i: number) => {
     setHovered(i);
@@ -224,15 +210,6 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
   const handleLeave = useCallback(() => setHovered(null), []);
   const activeProject = hovered !== null ? display[hovered] : null;
 
-  /** Data shown in the cursor HUD beside the crosshair. */
-  const hud: HudData | null = activeProject
-    ? {
-        num:  `P-${String((hovered ?? 0) + 1).padStart(3, "0")}`,
-        year: new Date(activeProject.createdAt).getFullYear(),
-        tech: parseTech(activeProject.technologies)[0] ?? "",
-      }
-    : null;
-
   return (
     <section
       ref={sectionRef}
@@ -242,8 +219,41 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
     >
       {/* ── background layers ── */}
       <NoiseOverlay />
-      <GridLines reduced={reduced} />
-      {!reduced && <SectionCursor container={sectionRef} hud={hud} />}
+      <GridLines />
+      {!reduced && <Scanline />}
+      {!reduced && <SectionCursor container={sectionRef} />}
+
+      {/* ── top status bar ── */}
+      <div
+        className="relative z-[3] mb-8 flex items-center justify-between pb-3 font-mono text-[11px] uppercase tracking-[0.18em]"
+        style={{ borderBottom: "1px solid rgba(242,239,230,0.14)", color: INK }}
+      >
+        <div className="flex items-center gap-3">
+          <span
+            className="inline-block h-2 w-2 brut-blink"
+            style={{ background: ACCENT }}
+            aria-hidden
+          />
+          <span className="opacity-80">LIVE</span>
+          <span className="opacity-30">/</span>
+          <span className="opacity-80">PROJECTS</span>
+          <span className="opacity-30">·</span>
+          <span
+            className="opacity-60 tabular-nums"
+            style={{ minWidth: "20ch", display: "inline-block" }}
+          >
+            {reduced
+              ? FEED[0]
+              : <ScrambleText text={feedItem} runKey={feedItem} ms={380} />}
+          </span>
+        </div>
+        <span
+          className="hidden tabular-nums opacity-70 md:inline"
+          style={{ minWidth: "8ch", textAlign: "right" }}
+        >
+          {now}
+        </span>
+      </div>
 
       {/* ── content ── */}
       <div className="relative z-[3] mx-auto w-full max-w-[1400px]">
@@ -300,7 +310,7 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
             >
               <div style={{ border: `2px solid ${INK}`, background: BG }}>
 
-                {/* card header */}
+                {/* card header: number + link buttons */}
                 <div
                   className="flex items-center justify-between px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em]"
                   style={{ borderBottom: `2px solid ${INK}` }}
@@ -383,7 +393,7 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
                   )}
                 </div>
 
-                {/* tech tags */}
+                {/* tech tags — only if admin added them */}
                 {parseTech(activeProject.technologies).length > 0 && (
                   <div
                     className="flex flex-wrap gap-1.5 p-3"
@@ -400,6 +410,7 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
                     ))}
                   </div>
                 )}
+
               </div>
             </div>
           )}
@@ -491,7 +502,7 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
           {num}
         </span>
 
-        {/* title + scramble + block cursor + dot */}
+        {/* title + scramble + dot */}
         <div className="flex min-w-0 flex-1 items-center gap-5">
           <h3
             className="min-w-0 flex-1 truncate"
@@ -505,25 +516,11 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
             }}
           >
             {isActive && !reduced ? (
-              <>
-                <ScrambleText
-                  text={project.title.toUpperCase()}
-                  runKey={runKey}
-                  ms={420}
-                />
-                {/* blinking block cursor — terminal feel */}
-                <span
-                  className="brut-blink ml-1 inline-block align-middle"
-                  style={{
-                    color: BG,
-                    fontSize: "0.75em",
-                    lineHeight: 1,
-                    verticalAlign: "middle",
-                  }}
-                >
-                  ▋
-                </span>
-              </>
+              <ScrambleText
+                text={project.title.toUpperCase()}
+                runKey={runKey}
+                ms={420}
+              />
             ) : (
               project.title.toUpperCase()
             )}
