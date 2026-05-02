@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import type { Skill } from "@shared";
 import {
   SiReact, SiTypescript, SiJavascript, SiThreedotjs,
@@ -19,7 +19,7 @@ const INK    = "#F2EFE6";
 const ACCENT = "#FF3D00";
 const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789█▓▒░<>/\\";
 
-/* ── scramble hook (same logic as hero section) ──────────────────────────── */
+/* ── scramble hook ───────────────────────────────────────────────────────── */
 function useScramble(target: string, durationMs: number, runKey: number | string) {
   const [out, setOut] = useState<string>(target);
   useEffect(() => {
@@ -30,9 +30,8 @@ function useScramble(target: string, durationMs: number, runKey: number | string
       const revealHead = Math.floor(t * (target.length + 4));
       let s = "";
       for (let i = 0; i < target.length; i++) {
-        const ch = target[i];
-        if (i < revealHead - 4) s += ch;
-        else if (ch === " ") s += " ";
+        if (i < revealHead - 4) s += target[i];
+        else if (target[i] === " ") s += " ";
         else s += GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
       }
       setOut(s);
@@ -48,22 +47,21 @@ function useScramble(target: string, durationMs: number, runKey: number | string
 
 /* ── brand icon + color map ──────────────────────────────────────────────── */
 type IconEntry = { Icon: React.ComponentType<{ size?: number; color?: string }>; color: string };
-
 const ICON_MAP: Record<string, IconEntry> = {
   "React":         { Icon: SiReact,        color: "#61DAFB" },
   "TypeScript":    { Icon: SiTypescript,   color: "#3178C6" },
   "JavaScript":    { Icon: SiJavascript,   color: "#F7DF1E" },
-  "Three.js":      { Icon: SiThreedotjs,  color: "#F2EFE6" },
+  "Three.js":      { Icon: SiThreedotjs,  color: "#C8C8C8" },
   "Node.js":       { Icon: SiNodedotjs,   color: "#339933" },
-  "Next.js":       { Icon: SiNextdotjs,   color: "#F2EFE6" },
+  "Next.js":       { Icon: SiNextdotjs,   color: "#C8C8C8" },
   "PostgreSQL":    { Icon: SiPostgresql,   color: "#4169E1" },
   "GraphQL":       { Icon: SiGraphql,      color: "#E10098" },
   "Tailwind":      { Icon: SiTailwindcss,  color: "#06B6D4" },
   "TailwindCSS":   { Icon: SiTailwindcss,  color: "#06B6D4" },
   "Framer":        { Icon: SiFramer,       color: "#6B8EFA" },
   "Framer Motion": { Icon: SiFramer,       color: "#6B8EFA" },
-  "Express":       { Icon: SiExpress,      color: "#F2EFE6" },
-  "Express.js":    { Icon: SiExpress,      color: "#F2EFE6" },
+  "Express":       { Icon: SiExpress,      color: "#C8C8C8" },
+  "Express.js":    { Icon: SiExpress,      color: "#C8C8C8" },
   "Redis":         { Icon: SiRedis,        color: "#DC382D" },
   "Docker":        { Icon: SiDocker,       color: "#2496ED" },
   "MongoDB":       { Icon: SiMongodb,      color: "#47A248" },
@@ -71,9 +69,9 @@ const ICON_MAP: Record<string, IconEntry> = {
   "Figma":         { Icon: SiFigma,        color: "#F24E1E" },
   "Blender":       { Icon: SiBlender,      color: "#F5792A" },
   "Git":           { Icon: SiGit,          color: "#F05032" },
-  "GitHub":        { Icon: SiGithub,       color: "#F2EFE6" },
+  "GitHub":        { Icon: SiGithub,       color: "#C8C8C8" },
   "Vite":          { Icon: SiVite,         color: "#646CFF" },
-  "Prisma":        { Icon: SiPrisma,       color: "#5A67D8" },
+  "Prisma":        { Icon: SiPrisma,       color: "#A78BFA" },
   "GSAP":          { Icon: SiGreensock,    color: "#88CE02" },
   "Svelte":        { Icon: SiSvelte,       color: "#FF3E00" },
   "Astro":         { Icon: SiAstro,        color: "#FF5D01" },
@@ -97,41 +95,63 @@ const ICON_MAP: Record<string, IconEntry> = {
   "Webpack":       { Icon: SiWebpack,      color: "#8DD6F9" },
 };
 
-/* ── scattered canvas positions (% from container top-left, centred on node) */
+/* ── 27 canvas positions: 4 organic rows across the full area ────────────── */
 const POSITIONS: { left: number; top: number }[] = [
-  { left:  7,  top:  7  },
-  { left: 21,  top:  3  },
-  { left: 36,  top:  9  },
-  { left: 51,  top:  2  },
-  { left: 65,  top:  8  },
-  { left: 79,  top:  3  },
-  { left: 90,  top:  9  },
-  { left: 13,  top: 26  },
-  { left: 28,  top: 21  },
-  { left: 44,  top: 28  },
-  { left: 59,  top: 22  },
-  { left: 74,  top: 27  },
-  { left: 87,  top: 20  },
-  { left:  4,  top: 47  },
-  { left: 18,  top: 43  },
-  { left: 33,  top: 50  },
-  { left: 48,  top: 44  },
-  { left: 63,  top: 51  },
-  { left: 77,  top: 45  },
-  { left: 89,  top: 52  },
-  { left:  9,  top: 69  },
-  { left: 24,  top: 65  },
-  { left: 39,  top: 72  },
-  { left: 54,  top: 66  },
-  { left: 69,  top: 73  },
-  { left: 83,  top: 67  },
-  { left: 14,  top: 86  },
-  { left: 30,  top: 82  },
-  { left: 46,  top: 88  },
-  { left: 61,  top: 83  },
+  /* row 1 — top ~7% */
+  { left:  5, top:  7 }, // 0
+  { left: 18, top:  7 }, // 1
+  { left: 32, top:  7 }, // 2
+  { left: 46, top:  7 }, // 3
+  { left: 60, top:  7 }, // 4
+  { left: 73, top:  7 }, // 5
+  { left: 87, top:  7 }, // 6
+  /* row 2 — top ~32% */
+  { left: 11, top: 32 }, // 7
+  { left: 24, top: 32 }, // 8
+  { left: 38, top: 32 }, // 9
+  { left: 52, top: 32 }, // 10
+  { left: 65, top: 32 }, // 11
+  { left: 78, top: 32 }, // 12
+  { left: 91, top: 32 }, // 13
+  /* row 3 — top ~57% */
+  { left:  5, top: 57 }, // 14
+  { left: 18, top: 57 }, // 15
+  { left: 32, top: 57 }, // 16
+  { left: 46, top: 57 }, // 17
+  { left: 60, top: 57 }, // 18
+  { left: 73, top: 57 }, // 19
+  { left: 87, top: 57 }, // 20
+  /* row 4 — top ~80% */
+  { left: 11, top: 80 }, // 21
+  { left: 25, top: 80 }, // 22
+  { left: 39, top: 80 }, // 23
+  { left: 53, top: 80 }, // 24
+  { left: 67, top: 80 }, // 25
+  { left: 81, top: 80 }, // 26
 ];
 
-/* ── deterministic color for unknowns ───────────────────────────────────── */
+/*
+ * POSITION_SHUFFLE — maps each skill-array index to a POSITIONS slot.
+ * Manually designed so same-category items in the interleaved FALLBACK
+ * end up spread across all four rows and different columns.
+ *
+ * Skill interleaving: FE, BE, FE, 3D, Tools, FE, BE, 3D, Tools, FE,
+ *   BE, 3D, Tools, FE, BE, FE, BE, Tools, BE, BE, FE
+ *
+ * FE  (0,2,5,9,13,15,20) → pos [0,20,25,8,21,16,9]
+ *   → rows: 1,3,4,2,4,3,2 — ✓ spread across all rows
+ * BE  (1,6,10,14,16,18,19) → pos [10,3,23,6,26,14,22]
+ *   → rows: 2,1,4,1,4,3,4 — ✓ spread
+ * 3D  (3,7,11) → pos [5,13,1]  — rows 1,2,1 (3 items, adequate)
+ * Tools (4,8,12,17) → pos [15,18,11,4] — rows 3,3,2,1 — ✓
+ */
+const POSITION_SHUFFLE = [
+   0, 10, 20,  5, 15, 25,  3,
+  13, 18,  8, 23,  1, 11, 21,
+   6, 16, 26,  4, 14, 22,  9,
+];
+
+/* ── deterministic fallback color ────────────────────────────────────────── */
 function techColor(name: string): string {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffff;
@@ -143,7 +163,7 @@ function abbr(name: string): string {
   return w.length >= 2 ? (w[0][0] + w[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
 }
 
-/* ── fallback (DB empty) ─────────────────────────────────────────────────── */
+/* ── fallback interleaved by category so scatter looks natural ───────────── */
 const FALLBACK: Skill[] = [
   { id:"f1", name:"React",      category:"Frontend",     proficiency:95, icon:null, order:0  },
   { id:"b1", name:"Node.js",    category:"Backend",      proficiency:88, icon:null, order:1  },
@@ -189,14 +209,13 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
     ? Math.round(activeSkills.reduce((a, s) => a + s.proficiency, 0) / activeSkills.length)
     : 0;
 
-  const scrambled = useScramble(activeCat.toUpperCase(), 700, catIdx);
+  const scrambled = useScramble(activeCat.toUpperCase(), 650, catIdx);
 
-  /* auto-cycle */
   useEffect(() => {
     if (cats.length <= 1) return;
     const id = setInterval(() => {
       setTransitioning(true);
-      setTimeout(() => { setCatIdx(i => (i + 1) % cats.length); setTransitioning(false); }, 350);
+      setTimeout(() => { setCatIdx(i => (i + 1) % cats.length); setTransitioning(false); }, 320);
     }, 4200);
     return () => clearInterval(id);
   }, [cats.length]);
@@ -204,23 +223,24 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
   const switchCat = (i: number) => {
     if (i === catIdx) return;
     setTransitioning(true);
-    setTimeout(() => { setCatIdx(i); setTransitioning(false); }, 350);
+    setTimeout(() => { setCatIdx(i); setTransitioning(false); }, 320);
   };
 
   return (
     <section
       id="skills"
-      className="relative overflow-hidden"
       style={{
+        height: "100vh",
+        overflow: "hidden",
         background: BG,
         color: INK,
-        minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        padding: "80px 40px 40px",
+        padding: "20px 28px 16px",
+        position: "relative",
       }}
     >
-      {/* ── Header ── */}
+      {/* ── Section header ── */}
       <Reveal>
         <SectionHeader
           num="03"
@@ -232,14 +252,37 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
         />
       </Reveal>
 
-      {/* ── Canvas: scattered icons + category label ── */}
-      <div
-        className="flex-1 relative"
-        style={{ minHeight: 620, marginTop: 32 }}
-      >
-        {/* All skill nodes — absolute scattered positions */}
+      {/* ── Full-remaining-height canvas ── */}
+      <div style={{ position: "relative", flex: 1, marginTop: 12 }}>
+
+        {/* Ghost watermark — category name huge in background */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            zIndex: 0,
+            fontFamily: "Inter, sans-serif",
+            fontWeight: 800,
+            fontSize: "clamp(5rem, 10vw, 9rem)",
+            lineHeight: 0.85,
+            letterSpacing: "-0.05em",
+            textTransform: "uppercase",
+            color: INK,
+            opacity: 0.04,
+            userSelect: "none",
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {scrambled || "\u00A0"}
+        </div>
+
+        {/* ── Scattered skill nodes ── */}
         {source.map((skill, i) => {
-          const pos = POSITIONS[i % POSITIONS.length];
+          const posIdx = POSITION_SHUFFLE[i % POSITION_SHUFFLE.length];
+          const pos    = POSITIONS[posIdx % POSITIONS.length];
           return (
             <SkillNode
               key={skill.id}
@@ -252,59 +295,24 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
           );
         })}
 
-        {/* ── Category label — bottom-left corner ── */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            zIndex: 0,
-            pointerEvents: "none",
-            userSelect: "none",
-          }}
-        >
-          <div
-            className="font-mono uppercase tracking-[0.3em]"
-            style={{ fontSize: 9, opacity: 0.35, marginBottom: 6, color: ACCENT }}
-          >
-            ACTIVE CATEGORY
-          </div>
-          <div
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 800,
-              fontSize: "clamp(3.5rem, 7vw, 7rem)",
-              lineHeight: 0.9,
-              letterSpacing: "-0.04em",
-              textTransform: "uppercase",
-              color: INK,
-              opacity: 0.06,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {scrambled || "\u00A0"}
-          </div>
-        </div>
-
-        {/* ── Category label — prominent overlay bottom-right ── */}
+        {/* ── Category UI — bottom-right ── */}
         <div
           style={{
             position: "absolute",
             bottom: 0,
             right: 0,
-            zIndex: 10,
+            zIndex: 20,
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-end",
-            gap: 12,
+            gap: 8,
           }}
         >
-          {/* Readable category name */}
           <div
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 800,
-              fontSize: "clamp(1.6rem, 3.5vw, 3rem)",
+              fontSize: "clamp(1.4rem, 2.8vw, 2.4rem)",
               lineHeight: 1,
               letterSpacing: "-0.03em",
               textTransform: "uppercase",
@@ -314,24 +322,22 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
             {scrambled || "\u00A0"}
           </div>
 
-          {/* Count + avg */}
-          <div className="flex items-center gap-4 font-mono uppercase tracking-[0.2em]" style={{ fontSize: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em" }}>
             <span style={{ color: ACCENT }}>{activeSkills.length} skills</span>
-            <span style={{ opacity: 0.3 }}>/</span>
-            <span style={{ opacity: 0.5 }}>avg {avgProf}%</span>
+            <span style={{ opacity: 0.25 }}>/</span>
+            <span style={{ opacity: 0.45 }}>avg {avgProf}%</span>
           </div>
 
-          {/* Dot selector */}
-          <div className="flex items-center gap-2">
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             {cats.map((cat, i) => (
               <button
                 key={cat}
                 onClick={() => switchCat(i)}
                 title={cat}
                 style={{
-                  height: 7,
-                  width: i === catIdx ? 28 : 7,
-                  borderRadius: 4,
+                  height: 6,
+                  width: i === catIdx ? 26 : 6,
+                  borderRadius: 3,
                   background: i === catIdx ? ACCENT : `${INK}28`,
                   border: "none",
                   cursor: "pointer",
@@ -340,41 +346,34 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
                 }}
               />
             ))}
-          </div>
-
-          {/* Counter */}
-          <div className="font-mono" style={{ fontSize: 9, opacity: 0.3, letterSpacing: "0.2em" }}>
-            {String(catIdx + 1).padStart(2, "0")} / {String(cats.length).padStart(2, "0")}
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, opacity: 0.3, marginLeft: 4, letterSpacing: "0.15em" }}>
+              {String(catIdx + 1).padStart(2,"0")}/{String(cats.length).padStart(2,"0")}
+            </span>
           </div>
         </div>
+
       </div>
     </section>
   );
 }
 
-/* ─── SkillNode (absolutely positioned) ─────────────────────────────────── */
+/* ─── SkillNode ──────────────────────────────────────────────────────────── */
 
 function SkillNode({
   skill, active, transitioning, left, top,
 }: {
-  skill: Skill;
-  active: boolean;
-  transitioning: boolean;
-  left: number;
-  top: number;
+  skill: Skill; active: boolean; transitioning: boolean; left: number; top: number;
 }) {
   const entry   = ICON_MAP[skill.name];
   const brand   = entry?.color ?? techColor(skill.name);
   const IconCmp = entry?.Icon;
 
-  const sz      = 84;
+  const sz      = 72;
   const strokeW = 2;
   const r       = (sz - strokeW * 2) / 2;
   const circ    = 2 * Math.PI * r;
   const dash    = (Math.min(100, Math.max(0, skill.proficiency)) / 100) * circ;
   const cx      = sz / 2;
-
-  const glowing = active && !transitioning;
 
   return (
     <div
@@ -387,62 +386,56 @@ function SkillNode({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 5,
-        zIndex: active ? 5 : 2,
-        transition: "opacity 0.5s cubic-bezier(0.4,0,0.2,1), filter 0.5s",
-        opacity: transitioning ? 0.05 : active ? 1 : 0.11,
+        gap: 4,
+        zIndex: active ? 10 : 3,
+        cursor: "default",
+        /* opacity: inactive raised to 0.38 so icons are clearly visible */
+        opacity: transitioning ? 0.08 : active ? 1 : 0.38,
+        /* grayscale: 80% when inactive — still shows a hint of color */
         filter: transitioning
           ? "grayscale(100%)"
           : active
-          ? `grayscale(0%) drop-shadow(0 0 10px ${brand}bb) drop-shadow(0 0 22px ${brand}55)`
-          : "grayscale(100%)",
+          ? `grayscale(0%) drop-shadow(0 0 10px ${brand}cc) drop-shadow(0 0 24px ${brand}66)`
+          : "grayscale(80%)",
+        transition: "opacity 0.48s cubic-bezier(0.4,0,0.2,1), filter 0.48s",
       }}
     >
+      {/* Ring + icon */}
       <div style={{ position: "relative", width: sz, height: sz }}>
-        {/* Arc */}
-        <svg
-          width={sz} height={sz}
-          style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}
-        >
-          <circle cx={cx} cy={cx} r={r} fill="none" stroke={`${INK}0e`} strokeWidth={strokeW} />
+        <svg width={sz} height={sz} style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
+          <circle cx={cx} cy={cx} r={r} fill="none" stroke={`${INK}12`} strokeWidth={strokeW} />
           <circle
             cx={cx} cy={cx} r={r}
             fill="none"
-            stroke={active ? brand : `${INK}1a`}
+            stroke={active ? brand : `${INK}22`}
             strokeWidth={strokeW}
             strokeDasharray={`${dash} ${circ - dash}`}
             strokeLinecap="round"
-            style={{ transition: "stroke 0.5s" }}
+            style={{ transition: "stroke 0.48s" }}
           />
         </svg>
-
-        {/* Inner circle */}
         <div
           style={{
             position: "absolute",
-            inset: 9,
+            inset: 8,
             borderRadius: "50%",
-            border: `1.5px solid ${active ? brand + "60" : INK + "18"}`,
-            background: active ? brand + "14" : BG,
+            border: `1.5px solid ${active ? brand + "70" : INK + "20"}`,
+            background: active ? brand + "16" : `${INK}06`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            transition: "border-color 0.5s, background 0.5s",
+            transition: "border-color 0.48s, background 0.48s",
           }}
         >
           {IconCmp ? (
-            <IconCmp size={active ? 28 : 20} color={active ? brand : INK} />
+            <IconCmp size={active ? 26 : 20} color={active ? brand : INK} />
           ) : (
-            <span
-              style={{
-                fontFamily: "Inter, sans-serif",
-                fontWeight: 800,
-                fontSize: active ? 13 : 10,
-                color: active ? brand : INK,
-                letterSpacing: "-0.01em",
-                transition: "color 0.5s",
-              }}
-            >
+            <span style={{
+              fontFamily: "Inter, sans-serif", fontWeight: 800,
+              fontSize: active ? 13 : 10,
+              color: active ? brand : INK,
+              transition: "color 0.48s",
+            }}>
               {abbr(skill.name)}
             </span>
           )}
@@ -450,17 +443,15 @@ function SkillNode({
       </div>
 
       {/* Label */}
-      <div
-        style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 8,
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          color: active ? brand : INK,
-          whiteSpace: "nowrap",
-          transition: "color 0.5s",
-        }}
-      >
+      <div style={{
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 7.5,
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+        color: active ? brand : INK,
+        whiteSpace: "nowrap",
+        transition: "color 0.48s",
+      }}>
         {skill.name}
       </div>
     </div>
