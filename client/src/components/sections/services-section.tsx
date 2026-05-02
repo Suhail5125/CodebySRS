@@ -1,248 +1,236 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
-import { Code2, Palette, Smartphone, Rocket, Globe, Zap } from "lucide-react";
+import { useState } from "react";
+import { Code2, Palette, Smartphone, Rocket, Globe, Zap, ArrowUpRight } from "lucide-react";
+
+const BG = "#0A0A0A";
+const INK = "#F2EFE6";
+const ACCENT = "#FF3D00";
 
 const services = [
   {
+    code: "WD",
     icon: Code2,
     title: "Web Development",
-    description: "Custom web applications built with modern technologies like React, Next.js, and Node.js for optimal performance and scalability. We specialize in creating responsive, fast-loading websites that deliver exceptional user experiences across all devices and platforms.",
-    color: "text-chart-1",
-    gradient: "from-chart-1/20 to-chart-1/5",
+    description:
+      "Custom web applications built with React, Next.js and Node.js. Responsive, fast-loading, scalable.",
+    deliverables: ["SSR/SSG", "API Layer", "CI/CD", "Type-Safe DB"],
   },
   {
+    code: "UX",
     icon: Palette,
     title: "UI/UX Design",
-    description: "Beautiful, intuitive interfaces designed with user experience in mind. We create designs that engage and convert visitors into customers. Our design process focuses on user research, wireframing, prototyping, and creating pixel-perfect designs.",
-    color: "text-chart-2",
-    gradient: "from-chart-2/20 to-chart-2/5",
+    description:
+      "Pixel-perfect interfaces grounded in research, wireframes and prototypes that convert.",
+    deliverables: ["Design System", "Prototype", "Tokens", "Hand-off"],
   },
   {
+    code: "MB",
     icon: Smartphone,
     title: "Mobile Development",
-    description: "Responsive mobile applications that work seamlessly across all devices and platforms. From native iOS and Android apps to cross-platform solutions using React Native and Flutter, we build mobile experiences that users love and engage with daily.",
-    color: "text-chart-3",
-    gradient: "from-chart-3/20 to-chart-3/5",
+    description:
+      "Native iOS / Android and cross-platform builds (React Native, Flutter) with first-class UX.",
+    deliverables: ["Native UI", "Push", "Offline", "App Store"],
   },
   {
+    code: "3D",
     icon: Globe,
     title: "3D Web Experiences",
-    description: "Immersive 3D visualizations and interactive experiences using WebGL, Three.js, and modern graphics technologies. We create stunning 3D websites, product configurators, virtual showrooms, and interactive animations that captivate your audience.",
-    color: "text-chart-4",
-    gradient: "from-chart-4/20 to-chart-4/5",
+    description:
+      "WebGL / Three.js product configurators, virtual showrooms and interactive marketing scenes.",
+    deliverables: ["WebGL", "Three.js", "GLTF", "Animation"],
   },
   {
+    code: "PF",
     icon: Zap,
-    title: "Performance Optimization",
-    description: "Speed up your existing applications with expert optimization techniques for better user experience and SEO rankings. We analyze, optimize, and enhance your website's performance through code splitting, lazy loading, and caching strategies.",
-    color: "text-chart-1",
-    gradient: "from-chart-1/20 to-chart-1/5",
+    title: "Performance",
+    description:
+      "Audit, profile and optimise. Code-splitting, lazy loading, edge caching, real Lighthouse wins.",
+    deliverables: ["Audit", "Bundle Cut", "Cache", "Core Web Vitals"],
   },
   {
+    code: "CS",
     icon: Rocket,
     title: "Consulting & Strategy",
-    description: "Technical consulting and strategic planning to help you make the right technology decisions for your business growth. We provide architecture reviews, technology audits, scalability planning, and strategic roadmaps for digital transformation.",
-    color: "text-chart-2",
-    gradient: "from-chart-2/20 to-chart-2/5",
+    description:
+      "Architecture reviews, scalability planning, technology roadmaps for digital transformation.",
+    deliverables: ["Audit", "Roadmap", "Stack Pick", "Hiring"],
   },
 ];
 
 export function ServicesSection() {
   return (
-    <section id="services" className="min-h-screen relative overflow-hidden flex items-center pt-0 pb-20 md:py-20">
-      {/* Enhanced Animated Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-card/20 to-background" />
+    <section
+      id="services"
+      className="relative px-6 py-24 lg:px-10"
+      style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
+    >
+      <div className="mx-auto max-w-[1400px]">
+        <SectionHeader
+          num="04"
+          name="SERVICES"
+          kicker="// PRODUCTION SCOPE"
+          headline="WHAT I BUILD FOR CLIENTS"
+          right={`${String(services.length).padStart(2, "0")} OFFERINGS`}
+        />
 
-        {/* Matrix-style Grid */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div className="h-full w-full" style={{
-            backgroundImage: `
-              linear-gradient(hsl(var(--chart-1)) 1px, transparent 1px),
-              linear-gradient(90deg, hsl(var(--chart-1)) 1px, transparent 1px)
-            `,
-            backgroundSize: '80px 80px'
-          }} />
+        {/* Grid */}
+        <div
+          className="mt-10 grid grid-cols-1 gap-0 md:grid-cols-2 lg:grid-cols-3"
+          style={{ border: `2px solid ${INK}` }}
+        >
+          {services.map((s, i) => (
+            <ServiceCell key={s.title} svc={s} index={i} total={services.length} />
+          ))}
         </div>
 
-        {/* Floating Code Symbols */}
-        {Array.from({ length: 30 }).map((_, i) => {
-          const symbols = ['<>', '{}', '[]', '/>', '()', '&&', '||', '=>', 'fn', 'var', 'let', 'const', 'if', 'else', 'for', 'while', 'try', 'catch', 'class', 'import', 'export', 'async', 'await', 'return', 'null', 'true', 'false', '===', '!==', '++', '--', '+=', '-=', '*=', '/=', '??', '?.', '...', 'new', 'this', 'super', 'extends', 'implements'];
-          return (
-            <motion.div
-              key={i}
-              className="absolute font-mono font-bold"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                fontSize: `${Math.random() * 20 + 16}px`,
-                color: `hsl(var(--chart-${(i % 4) + 1}))`,
-                opacity: 0.1,
-              }}
-              animate={{
-                y: [0, -30, 0],
-              }}
-              transition={{
-                duration: 4 + Math.random() * 2,
-                repeat: Infinity,
-                delay: i * 0.1,
-                ease: "easeInOut",
-              }}
-            >
-              {symbols[i % symbols.length]}
-            </motion.div>
-          );
-        })}
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <motion.div
-          className="text-center mb-8 md:mb-12"
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+        {/* Bottom strip */}
+        <div
+          className="flex flex-col items-start justify-between gap-4 px-5 py-5 font-mono text-[11px] uppercase tracking-[0.2em] md:flex-row md:items-center"
+          style={{ border: `2px solid ${INK}`, borderTop: "none" }}
         >
-          <motion.h2
-            className="font-display text-4xl md:text-5xl font-bold mb-3"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <span className="gradient-text-cyan-purple">Our Services</span>
-          </motion.h2>
-          <motion.p
-            className="text-lg text-muted-foreground max-w-2xl mx-auto mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            Comprehensive solutions to bring your digital vision to life
-          </motion.p>
-          <motion.div
-            className="flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            <motion.div
-              className="h-px w-16 bg-gradient-to-r from-transparent to-chart-1"
-              initial={{ width: 0 }}
-              whileInView={{ width: 64 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-            />
-            <div className="h-1.5 w-1.5 rounded-full bg-chart-1 mx-3" />
-            <motion.div
-              className="h-px w-16 bg-gradient-to-l from-transparent to-chart-1"
-              initial={{ width: 0 }}
-              whileInView={{ width: 64 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-            />
-          </motion.div>
-        </motion.div>
-
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 md:mb-16"
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-        >
-          {services.map((service, index) => (
-            <motion.div
-              key={service.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ y: -15, rotateY: 5 }}
-              className="group"
-            >
-              <Card className="p-4 glass border-chart-1/20 hover:border-chart-1/50 transition-all h-full relative overflow-hidden backdrop-blur-xl">
-                {/* Glow Effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-br from-chart-1/5 via-transparent to-chart-2/5"
-                  initial={{ opacity: 0 }}
-                  whileHover={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
-
-                {/* Animated Border */}
-                <motion.div
-                  className="absolute inset-0 rounded-xl"
-                  style={{
-                    background: `conic-gradient(from 0deg, hsl(var(--chart-1)), hsl(var(--chart-2)), hsl(var(--chart-3)), hsl(var(--chart-4)), hsl(var(--chart-1)))`,
-                    padding: '1px',
-                  }}
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                >
-                  <div className="w-full h-full bg-background/95 rounded-xl" />
-                </motion.div>
-
-                <div className="relative z-20 h-full flex flex-col">
-                  {/* Header: Icon + Title */}
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="relative">
-                      <motion.div
-                        className={`flex p-3 rounded-xl glass border border-chart-1/30 ${service.color}`}
-                        whileHover={{ scale: 1.1, rotate: 10 }}
-                        animate={{
-                          boxShadow: ['0 0 12px hsl(var(--chart-1) / 0.2)', '0 0 24px hsl(var(--chart-1) / 0.4)', '0 0 12px hsl(var(--chart-1) / 0.2)'],
-                        }}
-                        transition={{
-                          boxShadow: { duration: 2, repeat: Infinity },
-                          scale: { duration: 0.2 },
-                          rotate: { duration: 0.2 }
-                        }}
-                      >
-                        <service.icon className="h-6 w-6" />
-                      </motion.div>
-
-                      {/* Floating Orb */}
-                      <motion.div
-                        className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-chart-1/60"
-                        animate={{
-                          scale: [0.5, 1.2, 0.5],
-                          opacity: [0.4, 0.9, 0.4],
-                        }}
-                        transition={{
-                          duration: 1.5,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex-1">
-                      <h3 className="font-display text-xl font-bold group-hover:text-chart-1 transition-colors leading-tight">
-                        {service.title}
-                      </h3>
-                      <motion.div
-                        className="h-0.5 bg-gradient-to-r from-chart-1 to-chart-2 rounded-full mt-1"
-                        initial={{ width: 0 }}
-                        whileHover={{ width: '100%' }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    {service.description}
-                  </p>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
+          <div className="flex items-center gap-3">
+            <span style={{ color: ACCENT }}>●</span>
+            <span>QUEUE OPEN — Q3 / Q4 2026</span>
+          </div>
+          <div className="flex items-center gap-3 opacity-70">
+            <span>RETAINER + PROJECT</span>
+            <span>•</span>
+            <span>EU / NA TIMEZONES</span>
+          </div>
+        </div>
       </div>
     </section>
+  );
+}
+
+function ServiceCell({
+  svc,
+  index,
+  total,
+}: {
+  svc: (typeof services)[number];
+  index: number;
+  total: number;
+}) {
+  const [hover, setHover] = useState(false);
+  const Icon = svc.icon;
+  const isLastRow = index >= total - (total % 3 === 0 ? 3 : total % 3);
+  const num = String(index + 1).padStart(2, "0");
+
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="relative flex flex-col p-6"
+      style={{
+        background: hover ? INK : "transparent",
+        color: hover ? BG : INK,
+        borderRight: (index + 1) % 3 !== 0 ? `2px solid ${INK}` : "none",
+        borderBottom: !isLastRow ? `2px solid ${INK}` : "none",
+        transition: "none",
+        minHeight: 280,
+      }}
+    >
+      <div className="mb-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.2em]">
+        <span style={{ color: ACCENT }}>SVC_{svc.code}</span>
+        <span style={{ opacity: hover ? 0.7 : 0.55 }}>{num} / {String(total).padStart(2, "0")}</span>
+      </div>
+
+      <Icon className="mb-4 h-8 w-8" strokeWidth={2.5} />
+
+      <h3
+        className="mb-3"
+        style={{
+          fontFamily: "Inter, sans-serif",
+          fontWeight: 800,
+          fontSize: "26px",
+          lineHeight: 1,
+          letterSpacing: "-0.025em",
+          textTransform: "uppercase",
+        }}
+      >
+        {svc.title}
+      </h3>
+
+      <p className="mb-5 text-[13px] leading-snug" style={{ opacity: 0.85 }}>
+        {svc.description}
+      </p>
+
+      <div className="mt-auto flex flex-wrap gap-1.5">
+        {svc.deliverables.map((d) => (
+          <span
+            key={d}
+            className="font-mono text-[10px] uppercase tracking-[0.16em]"
+            style={{
+              padding: "3px 7px",
+              border: `1.5px solid ${hover ? BG : INK}`,
+              transition: "none",
+            }}
+          >
+            {d}
+          </span>
+        ))}
+      </div>
+
+      <div
+        className="mt-5 flex items-center justify-between pt-3 font-mono text-[11px] uppercase tracking-[0.22em]"
+        style={{ borderTop: `2px solid ${hover ? BG : INK}` }}
+      >
+        <span className="font-bold">SCOPE_BRIEF</span>
+        <ArrowUpRight className="h-4 w-4" />
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({
+  num,
+  name,
+  kicker,
+  headline,
+  right,
+}: {
+  num: string;
+  name: string;
+  kicker: string;
+  headline: string;
+  right?: string;
+}) {
+  return (
+    <header className="grid grid-cols-12 gap-x-6">
+      <aside className="col-span-12 mb-6 lg:col-span-2 lg:mb-0">
+        <div className="font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
+          [ SECTION {num} ]
+        </div>
+        <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
+          / {name}
+        </div>
+        <div className="mt-3 h-[2px] w-12" style={{ background: ACCENT }} />
+      </aside>
+      <div className="col-span-12 lg:col-span-10">
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
+            {kicker}
+          </span>
+          {right && (
+            <span className="font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
+              {right}
+            </span>
+          )}
+        </div>
+        <h2
+          className="mt-2"
+          style={{
+            fontFamily: "Inter, sans-serif",
+            fontWeight: 800,
+            fontSize: "clamp(40px, 7vw, 96px)",
+            lineHeight: 0.92,
+            letterSpacing: "-0.035em",
+            textTransform: "uppercase",
+          }}
+        >
+          {headline}
+        </h2>
+      </div>
+    </header>
   );
 }

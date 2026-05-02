@@ -1,512 +1,328 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
+import { useState } from "react";
 import { Lightbulb, FileSearch, Palette, Code, TestTube, Rocket } from "lucide-react";
 
-const processSteps = [
+const BG = "#0A0A0A";
+const INK = "#F2EFE6";
+const ACCENT = "#FF3D00";
+
+type Step = {
+  num: string;
+  icon: typeof Lightbulb;
+  title: string;
+  description: string;
+  duration: string;
+  activities: string[];
+  deliverables: string[];
+};
+
+const STEPS: Step[] = [
   {
-    number: "01",
+    num: "01",
     icon: Lightbulb,
     title: "Discovery & Planning",
-    description: "We start by understanding your business goals, target audience, and project requirements to create a comprehensive strategy.",
-    color: "text-chart-1",
-    gradient: "from-chart-1 to-chart-2",
-    duration: "1-2 weeks",
+    description:
+      "We map the goal, audience, constraints and success metrics into a concrete brief.",
+    duration: "1–2 WK",
+    activities: ["Stakeholder interviews", "Market research", "Competitor benchmark", "Requirements"],
+    deliverables: ["Project brief", "Personas", "Market analysis", "Requirements doc"],
   },
   {
-    number: "02",
+    num: "02",
     icon: FileSearch,
     title: "Research & Analysis",
-    description: "Deep dive into market research, competitor analysis, and user behavior to inform our design and development decisions.",
-    color: "text-chart-2",
-    gradient: "from-chart-2 to-chart-3",
-    duration: "1 week",
+    description:
+      "Technical feasibility, resource planning, risk assessment and a fixed timeline.",
+    duration: "1 WK",
+    activities: ["Feasibility study", "Resource plan", "Timeline", "Risk register"],
+    deliverables: ["Roadmap", "Tech specs", "Resource plan", "Timeline"],
   },
   {
-    number: "03",
+    num: "03",
     icon: Palette,
     title: "Design & Prototype",
-    description: "Create stunning visual designs and interactive prototypes that bring your vision to life before development begins.",
-    color: "text-chart-3",
-    gradient: "from-chart-3 to-chart-4",
-    duration: "2-3 weeks",
+    description:
+      "Interactive prototypes and a tokenised design system before a single line of production code.",
+    duration: "2–3 WK",
+    activities: ["Wireframes", "UX flows", "Prototype", "Design system"],
+    deliverables: ["Design system", "Prototype", "UI screens", "Style guide"],
   },
   {
-    number: "04",
+    num: "04",
     icon: Code,
     title: "Development",
-    description: "Build your solution using cutting-edge technologies and best practices, ensuring scalability and performance.",
-    color: "text-chart-4",
-    gradient: "from-chart-4 to-chart-1",
-    duration: "4-6 weeks",
+    description:
+      "Build with type-safe stacks, atomic commits and trunk-based delivery into staging daily.",
+    duration: "4–6 WK",
+    activities: ["Frontend", "Backend", "DB schema", "API layer"],
+    deliverables: ["Source code", "Docs", "API endpoints", "DB schema"],
   },
   {
-    number: "05",
+    num: "05",
     icon: TestTube,
     title: "Testing & QA",
-    description: "Rigorous testing across devices and browsers to ensure everything works flawlessly before launch.",
-    color: "text-chart-1",
-    gradient: "from-chart-1 to-chart-2",
-    duration: "1-2 weeks",
+    description:
+      "Unit, integration, cross-browser and performance audits — plus a security pass.",
+    duration: "1–2 WK",
+    activities: ["Unit + e2e", "Cross-browser", "Performance", "Security audit"],
+    deliverables: ["Test reports", "Bug fixes", "Perf metrics", "Security audit"],
   },
   {
-    number: "06",
+    num: "06",
     icon: Rocket,
     title: "Launch & Support",
-    description: "Deploy your project to production and provide ongoing support and maintenance to ensure continued success.",
-    color: "text-chart-2",
-    gradient: "from-chart-2 to-chart-3",
-    duration: "1 week",
+    description:
+      "Deploy, monitor, train and stay on call. Smooth runway after go-live.",
+    duration: "1 WK",
+    activities: ["Production deploy", "Monitoring", "Training", "Support window"],
+    deliverables: ["Live site", "Deploy guide", "Training", "Support plan"],
   },
 ];
 
-const getStepActivities = (stepNumber: string) => {
-  const activities: Record<string, string[]> = {
-    '01': ['Stakeholder interviews', 'Market research & analysis', 'Competitor benchmarking', 'Requirements gathering'],
-    '02': ['Technical feasibility study', 'Resource planning', 'Timeline estimation', 'Risk assessment'],
-    '03': ['Wireframing & mockups', 'User experience design', 'Interactive prototyping', 'Design system creation'],
-    '04': ['Frontend development', 'Backend architecture', 'Database design', 'API integration'],
-    '05': ['Unit & integration testing', 'Cross-browser testing', 'Performance optimization', 'Security auditing'],
-    '06': ['Production deployment', 'Performance monitoring', 'User training', 'Ongoing support']
-  };
-  return activities[stepNumber] || [];
-};
-
-const getStepDeliverables = (stepNumber: string) => {
-  const deliverables: Record<string, string[]> = {
-    '01': ['Project Brief', 'User Personas', 'Market Analysis', 'Requirements Doc'],
-    '02': ['Project Roadmap', 'Technical Specs', 'Resource Plan', 'Timeline'],
-    '03': ['Design System', 'Prototypes', 'UI/UX Designs', 'Style Guide'],
-    '04': ['Source Code', 'Documentation', 'API Endpoints', 'Database Schema'],
-    '05': ['Test Reports', 'Bug Fixes', 'Performance Metrics', 'Security Audit'],
-    '06': ['Live Website', 'Deployment Guide', 'Training Materials', 'Support Plan']
-  };
-  return deliverables[stepNumber] || [];
-};
-
 export function WorkProcessSection() {
-  const [selectedStep, setSelectedStep] = useState<string>('01');
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const checkDesktop = () => setIsDesktop(window.innerWidth >= 768);
-    checkDesktop();
-    window.addEventListener('resize', checkDesktop);
-    return () => window.removeEventListener('resize', checkDesktop);
-  }, []);
-
-  // Auto-rotate steps
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSelectedStep(prev => {
-        const currentIndex = processSteps.findIndex(step => step.number === prev);
-        const nextIndex = (currentIndex + 1) % processSteps.length;
-        return processSteps[nextIndex].number;
-      });
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const currentStep = processSteps.find(step => step.number === selectedStep) || processSteps[0];
-  const currentIndex = processSteps.findIndex(step => step.number === selectedStep);
+  const [active, setActive] = useState("01");
+  const current = STEPS.find((s) => s.num === active) ?? STEPS[0];
 
   return (
-    <section id="process" className="min-h-screen relative overflow-hidden flex items-center pt-0 pb-20 md:py-20">
-      {/* Enhanced Animated Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-card/20 to-background" />
+    <section
+      id="process"
+      className="relative px-6 py-24 lg:px-10"
+      style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
+    >
+      <div className="mx-auto max-w-[1400px]">
+        <SectionHeader
+          num="05"
+          name="PROCESS"
+          kicker="// DELIVERY PIPELINE"
+          headline="HOW THE WORK GETS SHIPPED"
+          right="06 PHASES · ~12 WEEKS"
+        />
 
-        {/* Matrix-style Grid */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div className="h-full w-full" style={{
-            backgroundImage: `
-              linear-gradient(hsl(var(--chart-1)) 1px, transparent 1px),
-              linear-gradient(90deg, hsl(var(--chart-1)) 1px, transparent 1px)
-            `,
-            backgroundSize: '80px 80px'
-          }} />
+        {/* Phase rail */}
+        <div
+          className="mt-10 grid grid-cols-2 gap-0 md:grid-cols-3 lg:grid-cols-6"
+          style={{ border: `2px solid ${INK}` }}
+        >
+          {STEPS.map((s, i) => {
+            const isActive = s.num === active;
+            return (
+              <button
+                key={s.num}
+                onClick={() => setActive(s.num)}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = ACCENT;
+                    e.currentTarget.style.color = BG;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = INK;
+                  }
+                }}
+                className="flex flex-col items-start px-4 py-4 text-left"
+                style={{
+                  background: isActive ? INK : "transparent",
+                  color: isActive ? BG : INK,
+                  borderRight: i < STEPS.length - 1 ? `2px solid ${INK}` : "none",
+                  transition: "none",
+                }}
+              >
+                <span
+                  className="font-mono text-[11px] uppercase tracking-[0.22em]"
+                  style={{ color: isActive ? BG : ACCENT }}
+                >
+                  PHASE {s.num}
+                </span>
+                <span
+                  className="mt-1.5"
+                  style={{
+                    fontFamily: "Inter, sans-serif",
+                    fontWeight: 800,
+                    fontSize: "13px",
+                    lineHeight: 1.1,
+                    textTransform: "uppercase",
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {s.title}
+                </span>
+                <span className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] opacity-70">
+                  {s.duration}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Floating Code Symbols */}
-        {Array.from({ length: 30 }).map((_, i) => {
-          const symbols = ['<>', '{}', '[]', '/>', '()', '&&', '||', '=>', 'fn', 'var', 'let', 'const', 'if', 'else', 'for', 'while', 'try', 'catch', 'class', 'import', 'export', 'async', 'await', 'return', 'null', 'true', 'false', '===', '!==', '++', '--', '+=', '-=', '*=', '/=', '??', '?.', '...', 'new', 'this', 'super', 'extends', 'implements'];
-          return (
-            <motion.div
-              key={i}
-              className="absolute font-mono font-bold"
+        {/* Detail pane */}
+        <div
+          className="grid grid-cols-1 gap-0 lg:grid-cols-12"
+          style={{ border: `2px solid ${INK}`, borderTop: "none" }}
+        >
+          {/* Left: huge number */}
+          <div
+            className="flex items-center justify-center px-6 py-10 lg:col-span-3"
+            style={{ borderRight: `2px solid ${INK}`, background: ACCENT, color: BG }}
+          >
+            <div
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                fontSize: `${Math.random() * 20 + 16}px`,
-                color: `hsl(var(--chart-${(i % 4) + 1}))`,
-                opacity: 0.1,
-              }}
-              animate={{
-                y: [0, -30, 0],
-              }}
-              transition={{
-                duration: 4 + Math.random() * 2,
-                repeat: Infinity,
-                delay: i * 0.1,
-                ease: "easeInOut",
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 800,
+                fontSize: "clamp(120px, 14vw, 220px)",
+                lineHeight: 0.85,
+                letterSpacing: "-0.05em",
               }}
             >
-              {symbols[i % symbols.length]}
-            </motion.div>
-          );
-        })}
-      </div>
+              {current.num}
+            </div>
+          </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        {/* Header */}
-        <motion.div
-          className="text-center mb-8 md:mb-12"
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+          {/* Middle: copy */}
+          <div className="px-6 py-8 lg:col-span-5" style={{ borderRight: `2px solid ${INK}` }}>
+            <div className="mb-3 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em]">
+              <current.icon className="h-4 w-4" />
+              <span style={{ color: ACCENT }}>PHASE_{current.num}</span>
+              <span className="opacity-60">DURATION {current.duration}</span>
+            </div>
+            <h3
+              className="mb-4"
+              style={{
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 800,
+                fontSize: "clamp(28px, 4vw, 48px)",
+                lineHeight: 0.95,
+                letterSpacing: "-0.025em",
+                textTransform: "uppercase",
+              }}
+            >
+              {current.title}
+            </h3>
+            <p className="text-[14px] leading-relaxed" style={{ opacity: 0.85 }}>
+              {current.description}
+            </p>
+          </div>
+
+          {/* Right: lists */}
+          <div className="grid grid-cols-1 gap-0 sm:grid-cols-2 lg:col-span-4">
+            <ListBlock title="ACTIVITIES" items={current.activities} borderRight />
+            <ListBlock title="DELIVERABLES" items={current.deliverables} />
+          </div>
+        </div>
+
+        {/* Bottom counter */}
+        <div
+          className="grid grid-cols-3 gap-0 font-mono text-[11px] uppercase tracking-[0.2em]"
+          style={{ border: `2px solid ${INK}`, borderTop: "none" }}
         >
-          <motion.h2
-            className="font-display text-4xl md:text-5xl font-bold mb-3"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <span className="gradient-text-cyan-purple">Our Work Process</span>
-          </motion.h2>
-          <motion.p
-            className="text-lg text-muted-foreground max-w-2xl mx-auto mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            From concept to launch - our systematic approach to digital excellence
-          </motion.p>
-          <motion.div
-            className="flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            <motion.div
-              className="h-px w-16 bg-gradient-to-r from-transparent to-chart-1"
-              initial={{ width: 0 }}
-              whileInView={{ width: 64 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-            />
-            <div className="h-1.5 w-1.5 rounded-full bg-chart-1 mx-3" />
-            <motion.div
-              className="h-px w-16 bg-gradient-to-l from-transparent to-chart-1"
-              initial={{ width: 0 }}
-              whileInView={{ width: 64 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-            />
-          </motion.div>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-
-          {/* Left Side - Process Timeline */}
-          <div className="relative h-[32rem] md:h-96 flex items-center justify-center md:-ml-8">
-            {/* Process Flow Path */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 350 400" preserveAspectRatio="xMidYMid meet">
-              <defs>
-                <linearGradient id="processGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity="0.9" />
-                  <stop offset="20%" stopColor="hsl(var(--chart-2))" stopOpacity="0.7" />
-                  <stop offset="40%" stopColor="hsl(var(--chart-3))" stopOpacity="0.7" />
-                  <stop offset="60%" stopColor="hsl(var(--chart-4))" stopOpacity="0.7" />
-                  <stop offset="80%" stopColor="hsl(var(--chart-1))" stopOpacity="0.7" />
-                  <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity="0.9" />
-                </linearGradient>
-                <filter id="processGlow">
-                  <feGaussianBlur stdDeviation="5" result="coloredBlur" />
-                  <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-
-              {/* Main Process Flow through all steps */}
-              <motion.path
-                d="M32 8 Q120 40 260 72 Q320 100 72 140 Q30 180 288 220 Q320 250 72 290 Q30 320 288 340"
-                stroke="url(#processGradient)"
-                strokeWidth="5"
-                fill="none"
-                filter="url(#processGlow)"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ duration: 4, ease: "easeInOut" }}
-              />
-
-              {/* Flowing Data Particles */}
-              {Array.from({ length: 12 }).map((_, i) => (
-                <motion.circle
-                  key={`process-particle-${i}`}
-                  r="3"
-                  fill={`hsl(var(--chart-${(i % 4) + 1}))`}
-                  opacity="0.8"
-                  initial={{ opacity: 0 }}
-                  animate={{
-                    opacity: [0, 1, 0],
-                    offsetDistance: ['0%', '100%']
-                  }}
-                  transition={{
-                    duration: 8,
-                    repeat: Infinity,
-                    delay: i * 0.5,
-                    ease: "easeInOut"
-                  }}
-                  style={{
-                    offsetPath: "path('M32 8 Q120 40 260 72 Q320 100 72 140 Q30 180 288 220 Q320 250 72 290 Q30 320 288 340')"
-                  }}
-                />
-              ))}
-            </svg>
-
-            {/* Process Step Buttons positioned on curve */}
-            <div className="relative z-10 w-full h-full">
-              {processSteps.map((step, index) => {
-                const Icon = step.icon;
-                const isSelected = selectedStep === step.number;
-
-                // Positions along the process flow curve
-                const positions = [
-                  {
-                    mobile: { x: '8%', y: '10%' },
-                    desktop: { x: '16%', y: '-6%' }
-                  },   // Discovery
-                  {
-                    mobile: { x: '65%', y: '22%' },
-                    desktop: { x: '62%', y: '10%' }
-                  },   // Planning
-                  {
-                    mobile: { x: '10%', y: '36%' },
-                    desktop: { x: '22%', y: '28%' }
-                  },   // Design
-                  {
-                    mobile: { x: '70%', y: '50%' },
-                    desktop: { x: '64%', y: '48%' }
-                  },   // Development
-                  {
-                    mobile: { x: '16%', y: '64%' },
-                    desktop: { x: '24%', y: '66%' }
-                  },   // Testing
-                  {
-                    mobile: { x: '76%', y: '70%' },
-                    desktop: { x: '64%', y: '76%' }
-                  }    // Launch
-                ];
-
-                const currentPos = positions[index] || { mobile: { x: '50%', y: '50%' }, desktop: { x: '50%', y: '50%' } };
-                const pos = isDesktop ? currentPos.desktop : currentPos.mobile;
-
-                return (
-                  <motion.div
-                    key={step.number}
-                    className="absolute flex flex-col items-center"
-                    style={{
-                      left: pos.x,
-                      top: pos.y,
-                      transform: 'translate(-50%, -60%)'
-                    }}
-                    initial={{ opacity: 0, scale: 0.2, y: 30 }}
-                    whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-100px" }}
-                    transition={{
-                      duration: 0.8,
-                      delay: index * 0.2,
-                      type: "spring",
-                      stiffness: 100
-                    }}
-                  >
-
-
-                    {/* Process Step Button */}
-                    <motion.button
-                      className="relative group"
-                      onClick={() => setSelectedStep(step.number)}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      {/* Main Button */}
-                      <motion.div
-                        className={`w-16 h-16 md:w-24 md:h-24 rounded-2xl border-3 transition-all duration-500 glass backdrop-blur-xl relative overflow-hidden ${isSelected
-                          ? 'border-chart-1 bg-chart-1/20 shadow-2xl'
-                          : 'border-chart-1/50 hover:border-chart-1/80 bg-background/15'
-                          }`}
-                        style={{
-                          background: isSelected ? `linear-gradient(135deg, 
-                            hsl(var(--chart-${(index % 4) + 1}) / 0.25) 0%, 
-                            hsl(var(--chart-${((index + 1) % 4) + 1}) / 0.15) 100%)` :
-                            `linear-gradient(135deg, 
-                            hsl(var(--chart-${(index % 4) + 1}) / 0.15) 0%, 
-                            hsl(var(--chart-${((index + 1) % 4) + 1}) / 0.1) 100%)`
-                        }}
-                        animate={{
-                          boxShadow: isSelected
-                            ? '0 0 40px hsl(var(--chart-1) / 0.5), 0 0 80px hsl(var(--chart-1) / 0.3)'
-                            : '0 0 0px hsl(var(--chart-1) / 0)'
-                        }}
-                      >
-                        {/* Inner Content */}
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2">
-                          <Icon className={`h-4 w-4 md:h-6 md:w-6 transition-colors ${isSelected ? 'text-chart-1' : 'text-muted-foreground group-hover:text-chart-1'
-                            }`} />
-                          <span className={`text-[10px] md:text-xs font-bold transition-colors text-center leading-tight ${isSelected ? 'text-chart-1' : 'text-muted-foreground group-hover:text-chart-1'
-                            }`}>
-                            CHAPTER {step.number}
-                          </span>
-                        </div>
-
-                        {/* Active Indicator */}
-                        {isSelected && (
-                          <>
-                            <motion.div
-                              className="absolute -inset-3 rounded-2xl border-3 border-chart-1/40"
-                              animate={{
-                                scale: [1, 1.15, 1],
-                                opacity: [0.4, 0.1, 0.4]
-                              }}
-                              transition={{
-                                duration: 2.5,
-                                repeat: Infinity,
-                                ease: "easeInOut"
-                              }}
-                            />
-                            <motion.div
-                              className="absolute inset-0 rounded-2xl bg-gradient-to-br from-chart-1/10 to-chart-2/10"
-                              animate={{
-                                opacity: [0.3, 0.6, 0.3]
-                              }}
-                              transition={{
-                                duration: 3,
-                                repeat: Infinity,
-                                ease: "easeInOut"
-                              }}
-                            />
-                          </>
-                        )}
-                      </motion.div>
-                    </motion.button>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right Side - Static Card with Scrolling Content */}
-          <div className="flex flex-col items-center justify-center">
-            {/* Static Card Container */}
-            <div className="relative w-full max-w-md">
-              {/* Static Card Background with Glow */}
-              <div className="absolute inset-0 bg-gradient-to-br from-chart-1/10 via-transparent to-chart-2/10 rounded-2xl blur-lg" />
-
-              {/* Static Main Card */}
-              <div className="relative glass rounded-2xl border-2 border-chart-1/30 p-6 backdrop-blur-xl overflow-hidden h-[30rem]">
-                {/* Scrolling Content Container */}
-                <div className="relative overflow-hidden">
-                  {/* Page Content */}
-                  <motion.div
-                    key={selectedStep}
-                    initial={{ x: 300, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: -300, opacity: 0 }}
-                    transition={{
-                      duration: 1.2,
-                      ease: "easeInOut"
-                    }}
-                    className="relative z-10"
-                  >
-                    {/* Book Chapter Header */}
-                    <div className="text-center mb-6">
-                      {/* Chapter and Title on Single Line */}
-                      <h3 className="font-display text-xl font-bold mb-4 leading-tight">
-                        <span className="text-chart-1">CHAPTER {currentStep.number}:</span>{' '}
-                        <span className="text-foreground">{currentStep.title}</span>
-                      </h3>
-
-                      {/* Chapter Description */}
-                      <p className="text-sm text-muted-foreground leading-relaxed mb-6 text-justify">
-                        {currentStep.description}
-                      </p>
-
-                      {/* Decorative Line */}
-                      <div className="flex items-center justify-center mb-6">
-                        <div className="h-px w-12 bg-gradient-to-r from-transparent to-chart-1/50" />
-                        <div className="h-1 w-1 rounded-full bg-chart-1 mx-3" />
-                        <div className="h-px w-12 bg-gradient-to-l from-transparent to-chart-1/50" />
-                      </div>
-                    </div>
-
-                    {/* Key Activities */}
-                    <div className="mb-6">
-                      <h5 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-chart-1" />
-                        Key Activities
-                      </h5>
-                      <div className="space-y-2">
-                        {getStepActivities(currentStep.number).slice(0, 3).map((activity, index) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.2 + index * 0.1 }}
-                            className="flex items-center gap-3 p-2 rounded-lg bg-background/20 border border-chart-1/10"
-                          >
-                            <div className="h-1.5 w-1.5 rounded-full bg-chart-1/60 flex-shrink-0" />
-                            <span className="text-sm text-muted-foreground">{activity}</span>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Deliverables */}
-                    <div>
-                      <h5 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-chart-2" />
-                        Deliverables
-                      </h5>
-                      <div className="flex flex-wrap gap-2">
-                        {getStepDeliverables(currentStep.number).slice(0, 4).map((deliverable, index) => (
-                          <motion.span
-                            key={index}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.4 + index * 0.1 }}
-                            className="text-xs font-medium bg-chart-2/10 text-chart-2 px-3 py-1.5 rounded-full border border-chart-2/20"
-                          >
-                            {deliverable}
-                          </motion.span>
-                        ))}
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-
-                {/* Static Holographic Effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-br from-chart-1/10 via-transparent to-chart-2/10 pointer-events-none"
-                  animate={{
-                    opacity: [0.2, 0.4, 0.2]
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                />
-              </div>
-            </div>
-          </div>
+          <Counter k="PHASE" v={`${current.num} / 06`} />
+          <Counter k="MODE" v="ASYNC + SPRINTS" border />
+          <Counter k="STATUS" v="READY" />
         </div>
       </div>
     </section>
+  );
+}
+
+function ListBlock({
+  title,
+  items,
+  borderRight,
+}: {
+  title: string;
+  items: string[];
+  borderRight?: boolean;
+}) {
+  return (
+    <div
+      className="px-5 py-6"
+      style={{ borderRight: borderRight ? `2px solid ${INK}` : "none" }}
+    >
+      <div
+        className="mb-3 font-mono text-[10px] uppercase tracking-[0.22em]"
+        style={{ color: ACCENT }}
+      >
+        {title}
+      </div>
+      <ul className="space-y-1.5">
+        {items.map((it, i) => (
+          <li
+            key={i}
+            className="flex items-baseline gap-2 font-mono text-[12px] uppercase tracking-[0.08em]"
+          >
+            <span style={{ color: ACCENT }}>›</span>
+            <span>{it}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Counter({ k, v, border }: { k: string; v: string; border?: boolean }) {
+  return (
+    <div
+      className="flex items-center justify-between px-4 py-3"
+      style={{
+        borderLeft: border ? `2px solid ${INK}` : "none",
+        borderRight: border ? `2px solid ${INK}` : "none",
+      }}
+    >
+      <span className="opacity-60">{k}</span>
+      <span style={{ color: ACCENT }}>{v}</span>
+    </div>
+  );
+}
+
+function SectionHeader({
+  num,
+  name,
+  kicker,
+  headline,
+  right,
+}: {
+  num: string;
+  name: string;
+  kicker: string;
+  headline: string;
+  right?: string;
+}) {
+  return (
+    <header className="grid grid-cols-12 gap-x-6">
+      <aside className="col-span-12 mb-6 lg:col-span-2 lg:mb-0">
+        <div className="font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
+          [ SECTION {num} ]
+        </div>
+        <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
+          / {name}
+        </div>
+        <div className="mt-3 h-[2px] w-12" style={{ background: ACCENT }} />
+      </aside>
+      <div className="col-span-12 lg:col-span-10">
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
+            {kicker}
+          </span>
+          {right && (
+            <span className="font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
+              {right}
+            </span>
+          )}
+        </div>
+        <h2
+          className="mt-2"
+          style={{
+            fontFamily: "Inter, sans-serif",
+            fontWeight: 800,
+            fontSize: "clamp(40px, 7vw, 96px)",
+            lineHeight: 0.92,
+            letterSpacing: "-0.035em",
+            textTransform: "uppercase",
+          }}
+        >
+          {headline}
+        </h2>
+      </div>
+    </header>
   );
 }

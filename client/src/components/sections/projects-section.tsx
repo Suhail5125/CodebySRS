@@ -1,20 +1,11 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
 import { ProjectCard } from "@/components/project-card";
 import type { Project } from "@shared";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ExternalLink } from "lucide-react";
-import { FaGithub } from "react-icons/fa";
+const BG = "#0A0A0A";
+const INK = "#F2EFE6";
+const ACCENT = "#FF3D00";
 
 interface ProjectsSectionProps {
   projects: Project[];
@@ -22,390 +13,232 @@ interface ProjectsSectionProps {
 }
 
 export function ProjectsSection({ projects, isLoading }: ProjectsSectionProps) {
-  const featuredProjects = projects.filter((project) => project.featured);
-  const displayProjects = (featuredProjects.length > 0 ? featuredProjects : projects);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  const [visibleCount, setVisibleCount] = useState(1);
+  const featured = projects.filter((p) => p.featured);
+  const display = featured.length > 0 ? featured : projects;
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [perView, setPerView] = useState(1);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setVisibleCount(1);
-      } else if (window.innerWidth < 1024) {
-        setVisibleCount(2);
-      } else {
-        setVisibleCount(3);
-      }
+    const r = () => {
+      const w = window.innerWidth;
+      setPerView(w < 768 ? 1 : w < 1024 ? 2 : 3);
     };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    r();
+    window.addEventListener("resize", r);
+    return () => window.removeEventListener("resize", r);
   }, []);
 
-  // Auto-scroll effect
   useEffect(() => {
-    if (displayProjects.length === 0 || isPaused) return;
+    if (display.length === 0 || paused) return;
+    const t = setInterval(() => setIndex((i) => (i + 1) % display.length), 3500);
+    return () => clearInterval(t);
+  }, [display.length, paused]);
 
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % displayProjects.length);
-    }, 3000);
+  const visible: Project[] = [];
+  for (let i = 0; i < Math.min(perView, display.length); i++) {
+    visible.push(display[(index + i) % display.length]);
+  }
 
-    return () => clearInterval(interval);
-  }, [displayProjects.length, isPaused]);
-
-  // Get visible cards based on screen size
-  const getVisibleProjects = () => {
-    const visible = [];
-    for (let i = 0; i < visibleCount; i++) {
-      const index = (currentIndex + i) % displayProjects.length;
-      visible.push(displayProjects[index]);
-    }
-    return visible;
+  const open = (p: Project) => {
+    window.location.href = `/projects/${p.id}`;
   };
-
-  const handleProjectSelect = (project: Project) => {
-    // Navigate to project detail page (coming soon page for now)
-    window.location.href = `/projects/${project.id}`;
-  };
-
-  const handleDialogChange = (open: boolean) => {
-    setIsDialogOpen(open);
-
-    if (!open) {
-      setSelectedProject(null);
-    }
-  };
-
-  const getTechnologies = (project: Project) => {
-    const value = project.technologies as unknown;
-
-    if (Array.isArray(value)) {
-      return value as string[];
-    }
-
-    if (typeof value === "string") {
-      try {
-        return JSON.parse(value) as string[];
-      } catch {
-        return [];
-      }
-    }
-
-    return [];
-  };
-
-  const selectedTechnologies = selectedProject ? getTechnologies(selectedProject) : [];
 
   return (
-    <section id="projects" className="min-h-screen pt-0 pb-20 md:py-20 relative flex flex-col items-center justify-center overflow-x-hidden w-full">
-      {/* Enhanced Animated Background */}
-      <div className="absolute inset-0 overflow-hidden z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-card/20 to-background" />
+    <section
+      id="projects"
+      className="relative px-6 py-24 lg:px-10"
+      style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
+    >
+      <div className="mx-auto max-w-[1400px]">
+        <SectionHeader
+          num="02"
+          name="PROJECTS"
+          kicker="// SHIPPED ARTIFACTS"
+          headline="WORK THAT RUNS IN PRODUCTION"
+          right={`${display.length} ENTRIES`}
+        />
 
-        {/* Matrix-style Grid */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div className="h-full w-full" style={{
-            backgroundImage: `
-              linear-gradient(hsl(var(--chart-1)) 1px, transparent 1px),
-              linear-gradient(90deg, hsl(var(--chart-1)) 1px, transparent 1px)
-            `,
-            backgroundSize: '80px 80px'
-          }} />
+        {/* Controls bar */}
+        <div
+          className="mb-0 mt-10 flex items-center justify-between px-4 py-3 font-mono text-[11px] uppercase tracking-[0.2em]"
+          style={{ border: `2px solid ${INK}`, borderBottom: "none" }}
+        >
+          <div className="flex items-center gap-4">
+            <span style={{ color: ACCENT }}>●</span>
+            <span>FEED://featured</span>
+            <span className="hidden md:inline opacity-60">{paused ? "PAUSED" : "AUTO-ROTATE 3.5s"}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIndex((i) => (i - 1 + display.length) % display.length)}
+              className="inline-flex h-7 w-7 items-center justify-center"
+              style={{ border: `2px solid ${INK}`, transition: "none" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = ACCENT;
+                e.currentTarget.style.color = BG;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = INK;
+              }}
+              aria-label="Previous"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setIndex((i) => (i + 1) % display.length)}
+              className="inline-flex h-7 w-7 items-center justify-center"
+              style={{ border: `2px solid ${INK}`, transition: "none" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = ACCENT;
+                e.currentTarget.style.color = BG;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = INK;
+              }}
+              aria-label="Next"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setPaused((p) => !p)}
+              className="px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em]"
+              style={{ border: `2px solid ${INK}`, transition: "none" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = INK;
+                e.currentTarget.style.color = BG;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = INK;
+              }}
+            >
+              {paused ? "PLAY" : "PAUSE"}
+            </button>
+          </div>
         </div>
 
-        {/* Floating Code Symbols */}
-        {Array.from({ length: 30 }).map((_, i) => {
-          const symbols = ['<>', '{}', '[]', '/>', '()', '&&', '||', '=>', 'fn', 'var', 'let', 'const', 'if', 'else', 'for', 'while', 'try', 'catch', 'class', 'import', 'export', 'async', 'await', 'return', 'null', 'true', 'false', '===', '!==', '++', '--', '+=', '-=', '*=', '/=', '??', '?.', '...', 'new', 'this', 'super', 'extends', 'implements'];
-          return (
-            <motion.div
-              key={i}
-              className="absolute font-mono font-bold"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                fontSize: `${Math.random() * 20 + 16}px`,
-                color: `hsl(var(--chart-${(i % 4) + 1}))`,
-                opacity: 0.1,
-              }}
-              animate={{
-                y: [0, -30, 0],
-              }}
-              transition={{
-                duration: 4 + Math.random() * 2,
-                repeat: Infinity,
-                delay: i * 0.1,
-                ease: "easeInOut",
-              }}
-            >
-              {symbols[i % symbols.length]}
-            </motion.div>
-          );
-        })}
-      </div>
-
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <motion.div
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+        {/* Grid */}
+        <div
+          className="grid gap-0 p-0"
+          style={{
+            border: `2px solid ${INK}`,
+            gridTemplateColumns: `repeat(${perView}, minmax(0, 1fr))`,
+            background: BG,
+          }}
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
         >
-          <motion.h2
-            className="font-display text-4xl md:text-5xl font-bold mb-3 text-center px-4"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <span className="gradient-text-cyan-purple">Featured Projects</span>
-          </motion.h2>
-          <motion.p
-            className="text-lg text-muted-foreground max-w-2xl mx-auto mb-4 text-center px-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            Innovation meets design in our latest creations
-          </motion.p>
-          <motion.div
-            className="flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            <motion.div
-              className="h-px w-16 bg-gradient-to-r from-transparent to-chart-1"
-              initial={{ width: 0 }}
-              whileInView={{ width: 64 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-            />
-            <div className="h-1.5 w-1.5 rounded-full bg-chart-1 mx-3" />
-            <motion.div
-              className="h-px w-16 bg-gradient-to-l from-transparent to-chart-1"
-              initial={{ width: 0 }}
-              whileInView={{ width: 64 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-            />
-          </motion.div>
-        </motion.div>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="space-y-4">
-                <Skeleton className="aspect-video w-full" />
-                <Skeleton className="h-8 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-6 w-16" />
-                  <Skeleton className="h-6 w-20" />
-                  <Skeleton className="h-6 w-16" />
+          {isLoading
+            ? Array.from({ length: perView }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[440px]"
+                  style={{
+                    borderRight: i < perView - 1 ? `2px solid ${INK}` : "none",
+                    background: "transparent",
+                  }}
+                >
+                  <div className="flex h-full items-center justify-center font-mono text-[11px] uppercase tracking-[0.2em] opacity-50">
+                    LOADING…
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : projects.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="glass rounded-lg border border-border/50 p-12 max-w-md mx-auto">
-              <div className="text-6xl mb-4">🚀</div>
-              <h3 className="font-display text-2xl font-bold mb-2">No Projects Yet</h3>
-              <p className="text-muted-foreground">
-                Check back soon for exciting projects!
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="relative w-full overflow-visible pb-20" style={{ paddingTop: '0px' }}>
-            <motion.div
-              className="relative max-w-[1280px] mx-auto px-2"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-            >
-              <div className="relative flex md:gap-4 overflow-x-hidden justify-center" style={{ overflowY: 'visible' }}>
-                <AnimatePresence mode="popLayout" initial={false}>
-                  {getVisibleProjects().map((project, index) => (
-                    <motion.div
-                      key={`${project.id}-${(currentIndex + index) % displayProjects.length}`}
-                      layout
-                      initial={{ x: "100%", opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      exit={{ x: "-100%", opacity: 0 }}
-                      transition={{
-                        duration: 0.6,
-                        ease: "easeInOut",
-                        layout: { duration: 0.6 }
-                      }}
-                      className="flex-shrink-0 w-[85vw] max-w-[380px] md:w-[380px] mx-auto"
-                      style={{ marginTop: '0', paddingTop: '0' }}
-                      onMouseEnter={() => setIsPaused(true)}
-                      onMouseLeave={() => setIsPaused(false)}
-                    >
-                      <ProjectCard
-                        project={project}
-                        index={index}
-                        onSelect={() => handleProjectSelect(project)}
-                      />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
+              ))
+            : visible.map((p, i) => (
+                <div
+                  key={`${p.id}-${i}`}
+                  style={{
+                    borderRight: i < visible.length - 1 ? `2px solid ${INK}` : "none",
+                  }}
+                >
+                  <ProjectCard project={p} index={(index + i) % display.length} onSelect={() => open(p)} />
+                </div>
+              ))}
+        </div>
 
-              {/* Control Dots */}
-              <motion.div
-                className="flex items-center justify-center gap-3 mt-8"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-              >
-                {displayProjects.map((_, index) => (
-                  <motion.button
-                    key={index}
-                    onClick={() => {
-                      setCurrentIndex(index);
-                      setIsPaused(true);
-                      setTimeout(() => setIsPaused(false), 5000);
-                    }}
-                    className="relative group"
-                    whileHover={{ scale: 1.3 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <motion.div
-                      className="w-2.5 h-2.5 rounded-full cursor-pointer transition-all"
-                      style={{
-                        background: currentIndex === index
-                          ? "linear-gradient(135deg, hsl(var(--chart-1)), hsl(var(--chart-2)))"
-                          : "rgba(255,255,255,0.2)",
-                        boxShadow: currentIndex === index
-                          ? "0 0 15px rgba(0,255,255,0.6), 0 0 30px rgba(255,0,255,0.4)"
-                          : "none",
-                      }}
-                      animate={currentIndex === index ? {
-                        scale: [1, 1.2, 1],
-                      } : {}}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                      }}
-                    />
-                    {/* Hover ring effect */}
-                    <motion.div
-                      className="absolute inset-0 rounded-full border-2"
-                      style={{
-                        borderColor: "hsl(var(--chart-1))",
-                        opacity: 0,
-                      }}
-                      whileHover={{
-                        opacity: 0.6,
-                        scale: 1.8,
-                      }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </motion.button>
-                ))}
-              </motion.div>
-            </motion.div>
+        {/* Index dots */}
+        {display.length > 0 && (
+          <div
+            className="flex items-center justify-between px-4 py-3 font-mono text-[10px] uppercase tracking-[0.2em]"
+            style={{ border: `2px solid ${INK}`, borderTop: "none" }}
+          >
+            <span>
+              POS {String(index + 1).padStart(2, "0")} / {String(display.length).padStart(2, "0")}
+            </span>
+            <div className="flex gap-1.5">
+              {display.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setIndex(i)}
+                  aria-label={`Go to project ${i + 1}`}
+                  style={{
+                    width: 18,
+                    height: 6,
+                    background: i === index ? ACCENT : "transparent",
+                    border: `1.5px solid ${INK}`,
+                    transition: "none",
+                  }}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
-
-      <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-        <DialogContent className="w-screen h-screen max-w-none p-0 sm:rounded-none overflow-hidden [&>button]:hidden">
-          {selectedProject && (
-            <div className="relative flex h-full flex-col bg-background">
-              <div className="relative h-[40vh] w-full bg-muted">
-                {selectedProject.imageUrl ? (
-                  <img
-                    src={selectedProject.imageUrl}
-                    alt={selectedProject.title}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center">
-                    <span className="text-6xl font-display gradient-text-cyan-purple">
-                      {selectedProject.title[0]}
-                    </span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
-              </div>
-
-              <div className="flex-1 overflow-y-auto px-6 py-8 md:px-12">
-                <div className="mx-auto flex max-w-5xl flex-col gap-10">
-                  <DialogHeader className="space-y-4 text-left">
-                    <DialogTitle className="text-4xl font-display font-bold">
-                      {selectedProject.title}
-                    </DialogTitle>
-                    <DialogDescription className="text-base text-muted-foreground">
-                      {selectedProject.description}
-                    </DialogDescription>
-                  </DialogHeader>
-
-                  {selectedProject.description && (
-                    <p className="text-base leading-relaxed text-muted-foreground whitespace-pre-line">
-                      {selectedProject.description}
-                    </p>
-                  )}
-
-                  <div className="space-y-4">
-                    <h4 className="font-semibold text-lg">Technologies Used</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedTechnologies.map((tech, index) => (
-                        <Badge key={index} variant="secondary" className="glass text-xs px-3 py-1">
-                          {tech}
-                        </Badge>
-                      ))}
-                      {selectedTechnologies.length === 0 && (
-                        <span className="text-sm text-muted-foreground">No technologies listed.</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {selectedProject.liveUrl && (
-                      <Button asChild size="lg">
-                        <a
-                          href={selectedProject.liveUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          View Live Project
-                        </a>
-                      </Button>
-                    )}
-                    {selectedProject.githubUrl && (
-                      <Button variant="outline" asChild size="lg" className="glass">
-                        <a
-                          href={selectedProject.githubUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <FaGithub className="h-4 w-4 mr-2" />
-                          View Source Code
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </section>
+  );
+}
+
+function SectionHeader({
+  num,
+  name,
+  kicker,
+  headline,
+  right,
+}: {
+  num: string;
+  name: string;
+  kicker: string;
+  headline: string;
+  right?: string;
+}) {
+  return (
+    <header className="grid grid-cols-12 gap-x-6">
+      <aside className="col-span-12 mb-6 lg:col-span-2 lg:mb-0">
+        <div className="font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
+          [ SECTION {num} ]
+        </div>
+        <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
+          / {name}
+        </div>
+        <div className="mt-3 h-[2px] w-12" style={{ background: ACCENT }} />
+      </aside>
+      <div className="col-span-12 lg:col-span-10">
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
+            {kicker}
+          </span>
+          {right && (
+            <span className="font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
+              {right}
+            </span>
+          )}
+        </div>
+        <h2
+          className="mt-2"
+          style={{
+            fontFamily: "Inter, sans-serif",
+            fontWeight: 800,
+            fontSize: "clamp(40px, 7vw, 96px)",
+            lineHeight: 0.92,
+            letterSpacing: "-0.035em",
+            textTransform: "uppercase",
+          }}
+        >
+          {headline}
+        </h2>
+      </div>
+    </header>
   );
 }
