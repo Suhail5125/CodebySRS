@@ -26,29 +26,6 @@ function useReducedMotionCheck() {
   return v;
 }
 
-function useRotator<T>(items: T[], ms: number, paused: boolean) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    if (paused || items.length <= 1) return;
-    const id = setInterval(() => setI((n) => (n + 1) % items.length), ms);
-    return () => clearInterval(id);
-  }, [items.length, ms, paused]);
-  return items[i];
-}
-
-function useNow() {
-  const fmt = (d: Date) => {
-    const p = (n: number) => String(n).padStart(2, "0");
-    return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  };
-  const [s, setS] = useState(() => fmt(new Date()));
-  useEffect(() => {
-    const id = setInterval(() => setS(fmt(new Date())), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return s;
-}
-
 function useScramble(target: string, ms: number, runKey: number | string, paused: boolean) {
   const [out, setOut] = useState(target);
   useEffect(() => {
@@ -114,17 +91,6 @@ function GridLines() {
   );
 }
 
-function Scanline() {
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
-      <div
-        className="absolute inset-x-0 h-px brut-scan"
-        style={{ background: ACCENT, opacity: 0.38, boxShadow: `0 0 6px ${ACCENT}` }}
-      />
-    </div>
-  );
-}
-
 function SectionCursor({ container }: { container: React.RefObject<HTMLElement | null> }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -185,17 +151,6 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
   const listRef   = useRef<HTMLDivElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
 
-  const FEED = useMemo(() => [
-    `${display.length} ENTRIES`,
-    "FEED://projects",
-    "STATUS: SHIPPED",
-    "HOVER TO PREVIEW",
-    "STACK: REACT + TS",
-  ], [display.length]);
-
-  const feedItem = useRotator(FEED, 2200, reduced);
-  const now = useNow();
-
   const handleEnter = useCallback((i: number) => {
     setHovered(i);
     const row  = rowEls.current[i];
@@ -220,40 +175,7 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
       {/* ── background layers ── */}
       <NoiseOverlay />
       <GridLines />
-      {!reduced && <Scanline />}
       {!reduced && <SectionCursor container={sectionRef} />}
-
-      {/* ── top status bar ── */}
-      <div
-        className="relative z-[3] mb-8 flex items-center justify-between pb-3 font-mono text-[11px] uppercase tracking-[0.18em]"
-        style={{ borderBottom: "1px solid rgba(242,239,230,0.14)", color: INK }}
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className="inline-block h-2 w-2 brut-blink"
-            style={{ background: ACCENT }}
-            aria-hidden
-          />
-          <span className="opacity-80">LIVE</span>
-          <span className="opacity-30">/</span>
-          <span className="opacity-80">PROJECTS</span>
-          <span className="opacity-30">·</span>
-          <span
-            className="opacity-60 tabular-nums"
-            style={{ minWidth: "20ch", display: "inline-block" }}
-          >
-            {reduced
-              ? FEED[0]
-              : <ScrambleText text={feedItem} runKey={feedItem} ms={380} />}
-          </span>
-        </div>
-        <span
-          className="hidden tabular-nums opacity-70 md:inline"
-          style={{ minWidth: "8ch", textAlign: "right" }}
-        >
-          {now}
-        </span>
-      </div>
 
       {/* ── content ── */}
       <div className="relative z-[3] mx-auto w-full max-w-[1400px]">
