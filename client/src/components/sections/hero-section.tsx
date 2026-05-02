@@ -1,342 +1,313 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import {
   Github,
   Linkedin,
   Mail,
-  Send,
-  ArrowUpRight,
-  Instagram,
   Twitter,
-  ChevronDown,
+  Instagram,
+  ArrowUpRight,
+  ArrowDown,
 } from "lucide-react";
 import type { AboutInfo } from "@shared";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GlitchText } from "./hero/glitch-text";
-import { HoloButton } from "./hero/holo-button";
-import {
-  CornerBrackets,
-  ScanLines,
-  StatusPanel,
-  Terminal,
-  TechChips,
-} from "./hero/hud";
-import { SceneErrorBoundary, detectWebGL } from "./hero/scene-boundary";
-import { SceneCssFallback } from "./hero/scene-css-fallback";
-
-// Lazy-load the heavy 3D scene so it doesn't block first paint.
-// Uses the manual chunk split (`3d-vendor`) configured in vite.config.ts.
-const HeroScene = lazy(() => import("./hero/scene"));
 
 interface HeroSectionProps {
   aboutInfo: AboutInfo | null;
   isLoading: boolean;
 }
 
+const INK = "#F2EFE6";
+const BG = "#0A0A0A";
+const ACCENT = "#FF3D00";
+
 const ROLES = [
   "Creative Developer",
-  "3D Enthusiast",
+  "3D Generalist",
   "UI / UX Designer",
   "Full-Stack Engineer",
 ];
 
 const TECH = [
-  "React",
-  "TypeScript",
-  "Three.js",
-  "Node",
-  "WebGL",
-  "Tailwind",
+  "REACT",
+  "TYPESCRIPT",
+  "THREE.JS",
+  "NODE",
+  "POSTGRES",
+  "TAILWIND",
+  "WEBGL",
+  "FRAMER",
 ];
-
-function useIsMobile(breakpoint = 640) {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`);
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, [breakpoint]);
-  return isMobile;
-}
-
-/**
- * Returns 0..1 scroll progress through the hero (0 = top, 1 = scrolled
- * one full viewport). Used to dim HUD overlays as the next section approaches.
- */
-function useHeroScrollProgress() {
-  const [progress, setProgress] = useState(0);
-  useEffect(() => {
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const vh = Math.max(window.innerHeight, 1);
-      const p = Math.min(Math.max(window.scrollY / vh, 0), 1);
-      setProgress(p);
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
-  return progress;
-}
 
 export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   const reducedMotion = !!useReducedMotion();
-  const isMobile = useIsMobile();
+
+  const fullName = aboutInfo?.name ?? "DEVELOPER";
+  const firstName = (aboutInfo?.name?.split(" ")[0] ?? "DEVELOPER").toUpperCase();
+  const lastName = (aboutInfo?.name?.split(" ").slice(1).join(" ") ?? "ENGINEER").toUpperCase() || "ENGINEER";
+  const bio =
+    aboutInfo?.bio ??
+    "I design and build modern web experiences — interfaces, interactions, and the systems that hold them together.";
+  const location = (aboutInfo?.location ?? "EARTH / GLOBAL").toUpperCase();
+  const available = aboutInfo?.availableForWork ?? true;
+
+  const stats = useMemo(
+    () => [
+      { value: aboutInfo?.yearsExperience ?? 0, label: "YEARS" },
+      { value: aboutInfo?.completedProjects ?? 0, label: "PROJECTS" },
+      { value: aboutInfo?.totalClients ?? 0, label: "CLIENTS" },
+      { value: aboutInfo?.technologiesCount ?? 0, label: "STACK" },
+    ],
+    [aboutInfo],
+  );
+
+  // Role cycling — fixed-width slot prevents the layout from shifting.
   const [roleIndex, setRoleIndex] = useState(0);
-  const [scenePaused, setScenePaused] = useState(false);
-  const [webglOk, setWebglOk] = useState<boolean | null>(null);
-  const scrollProgress = useHeroScrollProgress();
-  // HUD opacity: full at top, ~0.05 at bottom of hero (reduced-motion stays full).
-  const hudOpacity = reducedMotion ? 1 : Math.max(0.05, 1 - scrollProgress * 1.1);
-  // Scene gets a slight darken too as user descends.
-  const sceneOpacity = reducedMotion ? 1 : Math.max(0.4, 1 - scrollProgress * 0.55);
-
-  // Detect WebGL support on mount (client only). Skip mounting <Canvas>
-  // entirely if not supported — saves the 3D bundle download too.
-  useEffect(() => {
-    setWebglOk(detectWebGL());
-  }, []);
-
   useEffect(() => {
     if (reducedMotion) return;
-    const id = setInterval(
-      () => setRoleIndex((i) => (i + 1) % ROLES.length),
-      3400,
-    );
+    const id = setInterval(() => setRoleIndex((i) => (i + 1) % ROLES.length), 2800);
     return () => clearInterval(id);
   }, [reducedMotion]);
+  // Width of the longest role string in characters — locks the slot.
+  const roleSlotCh = Math.max(...ROLES.map((r) => r.length));
 
-  // Pause the WebGL canvas (visibility:hidden) once the user has scrolled past the
-  // hero, to free GPU. R3F internally throttles offscreen, but this is belt+braces.
-  useEffect(() => {
-    const onScroll = () => {
-      const past = window.scrollY > window.innerHeight * 1.2;
-      setScenePaused(past);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const socialLinks = aboutInfo
+    ? [
+        aboutInfo.githubUrl && { Icon: Github, href: aboutInfo.githubUrl, label: "GitHub" },
+        aboutInfo.linkedinUrl && { Icon: Linkedin, href: aboutInfo.linkedinUrl, label: "LinkedIn" },
+        aboutInfo.twitterUrl && { Icon: Twitter, href: aboutInfo.twitterUrl, label: "Twitter" },
+        aboutInfo.instagramUrl && { Icon: Instagram, href: aboutInfo.instagramUrl, label: "Instagram" },
+        aboutInfo.email && { Icon: Mail, href: `mailto:${aboutInfo.email}`, label: "Email" },
+      ].filter(
+        (l): l is { Icon: typeof Github; href: string; label: string } => Boolean(l),
+      )
+    : [];
 
   const scrollTo = (id: string) =>
     document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
 
-  const socialLinks = aboutInfo
-    ? [
-        aboutInfo.githubUrl && { icon: Github, href: aboutInfo.githubUrl, label: "GitHub" },
-        aboutInfo.linkedinUrl && { icon: Linkedin, href: aboutInfo.linkedinUrl, label: "LinkedIn" },
-        aboutInfo.email && { icon: Mail, href: `mailto:${aboutInfo.email}`, label: "Email" },
-        aboutInfo.twitterUrl && { icon: Twitter, href: aboutInfo.twitterUrl, label: "Twitter" },
-        aboutInfo.instagramUrl && { icon: Instagram, href: aboutInfo.instagramUrl, label: "Instagram" },
-      ].filter((l): l is { icon: typeof Github; href: string; label: string } => Boolean(l))
-    : [];
-
-  const firstName = aboutInfo?.name?.split(" ")[0] ?? "DEVELOPER";
-  const fullName = aboutInfo?.name ?? "Welcome";
-  const bio =
-    aboutInfo?.bio ??
-    "I design and build modern web experiences — interfaces, interactions, and the systems that hold them together.";
-  const location = aboutInfo?.location ?? "EARTH / GLOBAL";
-  const available = aboutInfo?.availableForWork ?? true;
-
-  const stats = [
-    { value: aboutInfo?.yearsExperience ?? 0, label: "Years" },
-    { value: aboutInfo?.completedProjects ?? 0, label: "Projects" },
-    { value: aboutInfo?.totalClients ?? 0, label: "Clients" },
-    { value: aboutInfo?.technologiesCount ?? 0, label: "Stack" },
-  ];
+  // Live clock for the top status bar (1Hz, fixed-width slot).
+  const now = useNowEverySecond();
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-[#070512] text-white">
-      {/* ============== 3D SCENE LAYER ============== */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          visibility: scenePaused ? "hidden" : "visible",
-          opacity: sceneOpacity,
-          transition: "opacity 200ms linear",
-        }}
-        aria-hidden
-      >
-        {webglOk === false || reducedMotion ? (
-          <SceneCssFallback />
-        ) : webglOk === true ? (
-          <SceneErrorBoundary fallback={<SceneCssFallback />}>
-            <Suspense fallback={<SceneLoading />}>
-              <HeroScene
-                isMobile={isMobile}
-                reducedMotion={reducedMotion}
-                paused={scenePaused}
-              />
-            </Suspense>
-          </SceneErrorBoundary>
-        ) : (
-          <SceneLoading />
-        )}
-      </div>
+    <section
+      className="relative min-h-screen w-full overflow-hidden"
+      style={{ background: BG, color: INK, fontFamily: "var(--font-sans)" }}
+    >
+      {/* ==========  Background layers (no gradients, brutalist) ========== */}
+      <NoiseOverlay />
+      <GridLines />
+      {!reducedMotion && <Scanline />}
 
-      {/* Vignette gradient over the canvas to anchor text */}
+      {/* ==========  TOP STATUS BAR ========== */}
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-[1]"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 50% at 30% 50%, rgba(7,5,18,0.85) 0%, rgba(7,5,18,0.55) 35%, rgba(7,5,18,0) 70%), linear-gradient(180deg, rgba(7,5,18,0.55) 0%, rgba(7,5,18,0) 30%, rgba(7,5,18,0) 70%, rgba(7,5,18,0.95) 100%)",
-        }}
-      />
-
-      {/* HUD: corner brackets + scanlines (decorative) — fades on scroll */}
-      <div
-        className="pointer-events-none absolute inset-0 z-[2]"
-        style={{ opacity: hudOpacity, transition: "opacity 150ms linear" }}
+        className="relative z-[3] flex w-full items-center justify-between border-b border-[#F2EFE6]/15 px-6 py-3 font-mono text-[11px] uppercase tracking-[0.18em] lg:px-10"
+        style={{ color: INK }}
       >
-        <CornerBrackets />
-        <ScanLines reducedMotion={reducedMotion} />
-        {/* fixed-position label markers */}
-        <div className="absolute left-4 top-20 -translate-y-7 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-300/50">
-          ◢ NODE-01 / HERO
+        <div className="flex items-center gap-3">
+          <span
+            className="inline-block h-2 w-2 brut-blink"
+            style={{ background: available ? ACCENT : "#666" }}
+            aria-hidden
+          />
+          <span className="opacity-80">{available ? "LIVE" : "OFFLINE"}</span>
+          <span className="opacity-30">/</span>
+          <span className="opacity-80">CodebySRS · DEV-OS</span>
+          <span className="opacity-30">/</span>
+          <span className="opacity-50">v2.0</span>
         </div>
-        <div className="absolute right-4 top-20 -translate-y-7 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-300/50">
-          REC ● {new Date().getFullYear()}.{String(new Date().getMonth() + 1).padStart(2, "0")} ◣
+        <div className="hidden items-center gap-3 md:flex">
+          <span className="opacity-50">{location}</span>
+          <span className="opacity-30">·</span>
+          <span className="tabular-nums opacity-80" style={{ minWidth: "8ch", display: "inline-block", textAlign: "right" }}>
+            {now}
+          </span>
         </div>
       </div>
 
-      {/* ============== CONTENT ============== */}
-      <div className="relative z-[3] mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 pb-16 pt-32 lg:px-10 lg:pt-36">
-        <div className="grid flex-1 grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
-          {/* ===== LEFT: HEADLINE ===== */}
-          <div className="lg:col-span-8">
-            {/* Tag line */}
+      {/* ==========  MAIN GRID ========== */}
+      <main className="relative z-[3] mx-auto w-full max-w-[1600px] px-6 pt-16 pb-12 lg:px-10 lg:pt-24">
+        <div className="grid grid-cols-12 gap-x-6 gap-y-10">
+          {/* Left aside — section index + manifesto */}
+          <aside className="col-span-12 lg:col-span-2">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em]">
+              <div className="opacity-50">SECTION</div>
+              <div
+                className="mt-1 text-[28px] font-bold leading-none tabular-nums"
+                style={{ color: ACCENT }}
+              >
+                01
+              </div>
+              <div className="mt-1 opacity-50">/ HERO</div>
+
+              <div className="mt-10 hidden h-px w-12 bg-[#F2EFE6]/30 lg:block" />
+
+              <div className="mt-6 hidden lg:block">
+                <div className="opacity-50">MANIFESTO</div>
+                <p className="mt-2 max-w-[160px] leading-snug opacity-75">
+                  Build sharp.
+                  <br />
+                  Ship loud.
+                  <br />
+                  Cut the fluff.
+                </p>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main column */}
+          <div className="col-span-12 lg:col-span-10">
+            {/* Tag */}
             {isLoading ? (
-              <Skeleton className="mb-6 h-5 w-64 bg-white/10" />
+              <Skeleton className="mb-6 h-4 w-72 bg-white/10" />
             ) : (
-              <p className="hero-fade-in mb-5 font-mono text-xs uppercase tracking-[0.4em] text-cyan-300/80">
-                <span className="text-cyan-400">[</span> hello.world{" "}
-                <span className="text-cyan-400">::</span> identity ={" "}
-                <span className="text-fuchsia-300">"{fullName}"</span>{" "}
-                <span className="text-cyan-400">]</span>
+              <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.32em] opacity-70 brut-fade">
+                <span style={{ color: ACCENT }}>{"//"}</span> identity ={" "}
+                <span className="text-[#F2EFE6]">"{fullName}"</span>
               </p>
             )}
 
-            {/* Glitch headline */}
+            {/* Headline — shutter rise per line */}
             {isLoading ? (
               <div className="space-y-3">
-                <Skeleton className="h-16 w-3/4 bg-white/10" />
-                <Skeleton className="h-16 w-1/2 bg-white/10" />
+                <Skeleton className="h-20 w-3/4 bg-white/10" />
+                <Skeleton className="h-20 w-2/3 bg-white/10" />
               </div>
             ) : (
               <h1
                 data-testid="hero-name"
-                className="font-display text-5xl font-bold uppercase leading-[0.95] tracking-tight sm:text-6xl md:text-7xl xl:text-[6rem]"
-                style={{ textShadow: "0 0 30px rgba(0, 240, 255, 0.18)" }}
+                className="uppercase tracking-[-0.03em]"
+                style={{
+                  fontFamily:
+                    "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                  fontSize: "clamp(3.5rem, 11vw, 11rem)",
+                  fontWeight: 800,
+                  lineHeight: 0.9,
+                  color: INK,
+                }}
               >
-                <span className="block text-white">
-                  <GlitchText
-                    text={firstName.toUpperCase()}
-                    duration={1100}
-                    reducedMotion={reducedMotion}
-                  />
+                <span
+                  className={
+                    reducedMotion ? "block" : "block brut-fade"
+                  }
+                  style={
+                    reducedMotion
+                      ? undefined
+                      : { animationDelay: "0.05s" }
+                  }
+                >
+                  {firstName}
                 </span>
                 <span
-                  className="block bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-purple-300 bg-clip-text text-transparent"
-                  style={{
-                    filter:
-                      "drop-shadow(0 0 24px rgba(0, 240, 255, 0.35)) drop-shadow(0 0 40px rgba(255, 92, 240, 0.25))",
-                  }}
+                  className={
+                    reducedMotion
+                      ? "block"
+                      : "block brut-fade"
+                  }
+                  style={
+                    reducedMotion
+                      ? undefined
+                      : { animationDelay: "0.18s" }
+                  }
                 >
-                  <GlitchText
-                    text="// CONSTRUCT"
-                    duration={1300}
-                    reducedMotion={reducedMotion}
-                  />
+                  <span className="inline-flex items-baseline gap-[0.2em]">
+                    <span
+                      aria-hidden
+                      className="inline-block h-[0.5em] w-[0.5em] translate-y-[-0.05em]"
+                      style={{ background: ACCENT }}
+                    />
+                    {lastName}
+                  </span>
                 </span>
               </h1>
             )}
 
-            {/* Rotating role decode */}
+            {/* Role cycler — FIXED-WIDTH SLOT, no layout shift */}
             {!isLoading && (
-              <div className="hero-fade-in mt-6 flex items-center gap-3 font-mono text-sm">
-                <span className="h-px w-10 bg-cyan-300/60" />
-                <span className="uppercase tracking-[0.25em] text-cyan-300/70">
-                  Mode
-                </span>
+              <div
+                className="mt-8 flex flex-wrap items-center gap-3 font-mono text-[12px] uppercase tracking-[0.22em] brut-fade"
+                style={{ animationDelay: "0.2s" }}
+              >
+                <span className="opacity-50">ROLE</span>
+                <span className="opacity-30">[</span>
                 <span
-                  className="text-cyan-50"
-                  style={{ textShadow: "0 0 12px rgba(0,240,255,0.5)" }}
+                  key={roleIndex}
+                  className="inline-block uppercase brut-fade"
+                  style={{
+                    minWidth: `${roleSlotCh}ch`,
+                    color: INK,
+                    animationDuration: "0.45s",
+                  }}
                 >
-                  <GlitchText
-                    key={roleIndex}
-                    text={ROLES[roleIndex]}
-                    duration={700}
-                    reducedMotion={reducedMotion}
-                  />
+                  {ROLES[roleIndex].toUpperCase()}
+                </span>
+                <span className="opacity-30">]</span>
+                <span className="opacity-30">·</span>
+                <span className="tabular-nums opacity-50">
+                  {String(roleIndex + 1).padStart(2, "0")}/
+                  {String(ROLES.length).padStart(2, "0")}
                 </span>
               </div>
             )}
 
             {/* Bio */}
             {isLoading ? (
-              <div className="mt-8 space-y-2">
-                <Skeleton className="h-4 w-full max-w-xl bg-white/10" />
-                <Skeleton className="h-4 w-4/5 max-w-xl bg-white/10" />
+              <div className="mt-10 space-y-2">
+                <Skeleton className="h-4 w-full max-w-2xl bg-white/10" />
+                <Skeleton className="h-4 w-4/5 max-w-2xl bg-white/10" />
               </div>
             ) : (
-              <p
-                data-testid="hero-bio"
-                className="hero-fade-in mt-8 max-w-xl text-base leading-relaxed text-cyan-50/80 sm:text-lg"
-                style={{ animationDelay: "0.15s" }}
+              <div
+                className="mt-10 flex max-w-2xl gap-4 brut-fade"
+                style={{ animationDelay: "0.3s" }}
               >
-                {bio}
-              </p>
+                <span
+                  className="mt-1 inline-block h-[1.6em] w-[3px] flex-none"
+                  style={{ background: ACCENT }}
+                  aria-hidden
+                />
+                <p
+                  data-testid="hero-bio"
+                  className="text-base leading-relaxed sm:text-lg"
+                  style={{ color: "rgba(242,239,230,0.82)" }}
+                >
+                  {bio}
+                </p>
+              </div>
             )}
 
-            {/* CTAs */}
+            {/* CTAs — hard borders, hover inverts */}
             <div
-              className="hero-fade-in mt-10 flex flex-wrap items-center gap-3"
-              style={{ animationDelay: "0.3s" }}
+              className="mt-10 flex flex-wrap items-stretch gap-3 brut-fade"
+              style={{ animationDelay: "0.4s" }}
             >
-              <HoloButton
+              <BrutButton
                 onClick={() => scrollTo("#contact")}
                 data-testid="button-lets-work-together"
-                variant="primary"
+                variant="solid"
               >
-                Start a project
-                <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </HoloButton>
-              <HoloButton
+                START PROJECT
+                <ArrowUpRight className="h-4 w-4" />
+              </BrutButton>
+              <BrutButton
                 onClick={() => scrollTo("#projects")}
                 data-testid="button-view-work"
                 variant="ghost"
               >
-                View work
-                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </HoloButton>
-            </div>
-
-            {/* Tech chips */}
-            <div
-              className="hero-fade-in mt-8 max-w-2xl"
-              style={{ animationDelay: "0.45s" }}
-            >
-              <TechChips items={TECH} reducedMotion={reducedMotion} />
+                VIEW WORK
+                <ArrowUpRight className="h-4 w-4" />
+              </BrutButton>
             </div>
 
             {/* Social row */}
             {socialLinks.length > 0 && (
               <div
-                className="hero-fade-in mt-8 flex items-center gap-1"
-                style={{ animationDelay: "0.55s" }}
+                className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 font-mono text-[11px] uppercase tracking-[0.22em] brut-fade"
+                style={{ animationDelay: "0.5s" }}
               >
-                {socialLinks.map(({ icon: Icon, href, label }) => (
+                <span className="opacity-50">CHANNELS</span>
+                <span className="opacity-30">/</span>
+                {socialLinks.map(({ Icon, href, label }) => (
                   <a
                     key={label}
                     href={href}
@@ -344,84 +315,278 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                     rel="noopener noreferrer"
                     aria-label={label}
                     data-testid={`link-${label.toLowerCase()}`}
-                    className="group inline-flex h-10 w-10 items-center justify-center rounded-sm border border-cyan-300/0 text-cyan-200/70 transition-all hover:border-cyan-300/50 hover:bg-cyan-400/5 hover:text-cyan-100 hover:shadow-[0_0_15px_rgba(0,240,255,0.35)]"
+                    className="group inline-flex items-center gap-1.5 underline-offset-4 transition-none hover:underline"
+                    style={{ color: INK }}
                   >
-                    <Icon className="h-[18px] w-[18px]" />
+                    <Icon className="h-[14px] w-[14px]" />
+                    <span>{label.toUpperCase()}</span>
+                    <ArrowUpRight className="h-3 w-3 opacity-50 group-hover:opacity-100" />
                   </a>
                 ))}
               </div>
             )}
           </div>
+        </div>
 
-          {/* ===== RIGHT: HUD STACK ===== fades on scroll */}
-          <div
-            className="hero-fade-in space-y-4 lg:col-span-4"
-            style={{
-              animationDelay: "0.4s",
-              opacity: hudOpacity,
-              transition: "opacity 150ms linear",
-            }}
-          >
-            <StatusPanel
-              available={available}
-              location={location}
-              role={ROLES[roleIndex]}
+        {/* ==========  TECH MARQUEE ========== */}
+        <div className="relative mt-20 border-y-2 border-[#F2EFE6] py-4 lg:mt-28">
+          <Marquee items={TECH} reducedMotion={reducedMotion} />
+        </div>
+
+        {/* ==========  STATS ROW ========== */}
+        <div className="mt-10 grid grid-cols-2 gap-px border border-[#F2EFE6]/20 bg-[#F2EFE6]/20 sm:grid-cols-4">
+          {stats.map((s) => (
+            <Stat
+              key={s.label}
+              value={s.value}
+              label={s.label}
               reducedMotion={reducedMotion}
             />
-            <Terminal reducedMotion={reducedMotion} />
-
-            {/* Stats grid */}
-            <div className="grid grid-cols-2 gap-2">
-              {stats.map((s) => (
-                <div
-                  key={s.label}
-                  data-testid={`hero-stat-${s.label.toLowerCase()}`}
-                  className="rounded-md border border-cyan-300/25 bg-black/40 p-3 backdrop-blur-md shadow-[inset_0_0_15px_rgba(0,240,255,0.06)]"
-                >
-                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-400/70">
-                    {s.label}
-                  </div>
-                  <div className="mt-1 font-display text-2xl font-bold text-cyan-50 tabular-nums">
-                    {String(s.value).padStart(2, "0")}
-                    <span className="text-fuchsia-300">+</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Scroll affordance */}
-        <div className="hero-fade-in mt-10 flex items-center justify-between" style={{ animationDelay: "0.7s" }}>
-          <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-300/60">
-            <span className="h-px w-10 bg-cyan-300/40" />
-            Scroll :: descend
-            <ChevronDown className="h-3 w-3 motion-safe:animate-bounce" />
+        {/* ==========  BOTTOM STRIP ========== */}
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 font-mono text-[11px] uppercase tracking-[0.22em]">
+          <div className="flex items-center gap-3">
+            <span
+              className="inline-block h-2 w-2 brut-blink"
+              style={{ background: available ? ACCENT : "#666" }}
+              aria-hidden
+            />
+            <span className="opacity-80">
+              {available ? "AVAILABLE FOR WORK" : "BOOKED — JOIN WAITLIST"}
+            </span>
+            <span className="opacity-30">·</span>
+            <span className="opacity-50">{location}</span>
           </div>
-          <div className="hidden font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-300/40 md:block">
-            cursor.move :: parallax_active
-          </div>
+          <button
+            type="button"
+            onClick={() => scrollTo("#about")}
+            className="group flex items-center gap-2 opacity-70 hover:opacity-100"
+          >
+            <span>SCROLL</span>
+            <ArrowDown
+              className={`h-3 w-3 ${reducedMotion ? "" : "motion-safe:animate-bounce"}`}
+            />
+          </button>
         </div>
-      </div>
+      </main>
     </section>
   );
 }
 
-/** Spinner shown while the WebGL bundle is being downloaded. */
-function SceneLoading() {
+/* ==================== Sub-components ==================== */
+
+interface BrutButtonProps {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: "solid" | "ghost";
+  "data-testid"?: string;
+}
+/** Hard-bordered button. Hover = instant color invert (no transition). */
+function BrutButton({
+  children,
+  onClick,
+  variant = "solid",
+  "data-testid": testid,
+}: BrutButtonProps) {
+  const [hover, setHover] = useState(false);
+  const isSolid = variant === "solid";
+  // Solid: cream bg + black text → invert on hover to accent bg + cream text.
+  // Ghost: transparent bg + cream border → invert to cream bg + black text.
+  const bg = isSolid
+    ? hover
+      ? ACCENT
+      : INK
+    : hover
+      ? INK
+      : "transparent";
+  const fg = isSolid ? (hover ? INK : BG) : hover ? BG : INK;
+  const border = isSolid ? bg : INK;
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-[#070512]">
-      <div className="relative h-64 w-64">
-        <div
-          className="absolute inset-0 animate-pulse rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(0,240,255,0.4) 0%, rgba(255,92,240,0.2) 40%, transparent 70%)",
-            filter: "blur(40px)",
-          }}
-        />
-        <div className="absolute inset-8 animate-spin rounded-full border border-cyan-300/30 border-t-cyan-300 [animation-duration:3s]" />
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={testid}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+      className="group inline-flex items-center gap-3 px-5 py-3 font-mono text-[12px] font-bold uppercase tracking-[0.22em] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
+      style={{
+        background: bg,
+        color: fg,
+        border: `2px solid ${border}`,
+        transition: "none",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+interface StatProps {
+  value: number;
+  label: string;
+  reducedMotion?: boolean;
+}
+/** Big number + label cell with count-up animation in a fixed-width slot. */
+function Stat({ value, label, reducedMotion }: StatProps) {
+  const display = useCountUp(value, 1200, reducedMotion);
+  // Fixed slot: always 3 digits — prevents layout shift during count-up.
+  const padded = String(display).padStart(3, "0");
+  return (
+    <div
+      data-testid={`hero-stat-${label.toLowerCase()}`}
+      className="flex flex-col gap-2 bg-[#0A0A0A] p-5 lg:p-6"
+    >
+      <div
+        className="tabular-nums leading-none"
+        style={{
+          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+          fontSize: "clamp(2.25rem, 5vw, 3.75rem)",
+          fontWeight: 800,
+          color: INK,
+        }}
+      >
+        {padded}
+        <span style={{ color: ACCENT }}>+</span>
+      </div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.28em] opacity-60">
+        {label}
       </div>
     </div>
   );
+}
+
+interface MarqueeProps {
+  items: string[];
+  reducedMotion?: boolean;
+}
+/** Continuous horizontal ticker. Duplicates content for seamless loop. */
+function Marquee({ items, reducedMotion }: MarqueeProps) {
+  const content = (
+    <div
+      className="flex shrink-0 items-center gap-10 pr-10 text-2xl uppercase sm:text-3xl lg:text-5xl"
+      style={{
+        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+        fontWeight: 800,
+        letterSpacing: "-0.02em",
+      }}
+    >
+      {items.map((item, i) => (
+        <span key={`${item}-${i}`} className="inline-flex items-center gap-10">
+          <span>{item}</span>
+          <span style={{ color: ACCENT }} aria-hidden>
+            ●
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+
+  if (reducedMotion) {
+    return (
+      <div className="flex w-full overflow-hidden whitespace-nowrap">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex w-full overflow-hidden whitespace-nowrap">
+      <div className="flex brut-marquee">
+        {content}
+        <div aria-hidden>{content}</div>
+      </div>
+    </div>
+  );
+}
+
+/** Subtle SVG noise — gives the bg the brutalist grain feel. */
+function NoiseOverlay() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-[1] opacity-[0.08]"
+      style={{
+        backgroundImage:
+          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+        backgroundRepeat: "repeat",
+      }}
+    />
+  );
+}
+
+/** Static hairline grid — divides the viewport into brutalist columns. */
+function GridLines() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-[1]">
+      {[16.66, 33.33, 50, 66.66, 83.33].map((x) => (
+        <div
+          key={x}
+          className="absolute inset-y-0 w-px"
+          style={{ left: `${x}%`, background: "rgba(242,239,230,0.04)" }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** A single horizontal hairline that slowly travels the section. */
+function Scanline() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
+      <div
+        className="absolute inset-x-0 h-px brut-scan"
+        style={{
+          background: ACCENT,
+          opacity: 0.55,
+          boxShadow: `0 0 6px ${ACCENT}`,
+        }}
+      />
+    </div>
+  );
+}
+
+/* ==================== Hooks ==================== */
+
+/** Animates 0 → target with easeOutCubic. Honors reduced-motion. */
+function useCountUp(target: number, duration = 1200, reducedMotion = false) {
+  const [v, setV] = useState(reducedMotion ? target : 0);
+  const startedFor = useRef<number | null>(null);
+  useEffect(() => {
+    if (reducedMotion) {
+      setV(target);
+      return;
+    }
+    if (startedFor.current === target) return;
+    startedFor.current = target;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setV(Math.round(target * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, reducedMotion]);
+  return v;
+}
+
+/** HH:MM:SS string ticking once per second — shared across remounts cheaply. */
+function useNowEverySecond() {
+  const [s, setS] = useState(() => fmtClock(new Date()));
+  useEffect(() => {
+    const id = setInterval(() => setS(fmtClock(new Date())), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return s;
+}
+
+function fmtClock(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
