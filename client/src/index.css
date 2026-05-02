@@ -478,6 +478,46 @@ body::-webkit-scrollbar {
     animation: brut-fade 0.6s ease-out backwards;
   }
 
+  /* Horizontal slam from the left — Projects section personality. */
+  @keyframes brut-slide-left {
+    from { opacity: 0; transform: translateX(-52px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .brut-slide-left {
+    animation: brut-slide-left 0.82s cubic-bezier(0.85, 0, 0.15, 1) backwards;
+    will-change: transform;
+  }
+
+  /* Horizontal slam from the right — Skills section personality. */
+  @keyframes brut-slide-right {
+    from { opacity: 0; transform: translateX(52px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .brut-slide-right {
+    animation: brut-slide-right 0.82s cubic-bezier(0.85, 0, 0.15, 1) backwards;
+    will-change: transform;
+  }
+
+  /* Scale-in — Work Process & Testimonials section personality. */
+  @keyframes brut-scale {
+    from { opacity: 0; transform: scale(0.93); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .brut-scale {
+    animation: brut-scale 0.82s cubic-bezier(0.85, 0, 0.15, 1) backwards;
+    will-change: transform, opacity;
+  }
+
+  /* Top-to-bottom clip-path wipe — Services section personality. */
+  @keyframes brut-clip {
+    from { opacity: 0; clip-path: inset(0 0 100% 0); }
+    to   { opacity: 1; clip-path: inset(0 0 0% 0); }
+  }
+  .brut-clip {
+    animation: brut-clip 0.75s cubic-bezier(0.85, 0, 0.15, 1) backwards;
+    will-change: clip-path, opacity;
+  }
+
   /* Reverse-direction marquee for the bottom statement lane. */
   @keyframes brut-marquee-rev {
     from { transform: translateX(-50%); }
@@ -528,6 +568,10 @@ body::-webkit-scrollbar {
   @media (prefers-reduced-motion: reduce) {
     .brut-rise,
     .brut-fade,
+    .brut-slide-left,
+    .brut-slide-right,
+    .brut-scale,
+    .brut-clip,
     .brut-marquee,
     .brut-marquee-rev,
     .brut-scan,

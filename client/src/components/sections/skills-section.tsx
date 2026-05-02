@@ -138,7 +138,7 @@ export function SkillsSection({ skills, isLoading }: SkillsSectionProps) {
 
 function SkillRow({ skill, index }: { skill: Skill; index: number }) {
   const [hover, setHover] = useState(false);
-  const { ref, style: revealStyle } = useReveal({ delay: index * 60 });
+  const { ref, style: revealStyle } = useReveal({ delay: index * 60, variant: "slide-right" });
   const prof = skill.proficiency ?? 0;
   const num = String(index + 1).padStart(2, "0");
 

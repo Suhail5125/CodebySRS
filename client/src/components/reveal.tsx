@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
 
-type RevealVariant = "rise" | "fade";
+export type RevealVariant = "rise" | "fade" | "slide-left" | "slide-right" | "scale" | "clip";
 
 interface UseRevealOptions {
   delay?: number;
@@ -8,10 +8,33 @@ interface UseRevealOptions {
   threshold?: number;
 }
 
+function hiddenStyle(variant: RevealVariant): CSSProperties {
+  switch (variant) {
+    case "slide-left":  return { opacity: 0, transform: "translateX(-52px)" };
+    case "slide-right": return { opacity: 0, transform: "translateX(52px)" };
+    case "scale":       return { opacity: 0, transform: "scale(0.93)" };
+    case "clip":        return { opacity: 0, clipPath: "inset(0 0 100% 0)" };
+    case "fade":        return { opacity: 0 };
+    default:            return { opacity: 0, transform: "translateY(10px)" };
+  }
+}
+
+function animName(v: RevealVariant): string {
+  const names: Record<RevealVariant, string> = {
+    rise:           "brut-rise",
+    fade:           "brut-fade",
+    "slide-left":   "brut-slide-left",
+    "slide-right":  "brut-slide-right",
+    scale:          "brut-scale",
+    clip:           "brut-clip",
+  };
+  return names[v];
+}
+
 /**
  * IntersectionObserver-based reveal hook. Returns a ref to attach to the
  * target element and a style object that holds the element invisible until
- * it enters the viewport, then plays brut-rise / brut-fade with the given
+ * it enters the viewport, then plays the chosen animation with the given
  * delay. Honours prefers-reduced-motion and has a 1.5 s safety fallback so
  * content can never be permanently invisible.
  */
@@ -57,11 +80,10 @@ export function useReveal({
 
   const style: CSSProperties = visible
     ? {
-        animation: `${variant === "rise" ? "brut-rise" : "brut-fade"} 0.85s cubic-bezier(0.85, 0, 0.15, 1) backwards`,
-        animationDelay: `${delay}ms`,
+        animation: `${animName(variant)} 0.82s ${delay}ms cubic-bezier(0.85, 0, 0.15, 1) backwards`,
         opacity: 1,
       }
-    : { opacity: 0, transform: "translateY(10px)" };
+    : hiddenStyle(variant);
 
   return { ref, style, visible };
 }

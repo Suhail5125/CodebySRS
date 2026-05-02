@@ -64,7 +64,7 @@ export function TestimonialsSection({
           />
         </Reveal>
 
-        <Reveal delay={160}>
+        <Reveal delay={160} variant="scale" threshold={0.2}>
         {/* Marquee shell */}
         <div
           className="mt-10"

@@ -119,7 +119,7 @@ function ServiceCell({
   total: number;
 }) {
   const [hover, setHover] = useState(false);
-  const { ref, style: revealStyle } = useReveal({ delay: index * 90 });
+  const { ref, style: revealStyle } = useReveal({ delay: index * 90, variant: "clip" });
   const Icon = svc.icon;
   const isLastRow = index >= total - (total % 3 === 0 ? 3 : total % 3);
   const num = String(index + 1).padStart(2, "0");

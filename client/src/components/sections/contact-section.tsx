@@ -62,7 +62,7 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
           />
         </Reveal>
 
-        <Reveal delay={160}>
+        <Reveal delay={160} variant="slide-right">
         <div
           className="mt-10 grid grid-cols-1 gap-0 lg:grid-cols-12"
           style={{ border: `2px solid ${INK}` }}

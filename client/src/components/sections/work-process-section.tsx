@@ -103,7 +103,7 @@ export function WorkProcessSection() {
         </Reveal>
 
         {/* Phase rail */}
-        <Reveal delay={120}>
+        <Reveal delay={120} variant="scale">
         <div
           className="mt-10 grid grid-cols-2 gap-0 md:grid-cols-3 lg:grid-cols-6"
           style={{ border: `2px solid ${INK}` }}
@@ -163,7 +163,7 @@ export function WorkProcessSection() {
         </Reveal>
 
         {/* Detail pane */}
-        <Reveal delay={240}>
+        <Reveal delay={240} variant="scale">
         <div
           className="grid grid-cols-1 gap-0 lg:grid-cols-12"
           style={{ border: `2px solid ${INK}`, borderTop: "none" }}

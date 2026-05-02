@@ -64,7 +64,7 @@ export function ProjectsSection({ projects, isLoading }: ProjectsSectionProps) {
         </Reveal>
 
         {/* Controls bar */}
-        <Reveal delay={120} variant="fade">
+        <Reveal delay={120} variant="slide-left">
         <div
           className="mb-0 mt-10 flex items-center justify-between px-4 py-3 font-mono text-[11px] uppercase tracking-[0.2em]"
           style={{ border: `2px solid ${INK}`, borderBottom: "none" }}
