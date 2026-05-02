@@ -4,8 +4,8 @@ import { Reveal, useReveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
 import type { Project } from "@shared";
 
-const BG  = "#0A0A0A";
-const INK = "#F2EFE6";
+const BG     = "#0A0A0A";
+const INK    = "#F2EFE6";
 const ACCENT = "#FF3D00";
 
 function parseTech(raw: string): string[] {
@@ -26,27 +26,26 @@ function useReducedMotionCheck() {
   return v;
 }
 
-function useRotator<T>(items: T[], ms: number, paused: boolean) {
-  const [i, setI] = useState(0);
+/** Animates 0 → target with easeOutCubic. */
+function useCountUp(target: number, duration = 900, paused = false) {
+  const [v, setV] = useState(paused ? target : 0);
+  const ranFor = useRef<number | null>(null);
   useEffect(() => {
-    if (paused || items.length <= 1) return;
-    const id = setInterval(() => setI((n) => (n + 1) % items.length), ms);
-    return () => clearInterval(id);
-  }, [items.length, ms, paused]);
-  return items[i];
-}
-
-function useNow() {
-  const fmt = (d: Date) => {
-    const p = (n: number) => String(n).padStart(2, "0");
-    return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  };
-  const [s, setS] = useState(() => fmt(new Date()));
-  useEffect(() => {
-    const id = setInterval(() => setS(fmt(new Date())), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return s;
+    if (paused) { setV(target); return; }
+    if (ranFor.current === target) return;
+    ranFor.current = target;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const e = 1 - Math.pow(1 - t, 3);
+      setV(Math.round(target * e));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, paused]);
+  return v;
 }
 
 function useScramble(target: string, ms: number, runKey: number | string, paused: boolean) {
@@ -114,17 +113,6 @@ function GridLines() {
   );
 }
 
-function Scanline() {
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
-      <div
-        className="absolute inset-x-0 h-px brut-scan"
-        style={{ background: ACCENT, opacity: 0.38, boxShadow: `0 0 6px ${ACCENT}` }}
-      />
-    </div>
-  );
-}
-
 function SectionCursor({ container }: { container: React.RefObject<HTMLElement | null> }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -174,27 +162,106 @@ function SectionCursor({ container }: { container: React.RefObject<HTMLElement |
   );
 }
 
+/** Magnetic drift — children float toward cursor when it's nearby, snap back on leave. */
+function Magnetic({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (disabled) return;
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    let last: MouseEvent | null = null;
+    const apply = () => {
+      raf = 0;
+      if (!last) return;
+      const rect = el.getBoundingClientRect();
+      const cx   = rect.left + rect.width  / 2;
+      const cy   = rect.top  + rect.height / 2;
+      const dx   = last.clientX - cx;
+      const dy   = last.clientY - cy;
+      const radius = Math.max(rect.width, rect.height) * 2.2;
+      if (Math.hypot(dx, dy) < radius) {
+        el.style.transform = `translate(${dx * 0.28}px, ${dy * 0.28}px)`;
+      } else {
+        el.style.transform = "translate(0,0)";
+      }
+    };
+    const onMove  = (e: MouseEvent) => { last = e; if (!raf) raf = requestAnimationFrame(apply); };
+    const onLeave = () => { el.style.transform = "translate(0,0)"; };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    el.addEventListener("mouseleave", onLeave);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("mousemove", onMove);
+      el.removeEventListener("mouseleave", onLeave);
+    };
+  }, [disabled]);
+  return <div ref={ref} style={{ display: "inline-flex" }}>{children}</div>;
+}
+
+/** Continuous ticker — same pattern as the hero marquee. */
+const MARQUEE_ITEMS = [
+  "PRODUCTION READY",
+  "SHIPPED",
+  "REACT + TS",
+  "FULL-STACK",
+  "RESPONSIVE",
+  "TYPE-SAFE",
+  "WEB NATIVE",
+  "OPEN SOURCE",
+  "CLIENT WORK",
+  "PERFORMANT",
+];
+
+function Marquee({ reverse, reduced }: { reverse?: boolean; reduced: boolean }) {
+  const dot = reverse ? "◆" : "●";
+  const content = (
+    <div
+      className="flex shrink-0 items-center gap-8 pr-8 text-lg uppercase sm:text-xl lg:text-2xl"
+      style={{
+        fontFamily: "Inter, sans-serif",
+        fontWeight: reverse ? 600 : 800,
+        letterSpacing: "-0.02em",
+      }}
+    >
+      {MARQUEE_ITEMS.map((item, i) => (
+        <span key={`${item}-${i}`} className="inline-flex items-center gap-8">
+          <span>{item}</span>
+          <span style={{ color: ACCENT }} aria-hidden>{dot}</span>
+        </span>
+      ))}
+    </div>
+  );
+
+  if (reduced) {
+    return (
+      <div className="flex w-full overflow-hidden whitespace-nowrap opacity-30">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex w-full overflow-hidden whitespace-nowrap opacity-30">
+      <div className={`flex ${reverse ? "brut-marquee-rev" : "brut-marquee"}`}>
+        {content}
+        <div aria-hidden>{content}</div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── main section ──────────────────────────────────────────────────────── */
 
 export function ProjectsSection({ projects, isLoading }: { projects: Project[]; isLoading: boolean }) {
-  const reduced   = useReducedMotionCheck();
-  const display   = useMemo(() => [...projects].sort((a, b) => a.order - b.order), [projects]);
-  const [hovered, setHovered]   = useState<number | null>(null);
+  const reduced    = useReducedMotionCheck();
+  const display    = useMemo(() => [...projects].sort((a, b) => a.order - b.order), [projects]);
+  const countUp    = useCountUp(display.length, 900, reduced);
+  const [hovered,   setHovered]   = useState<number | null>(null);
   const [imgOffset, setImgOffset] = useState(0);
-  const rowEls    = useRef<(HTMLDivElement | null)[]>([]);
-  const listRef   = useRef<HTMLDivElement | null>(null);
+  const rowEls     = useRef<(HTMLDivElement | null)[]>([]);
+  const listRef    = useRef<HTMLDivElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
-
-  const FEED = useMemo(() => [
-    `${display.length} ENTRIES`,
-    "FEED://projects",
-    "STATUS: SHIPPED",
-    "HOVER TO PREVIEW",
-    "STACK: REACT + TS",
-  ], [display.length]);
-
-  const feedItem = useRotator(FEED, 2200, reduced);
-  const now = useNow();
 
   const handleEnter = useCallback((i: number) => {
     setHovered(i);
@@ -207,7 +274,7 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
     }
   }, []);
 
-  const handleLeave = useCallback(() => setHovered(null), []);
+  const handleLeave   = useCallback(() => setHovered(null), []);
   const activeProject = hovered !== null ? display[hovered] : null;
 
   return (
@@ -220,40 +287,7 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
       {/* ── background layers ── */}
       <NoiseOverlay />
       <GridLines />
-      {!reduced && <Scanline />}
       {!reduced && <SectionCursor container={sectionRef} />}
-
-      {/* ── top status bar ── */}
-      <div
-        className="relative z-[3] mb-8 flex items-center justify-between pb-3 font-mono text-[11px] uppercase tracking-[0.18em]"
-        style={{ borderBottom: "1px solid rgba(242,239,230,0.14)", color: INK }}
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className="inline-block h-2 w-2 brut-blink"
-            style={{ background: ACCENT }}
-            aria-hidden
-          />
-          <span className="opacity-80">LIVE</span>
-          <span className="opacity-30">/</span>
-          <span className="opacity-80">PROJECTS</span>
-          <span className="opacity-30">·</span>
-          <span
-            className="opacity-60 tabular-nums"
-            style={{ minWidth: "20ch", display: "inline-block" }}
-          >
-            {reduced
-              ? FEED[0]
-              : <ScrambleText text={feedItem} runKey={feedItem} ms={380} />}
-          </span>
-        </div>
-        <span
-          className="hidden tabular-nums opacity-70 md:inline"
-          style={{ minWidth: "8ch", textAlign: "right" }}
-        >
-          {now}
-        </span>
-      </div>
 
       {/* ── content ── */}
       <div className="relative z-[3] mx-auto w-full max-w-[1400px]">
@@ -310,7 +344,7 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
             >
               <div style={{ border: `2px solid ${INK}`, background: BG }}>
 
-                {/* card header: number + link buttons */}
+                {/* card header */}
                 <div
                   className="flex items-center justify-between px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em]"
                   style={{ borderBottom: `2px solid ${INK}` }}
@@ -329,8 +363,7 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
                         onMouseEnter={(e) => { e.currentTarget.style.background = ACCENT; e.currentTarget.style.borderColor = ACCENT; e.currentTarget.style.color = BG; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = INK; e.currentTarget.style.color = INK; }}
                       >
-                        <ExternalLink className="h-3 w-3" strokeWidth={2.5} />
-                        <span>LIVE</span>
+                        <ExternalLink className="h-3 w-3" strokeWidth={2.5} /><span>LIVE</span>
                       </a>
                     )}
                     {activeProject.githubUrl && (
@@ -343,8 +376,7 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
                         onMouseEnter={(e) => { e.currentTarget.style.background = INK; e.currentTarget.style.color = BG; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = INK; }}
                       >
-                        <Github className="h-3 w-3" strokeWidth={2} />
-                        <span>REPO</span>
+                        <Github className="h-3 w-3" strokeWidth={2} /><span>REPO</span>
                       </a>
                     )}
                   </div>
@@ -367,50 +399,24 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
                       }}
                     />
                   ) : (
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        background: ACCENT,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: "Inter, sans-serif",
-                          fontWeight: 800,
-                          fontSize: 100,
-                          color: BG,
-                          lineHeight: 1,
-                          letterSpacing: "-0.04em",
-                        }}
-                      >
+                    <div style={{ width: "100%", height: "100%", background: ACCENT, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 800, fontSize: 100, color: BG, lineHeight: 1, letterSpacing: "-0.04em" }}>
                         {String((hovered ?? 0) + 1).padStart(2, "0")}
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* tech tags — only if admin added them */}
+                {/* tech tags */}
                 {parseTech(activeProject.technologies).length > 0 && (
-                  <div
-                    className="flex flex-wrap gap-1.5 p-3"
-                    style={{ borderTop: `2px solid ${INK}` }}
-                  >
+                  <div className="flex flex-wrap gap-1.5 p-3" style={{ borderTop: `2px solid ${INK}` }}>
                     {parseTech(activeProject.technologies).slice(0, 6).map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em]"
-                        style={{ border: `1.5px solid ${INK}`, color: INK }}
-                      >
+                      <span key={tag} className="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em]" style={{ border: `1.5px solid ${INK}`, color: INK }}>
                         {tag}
                       </span>
                     ))}
                   </div>
                 )}
-
               </div>
             </div>
           )}
@@ -422,8 +428,8 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
             className="grid grid-cols-3 font-mono text-[11px] uppercase tracking-[0.2em]"
             style={{ border: `2px solid ${INK}`, borderTop: "none" }}
           >
-            <div className="px-4 py-3" style={{ borderRight: `2px solid ${INK}` }}>
-              {display.length} PROJECTS IN FEED
+            <div className="px-4 py-3 tabular-nums" style={{ borderRight: `2px solid ${INK}` }}>
+              <span style={{ color: ACCENT }}>{String(countUp).padStart(2, "0")}</span> PROJECTS IN FEED
             </div>
             <div className="px-4 py-3 opacity-50" style={{ borderRight: `2px solid ${INK}` }}>
               HOVER TO PREVIEW
@@ -444,6 +450,16 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
             </div>
           </div>
         )}
+      </div>
+
+      {/* ── full-width dual marquee ── */}
+      <div className="relative z-[3] mt-16" style={{ borderTop: `2px solid ${INK}` }}>
+        <div style={{ borderBottom: `1px solid rgba(242,239,230,0.12)`, padding: "14px 0" }}>
+          <Marquee reduced={reduced} />
+        </div>
+        <div style={{ padding: "14px 0" }}>
+          <Marquee reverse reduced={reduced} />
+        </div>
       </div>
     </section>
   );
@@ -468,10 +484,24 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
   forwardedRef,
 ) {
   const { ref: revealRef, style: revealStyle } = useReveal({ delay, variant: "slide-left" });
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   const num  = `P-${String(index + 1).padStart(3, "0")}`;
   const year = new Date(project.createdAt).getFullYear();
   const link = project.liveUrl ?? project.githubUrl ?? null;
+
+  /** Parallax: title drifts ±10px on X following cursor within the row. */
+  const onRowMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isActive || !titleRef.current || reduced) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width - 0.5; // -0.5 .. +0.5
+    titleRef.current.style.transform = `translateX(${relX * 20}px)`;
+  };
+
+  const onRowLeave = () => {
+    if (titleRef.current) titleRef.current.style.transform = "translateX(0)";
+    onLeave();
+  };
 
   return (
     <div
@@ -482,7 +512,8 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
           (forwardedRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
       }}
       onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
+      onMouseLeave={onRowLeave}
+      onMouseMove={onRowMove}
       style={{
         ...revealStyle,
         background: isActive ? ACCENT : "transparent",
@@ -502,9 +533,10 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
           {num}
         </span>
 
-        {/* title + scramble + dot */}
+        {/* title — scramble + cursor parallax */}
         <div className="flex min-w-0 flex-1 items-center gap-5">
           <h3
+            ref={titleRef}
             className="min-w-0 flex-1 truncate"
             style={{
               fontFamily: "Inter, sans-serif",
@@ -513,14 +545,11 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
               lineHeight: 1,
               letterSpacing: "-0.025em",
               textTransform: "uppercase",
+              willChange: "transform",
             }}
           >
             {isActive && !reduced ? (
-              <ScrambleText
-                text={project.title.toUpperCase()}
-                runKey={runKey}
-                ms={420}
-              />
+              <ScrambleText text={project.title.toUpperCase()} runKey={runKey} ms={420} />
             ) : (
               project.title.toUpperCase()
             )}
@@ -528,12 +557,7 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
           {isActive && (
             <div
               className="shrink-0"
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: "50%",
-                border: `2px solid ${BG}`,
-              }}
+              style={{ width: 30, height: 30, borderRadius: "50%", border: `2px solid ${BG}` }}
             />
           )}
         </div>
@@ -541,41 +565,32 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
         {/* year */}
         <span
           className="hidden shrink-0 font-mono text-[12px] lg:block"
-          style={{
-            opacity: isActive ? 0.65 : 0.45,
-            minWidth: 48,
-            textAlign: "right",
-            marginRight: "2.5rem",
-          }}
+          style={{ opacity: isActive ? 0.65 : 0.45, minWidth: 48, textAlign: "right", marginRight: "2.5rem" }}
         >
           {year}
         </span>
 
-        {/* VIEW button */}
+        {/* VIEW — magnetic pull */}
         {link ? (
-          <a
-            href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="pointer-events-auto inline-flex shrink-0 items-center gap-2 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.22em]"
-            style={{
-              border: `2px solid ${isActive ? BG : INK}`,
-              color: isActive ? BG : INK,
-              background: "transparent",
-              transition: "none",
-              textDecoration: "none",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = isActive ? BG : INK;
-              e.currentTarget.style.color = isActive ? ACCENT : BG;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = isActive ? BG : INK;
-            }}
-          >
-            VIEW <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} />
-          </a>
+          <Magnetic disabled={reduced}>
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="pointer-events-auto inline-flex shrink-0 items-center gap-2 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.22em]"
+              style={{
+                border: `2px solid ${isActive ? BG : INK}`,
+                color: isActive ? BG : INK,
+                background: "transparent",
+                transition: "none",
+                textDecoration: "none",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = isActive ? BG : INK; e.currentTarget.style.color = isActive ? ACCENT : BG; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = isActive ? BG : INK; }}
+            >
+              VIEW <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} />
+            </a>
+          </Magnetic>
         ) : (
           <span
             className="inline-flex shrink-0 items-center gap-2 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.22em] opacity-25"
@@ -595,25 +610,9 @@ function LoadingSkeleton() {
   return (
     <>
       {Array.from({ length: 4 }).map((_, i) => (
-        <div
-          key={i}
-          className="flex items-center gap-5 px-5 py-6"
-          style={{ borderBottom: `2px solid ${INK}`, opacity: 0.2 }}
-        >
-          <span className="w-[68px] font-mono text-[10px] uppercase tracking-[0.22em]">
-            P-{String(i + 1).padStart(3, "0")}
-          </span>
-          <span
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 800,
-              fontSize: 32,
-              letterSpacing: "-0.025em",
-              textTransform: "uppercase",
-            }}
-          >
-            LOADING…
-          </span>
+        <div key={i} className="flex items-center gap-5 px-5 py-6" style={{ borderBottom: `2px solid ${INK}`, opacity: 0.2 }}>
+          <span className="w-[68px] font-mono text-[10px] uppercase tracking-[0.22em]">P-{String(i + 1).padStart(3, "0")}</span>
+          <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 800, fontSize: 32, letterSpacing: "-0.025em", textTransform: "uppercase" }}>LOADING…</span>
         </div>
       ))}
     </>
