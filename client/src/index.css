@@ -530,6 +530,12 @@ body::-webkit-scrollbar {
     to   { transform: scale(1.07); }
   }
 
+  /* Staggered column-grid breathing — each line gets a different delay via JS. */
+  @keyframes brut-grid-pulse {
+    from { opacity: 0.018; }
+    to   { opacity: 0.072; }
+  }
+
   /* Reverse-direction marquee for the bottom statement lane. */
   @keyframes brut-marquee-rev {
     from { transform: translateX(-50%); }
