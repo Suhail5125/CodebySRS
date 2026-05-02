@@ -1,6 +1,53 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 
+/** Small, self-contained character-scramble. Identical in spirit
+ *  to the hero's `useScramble` but inlined so the preloader has
+ *  zero coupling to hero-section.tsx. The natural state is always
+ *  the full target string, so a missed frame never leaves the
+ *  label invisible. */
+function useScramble(target: string, durationMs: number, paused: boolean) {
+  const [out, setOut] = useState(target);
+  useEffect(() => {
+    if (paused) {
+      setOut(target);
+      return;
+    }
+    const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789█▓▒░<>/\\";
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      const revealHead = Math.floor(t * (target.length + 4));
+      let s = "";
+      for (let i = 0; i < target.length; i++) {
+        const ch = target[i];
+        if (i < revealHead - 4) s += ch;
+        else if (ch === " " || ch === "/") s += ch;
+        else s += glyphs[Math.floor(Math.random() * glyphs.length)];
+      }
+      setOut(s);
+      if (t < 1) raf = requestAnimationFrame(tick);
+      else setOut(target);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, durationMs, paused]);
+  return out;
+}
+
+/** Renders the rotating system-check label with a quick scramble
+ *  on each rotation. The `target` change re-triggers `useScramble`
+ *  via its dep array. */
+function SystemCheckLine({ text, paused }: { text: string; paused: boolean }) {
+  const out = useScramble(text, 280, paused);
+  return (
+    <span style={{ display: "inline-block", whiteSpace: "pre" }}>
+      {out || "\u00A0"}
+    </span>
+  );
+}
+
 /**
  * BootPreloader — Section 00 / BOOT.
  *
@@ -185,7 +232,10 @@ export function BootPreloader() {
                 CREATIVE / DEV / OS
               </div>
               <div className="text-[10px] uppercase tracking-[0.32em] opacity-50">
-                {SYSTEM_CHECKS[checkIndex]}
+                <SystemCheckLine
+                  text={SYSTEM_CHECKS[checkIndex]}
+                  paused={reducedMotion}
+                />
               </div>
             </div>
           </div>

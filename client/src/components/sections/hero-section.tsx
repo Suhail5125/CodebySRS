@@ -432,9 +432,9 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                   </span>
                   <div className="ml-2 h-px flex-1 bg-[#F2EFE6]/15" />
                 </div>
-                {/* 3-col grid keeps 5 tiles in two clean rows
-                    (3 + 2) with no orphan row of 1. */}
-                <div className="grid grid-cols-3 gap-3">
+                {/* 2-col stack — vertical channel list per the
+                    right-rail spec. */}
+                <div className="grid grid-cols-2 gap-3">
                   {socialLinks.map(({ Icon, href, label }, i) => (
                     <SocialTile
                       key={label}
