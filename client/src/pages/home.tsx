@@ -15,7 +15,6 @@ import type { Project, Skill, AboutInfo, InsertContactMessage, Testimonial } fro
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { ScrollIndicator } from "@/components/scroll-indicator";
-import { FloatingNavbar } from "@/components/layout/floating-navbar";
 
 export default function Home() {
   const { toast } = useToast();
@@ -75,16 +74,12 @@ export default function Home() {
     <div className="min-h-screen bg-background relative">
       <SEO />
       <ScrollIndicator />
-      <FloatingNavbar />
-      
 
-      
       <main>
-        {/* Hero Section */}
-        <div id="hero" className="relative min-h-screen">
-          <div className="absolute top-0 left-0 right-0 z-20">
-            <Navigation />
-          </div>
+        {/* Brutalist top nav now sits ABOVE the hero (not overlaid),
+            so the hero's LIVE status bar is no longer hidden. */}
+        <Navigation />
+        <div id="hero" className="relative">
           <HeroSection aboutInfo={aboutInfo || null} isLoading={aboutLoading} />
         </div>
 

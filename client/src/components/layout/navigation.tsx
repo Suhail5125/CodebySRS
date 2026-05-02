@@ -1,12 +1,24 @@
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { Menu, X, Code2, Send } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { Link } from "wouter";
+import { Menu, X, ArrowUpRight } from "lucide-react";
 
-const navItems = [
+/**
+ * Brutalist top navigation — matches the hero language:
+ * dark BG (#0A0A0A), cream INK (#F2EFE6), accent (#FF3D00),
+ * hard 2-px border, JetBrains Mono / Inter type, no gradients,
+ * instant or sharp animations only.
+ *
+ * Public testid contract preserved:
+ *   link-home, link-projects, link-services, link-about, link-contact,
+ *   button-lets-work-together, button-menu-toggle,
+ *   link-mobile-{name} (lowercase).
+ */
+
+const INK = "#F2EFE6";
+const BG = "#0A0A0A";
+const ACCENT = "#FF3D00";
+
+const NAV_ITEMS = [
   { name: "Projects", href: "#projects" },
   { name: "Services", href: "#services" },
   { name: "About", href: "#about" },
@@ -14,207 +26,283 @@ const navItems = [
 ];
 
 export function Navigation() {
-  const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const scrollToSection = (href: string) => {
-    if (href.startsWith("#")) {
-      const element = document.querySelector(href);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
-        setIsOpen(false);
-      }
-    }
+    if (!href.startsWith("#")) return;
+    document.querySelector(href)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setIsOpen(false);
   };
 
   return (
-    <motion.nav
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className={cn(
-        "relative z-50 transition-all duration-300 pt-6 pb-0"
-      )}
+    <nav
+      className="relative z-50"
+      style={{
+        background: BG,
+        color: INK,
+        borderBottom: `2px solid ${INK}`,
+        fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+        boxShadow: scrolled ? `0 1px 0 0 ${ACCENT}` : "none",
+        transition: "box-shadow 0.18s ease-out",
+      }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="glass rounded-lg border border-border/50 px-8 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" data-testid="link-home">
-              <motion.div
-                className="flex items-center gap-2 group cursor-pointer"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <div className="relative">
-                  <Code2 className="h-8 w-8 text-chart-1 transition-all group-hover:glow-cyan" />
-                  <motion.div
-                    className="absolute inset-0 bg-chart-1/20 rounded-full blur-xl"
-                    animate={{
-                      scale: [1, 1.2, 1],
-                      opacity: [0.5, 0.8, 0.5],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                  />
-                </div>
-                <span className="font-display text-xl font-bold gradient-text-cyan-magenta">
-                  CodebySRS
-                </span>
-              </motion.div>
-            </Link>
+      <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-6 py-4 lg:px-10">
+        {/* ====== Logo: orange square + wordmark ====== */}
+        <Link
+          href="/"
+          data-testid="link-home"
+          aria-label="CodebySRS — Home"
+          className="group inline-flex items-center gap-3 no-underline"
+        >
+          <span
+            className="relative grid h-9 w-9 shrink-0 place-items-center text-[14px] font-bold leading-none transition-transform duration-200 ease-out group-hover:rotate-[-6deg]"
+            style={{ background: ACCENT, color: BG }}
+            aria-hidden
+          >
+            S
+            {/* accent dot — pulses on hover */}
+            <span
+              className="absolute -right-1 -top-1 h-2 w-2"
+              style={{ background: INK, border: `1px solid ${BG}` }}
+            />
+          </span>
+          <span
+            className="text-[13px] font-bold uppercase tracking-[0.2em]"
+            style={{ color: INK }}
+          >
+            Codeby<span style={{ color: ACCENT }}>SRS</span>
+            <span style={{ color: ACCENT }}>.</span>
+          </span>
+        </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-2">
-              {navItems.map((item, index) => (
-                <motion.div
-                  key={item.name}
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 + 0.2 }}
-                >
-                  {item.href.startsWith("#") ? (
-                    <button
-                      onClick={() => scrollToSection(item.href)}
-                      data-testid={`link-${item.name.toLowerCase()}`}
-                      className={cn(
-                        "px-4 py-2 rounded-md font-medium transition-all relative group",
-                        "hover-elevate active-elevate-2"
-                      )}
-                    >
-                      <span className="relative z-10">{item.name}</span>
-                      <motion.div
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-chart-1 to-chart-2"
-                        initial={{ scaleX: 0 }}
-                        whileHover={{ scaleX: 1 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    </button>
-                  ) : (
-                    <Link href={item.href} data-testid={`link-${item.name.toLowerCase()}`}>
-                      <button
-                        className={cn(
-                          "px-4 py-2 rounded-md font-medium transition-all relative group",
-                          "hover-elevate active-elevate-2"
-                        )}
-                      >
-                        <span className="relative z-10">{item.name}</span>
-                        <motion.div
-                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-chart-1 to-chart-2"
-                          initial={{ scaleX: 0 }}
-                          whileHover={{ scaleX: 1 }}
-                          transition={{ duration: 0.3 }}
-                        />
-                      </button>
-                    </Link>
-                  )}
-                </motion.div>
-              ))}
-              <ThemeToggle />
-              <Button
-                onClick={() => scrollToSection("#contact")}
-                className="relative overflow-hidden group"
-                size="sm"
-                data-testid="button-lets-work-together"
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  <Send className="h-4 w-4" />
-                  Let's Work Together
-                </span>
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-chart-1/20 to-chart-2/20"
-                  initial={{ x: "-100%" }}
-                  whileHover={{ x: 0 }}
-                  transition={{ duration: 0.3 }}
-                />
-              </Button>
-            </div>
+        {/* ====== Desktop nav ====== */}
+        <div className="hidden items-center gap-1 md:flex">
+          {NAV_ITEMS.map((item, i) => (
+            <NavLink
+              key={item.name}
+              label={item.name}
+              index={i}
+              onClick={() => scrollToSection(item.href)}
+            />
+          ))}
 
-            {/* Mobile Menu Button */}
-            <div className="flex md:hidden items-center gap-2">
-              <ThemeToggle />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(!isOpen)}
-                data-testid="button-menu-toggle"
-              >
-                <AnimatePresence mode="wait">
-                  {isOpen ? (
-                    <motion.div
-                      key="close"
-                      initial={{ rotate: -90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: 90, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <X className="h-6 w-6" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="menu"
-                      initial={{ rotate: 90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: -90, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Menu className="h-6 w-6" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </Button>
-            </div>
-          </div>
+          <div className="mx-4 h-5 w-px" style={{ background: `${INK}55` }} aria-hidden />
+
+          <CtaButton onClick={() => scrollToSection("#contact")} />
         </div>
+
+        {/* ====== Mobile toggle ====== */}
+        <button
+          type="button"
+          onClick={() => setIsOpen((o) => !o)}
+          data-testid="button-menu-toggle"
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isOpen}
+          className="grid h-10 w-10 place-items-center md:hidden"
+          style={{
+            background: isOpen ? INK : "transparent",
+            color: isOpen ? BG : INK,
+            border: `2px solid ${INK}`,
+          }}
+        >
+          {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </button>
       </div>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden mt-2 mx-4 overflow-hidden"
-          >
-            <div className="glass rounded-lg border border-border/50 p-4">
-              <div className="flex flex-col gap-2">
-                {navItems.map((item, index) => (
-                  <motion.div
-                    key={item.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    {item.href.startsWith("#") ? (
-                      <button
-                        onClick={() => scrollToSection(item.href)}
-                        data-testid={`link-mobile-${item.name.toLowerCase()}`}
-                        className="w-full text-left px-4 py-3 rounded-md font-medium hover-elevate active-elevate-2 transition-all"
-                      >
-                        {item.name}
-                      </button>
-                    ) : (
-                      <Link href={item.href} data-testid={`link-mobile-${item.name.toLowerCase()}`}>
-                        <button
-                          onClick={() => setIsOpen(false)}
-                          className="w-full text-left px-4 py-3 rounded-md font-medium hover-elevate active-elevate-2 transition-all"
-                        >
-                          {item.name}
-                        </button>
-                      </Link>
-                    )}
-                  </motion.div>
-                ))}
+      {/* ====== Mobile menu ====== */}
+      {isOpen && (
+        <div
+          className="md:hidden"
+          style={{
+            background: BG,
+            borderTop: `1px solid ${INK}33`,
+            borderBottom: `2px solid ${INK}`,
+          }}
+        >
+          <ul className="flex flex-col">
+            {NAV_ITEMS.map((item, i) => (
+              <li
+                key={item.name}
+                style={{
+                  borderTop: i === 0 ? "none" : `1px solid ${INK}22`,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => scrollToSection(item.href)}
+                  data-testid={`link-mobile-${item.name.toLowerCase()}`}
+                  className="flex w-full items-center justify-between px-6 py-4 text-left text-[12px] font-semibold uppercase tracking-[0.22em]"
+                  style={{ color: INK }}
+                >
+                  <span className="flex items-center gap-3">
+                    <span
+                      className="tabular-nums"
+                      style={{ color: `${INK}66` }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span>{item.name}</span>
+                  </span>
+                  <ArrowUpRight className="h-4 w-4" style={{ color: ACCENT }} />
+                </button>
+              </li>
+            ))}
+            <li style={{ borderTop: `1px solid ${INK}22` }}>
+              <div className="px-6 py-4">
+                <CtaButton onClick={() => scrollToSection("#contact")} fullWidth />
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.nav>
+            </li>
+          </ul>
+        </div>
+      )}
+    </nav>
+  );
+}
+
+/* ============================================================
+ * NavLink — brutalist hover: top tick + bottom underline that
+ * sweeps in from the left, plus a [NN] section index prefix.
+ * ============================================================ */
+interface NavLinkProps {
+  label: string;
+  index: number;
+  onClick: () => void;
+}
+function NavLink({ label, index, onClick }: NavLinkProps) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={`link-${label.toLowerCase()}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+      className="group relative inline-flex items-center gap-2 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      style={{ color: INK }}
+    >
+      {/* top tick — appears on hover */}
+      <span
+        aria-hidden
+        className="absolute left-0 top-0 h-[2px]"
+        style={{
+          width: hover ? "100%" : "0%",
+          background: ACCENT,
+          transition: "width 0.22s cubic-bezier(0.2,0.8,0.2,1)",
+        }}
+      />
+      <span
+        className="tabular-nums"
+        style={{ color: hover ? ACCENT : `${INK}55`, transition: "color 0.18s" }}
+      >
+        [{String(index + 1).padStart(2, "0")}]
+      </span>
+      <span style={{ position: "relative", display: "inline-block" }}>
+        {label}
+        {/* bottom underline — slides from left */}
+        <span
+          aria-hidden
+          className="absolute -bottom-1 left-0 h-[2px]"
+          style={{
+            width: hover ? "100%" : "0%",
+            background: INK,
+            transition: "width 0.24s cubic-bezier(0.2,0.8,0.2,1)",
+          }}
+        />
+      </span>
+    </button>
+  );
+}
+
+/* ============================================================
+ * CtaButton — brutalist primary with three layered hover effects:
+ *   1. Accent block slides in from the bottom (color invert)
+ *   2. Label "swap": current label rises out, duplicate rises in
+ *   3. Arrow translates up-right and rotates
+ * ============================================================ */
+interface CtaButtonProps {
+  onClick: () => void;
+  fullWidth?: boolean;
+}
+function CtaButton({ onClick, fullWidth }: CtaButtonProps) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid="button-lets-work-together"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+      className={`group relative inline-flex items-center justify-center gap-3 overflow-hidden px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] ${
+        fullWidth ? "w-full" : ""
+      }`}
+      style={{
+        background: INK,
+        color: BG,
+        border: `2px solid ${INK}`,
+      }}
+    >
+      {/* accent block — sweeps up from bottom on hover */}
+      <span
+        aria-hidden
+        className="absolute inset-x-0 bottom-0"
+        style={{
+          height: "100%",
+          background: ACCENT,
+          transform: hover ? "translateY(0)" : "translateY(100%)",
+          transition: "transform 0.32s cubic-bezier(0.2,0.8,0.2,1)",
+        }}
+      />
+      {/* label-swap stack — single fixed-height window, two stacked spans.
+          Second span is decorative (mirror for the rise-in), hidden from
+          assistive tech so the label is only announced once. */}
+      <span
+        className="relative inline-block overflow-hidden"
+        style={{ height: "1em", lineHeight: "1em" }}
+      >
+        <span
+          className="block"
+          style={{
+            transform: hover ? "translateY(-100%)" : "translateY(0%)",
+            transition: "transform 0.28s cubic-bezier(0.2,0.8,0.2,1)",
+            color: BG,
+          }}
+        >
+          LET&apos;S WORK
+        </span>
+        <span
+          aria-hidden="true"
+          className="block"
+          style={{
+            transform: hover ? "translateY(-100%)" : "translateY(0%)",
+            transition: "transform 0.28s 0.04s cubic-bezier(0.2,0.8,0.2,1)",
+            color: BG,
+          }}
+        >
+          LET&apos;S WORK
+        </span>
+      </span>
+      <ArrowUpRight
+        className="relative h-4 w-4"
+        style={{
+          color: BG,
+          transform: hover
+            ? "translate(2px,-2px) rotate(0deg)"
+            : "translate(0,0) rotate(0deg)",
+          transition: "transform 0.22s cubic-bezier(0.2,0.8,0.2,1)",
+        }}
+      />
+    </button>
   );
 }

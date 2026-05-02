@@ -332,50 +332,48 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             >
               <Magnetic strength={0.35} disabled={reducedMotion}>
                 <BrutButton
+                  label="START PROJECT"
                   onClick={() => scrollTo("#contact")}
                   data-testid="button-lets-work-together"
                   variant="solid"
-                >
-                  START PROJECT
-                  <ArrowUpRight className="h-4 w-4" />
-                </BrutButton>
+                />
               </Magnetic>
               <Magnetic strength={0.35} disabled={reducedMotion}>
                 <BrutButton
+                  label="VIEW WORK"
                   onClick={() => scrollTo("#projects")}
                   data-testid="button-view-work"
                   variant="ghost"
-                >
-                  VIEW WORK
-                  <ArrowUpRight className="h-4 w-4" />
-                </BrutButton>
+                />
               </Magnetic>
             </div>
 
-            {/* Social row */}
+            {/* ============ Social tiles — bold square cells ============ */}
             {socialLinks.length > 0 && (
               <div
-                className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 font-mono text-[11px] uppercase tracking-[0.22em] brut-fade"
+                className="mt-12 brut-fade"
                 style={{ animationDelay: "0.5s" }}
               >
-                <span className="opacity-50">CHANNELS</span>
-                <span className="opacity-30">/</span>
-                {socialLinks.map(({ Icon, href, label }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={label}
-                    data-testid={`link-${label.toLowerCase()}`}
-                    className="group inline-flex items-center gap-1.5 underline-offset-4 transition-none hover:underline"
-                    style={{ color: INK }}
-                  >
-                    <Icon className="h-[14px] w-[14px]" />
-                    <span>{label.toUpperCase()}</span>
-                    <ArrowUpRight className="h-3 w-3 opacity-50 group-hover:opacity-100" />
-                  </a>
-                ))}
+                <div className="mb-4 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.32em] opacity-60">
+                  <span style={{ color: ACCENT }}>{"//"}</span>
+                  <span>CHANNELS</span>
+                  <span className="opacity-30">·</span>
+                  <span className="tabular-nums opacity-50">
+                    {String(socialLinks.length).padStart(2, "0")}
+                  </span>
+                  <div className="ml-2 h-px flex-1 bg-[#F2EFE6]/15" />
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {socialLinks.map(({ Icon, href, label }, i) => (
+                    <SocialTile
+                      key={label}
+                      Icon={Icon}
+                      href={href}
+                      label={label}
+                      index={i}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -443,31 +441,34 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
 /* ==================== Sub-components ==================== */
 
 interface BrutButtonProps {
-  children: React.ReactNode;
+  label: string;
   onClick?: () => void;
   variant?: "solid" | "ghost";
   "data-testid"?: string;
 }
-/** Hard-bordered button. Hover = instant color invert (no transition). */
+/**
+ * Brutalist primary CTA with three layered hover effects:
+ *   1. Accent block sweeps up from the bottom (color invert)
+ *   2. Label "swap" — current label rises out, duplicate rises in
+ *      (single fixed-height window prevents any layout shift)
+ *   3. Arrow translates up-right
+ *
+ * Solid variant = cream BG → accent on hover.
+ * Ghost variant = transparent BG → cream on hover (inverse).
+ */
 function BrutButton({
-  children,
+  label,
   onClick,
   variant = "solid",
   "data-testid": testid,
 }: BrutButtonProps) {
   const [hover, setHover] = useState(false);
   const isSolid = variant === "solid";
-  // Solid: cream bg + black text → invert on hover to accent bg + cream text.
-  // Ghost: transparent bg + cream border → invert to cream bg + black text.
-  const bg = isSolid
-    ? hover
-      ? ACCENT
-      : INK
-    : hover
-      ? INK
-      : "transparent";
-  const fg = isSolid ? (hover ? INK : BG) : hover ? BG : INK;
-  const border = isSolid ? bg : INK;
+  // Resting / hover swatches per variant.
+  const restBg = isSolid ? INK : "transparent";
+  const restFg = isSolid ? BG : INK;
+  const sweepBg = isSolid ? ACCENT : INK;
+  const sweepFg = isSolid ? INK : BG;
   return (
     <button
       type="button"
@@ -477,15 +478,64 @@ function BrutButton({
       onMouseLeave={() => setHover(false)}
       onFocus={() => setHover(true)}
       onBlur={() => setHover(false)}
-      className="group inline-flex items-center gap-3 px-5 py-3 font-mono text-[12px] font-bold uppercase tracking-[0.22em] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
+      className="group relative inline-flex items-center gap-3 overflow-hidden px-5 py-3 font-mono text-[12px] font-bold uppercase tracking-[0.22em] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
       style={{
-        background: bg,
-        color: fg,
-        border: `2px solid ${border}`,
-        transition: "none",
+        background: restBg,
+        color: restFg,
+        border: `2px solid ${INK}`,
       }}
     >
-      {children}
+      {/* (1) Sweeping accent block — bottom → top on hover */}
+      <span
+        aria-hidden
+        className="absolute inset-x-0 bottom-0"
+        style={{
+          height: "100%",
+          background: sweepBg,
+          transform: hover ? "translateY(0%)" : "translateY(101%)",
+          transition: "transform 0.34s cubic-bezier(0.2,0.8,0.2,1)",
+        }}
+      />
+      {/* (2) Label-swap stack — fixed-height window, two stacked spans.
+              The second span is purely decorative (mirrors the first for
+              the rise-in effect), so it's hidden from assistive tech to
+              prevent screen readers from announcing the label twice. */}
+      <span
+        className="relative inline-block overflow-hidden"
+        style={{ height: "1em", lineHeight: "1em" }}
+      >
+        <span
+          className="block whitespace-nowrap"
+          style={{
+            color: hover ? sweepFg : restFg,
+            transform: hover ? "translateY(-100%)" : "translateY(0%)",
+            transition:
+              "transform 0.28s cubic-bezier(0.2,0.8,0.2,1), color 0.05s 0.14s linear",
+          }}
+        >
+          {label}
+        </span>
+        <span
+          aria-hidden="true"
+          className="block whitespace-nowrap"
+          style={{
+            color: sweepFg,
+            transform: hover ? "translateY(-100%)" : "translateY(0%)",
+            transition: "transform 0.28s 0.06s cubic-bezier(0.2,0.8,0.2,1)",
+          }}
+        >
+          {label}
+        </span>
+      </span>
+      {/* (3) Arrow — translate up-right on hover */}
+      <ArrowUpRight
+        className="relative h-4 w-4"
+        style={{
+          color: hover ? sweepFg : restFg,
+          transform: hover ? "translate(2px,-2px)" : "translate(0,0)",
+          transition: "transform 0.22s cubic-bezier(0.2,0.8,0.2,1), color 0.05s 0.14s linear",
+        }}
+      />
     </button>
   );
 }
@@ -683,6 +733,97 @@ function useNowEverySecond() {
 function fmtClock(d: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+/* ============================================================
+ * SocialTile — bold brutalist square channel button.
+ *  - 64-px square, 2-px cream border, label below the icon
+ *  - Hover: accent block sweeps up from bottom (color invert),
+ *    icon scales + the corner ARROW pings out, top tick fills
+ *  - Staggered fade-in via `animationDelay` keyed by `index`
+ * ============================================================ */
+interface SocialTileProps {
+  Icon: typeof Github;
+  href: string;
+  label: string;
+  index: number;
+}
+function SocialTile({ Icon, href, label, index }: SocialTileProps) {
+  const [hover, setHover] = useState(false);
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      data-testid={`link-${label.toLowerCase()}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+      className="group relative inline-flex h-16 w-16 shrink-0 flex-col items-center justify-center overflow-hidden text-[9px] font-bold uppercase tracking-[0.18em] outline-none brut-fade focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] sm:h-20 sm:w-20 sm:text-[10px]"
+      style={{
+        color: INK,
+        background: "transparent",
+        border: `2px solid ${INK}`,
+        animationDelay: `${0.55 + index * 0.06}s`,
+        fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+      }}
+    >
+      {/* Sweep block — bottom → top */}
+      <span
+        aria-hidden
+        className="absolute inset-x-0 bottom-0"
+        style={{
+          height: "100%",
+          background: ACCENT,
+          transform: hover ? "translateY(0%)" : "translateY(101%)",
+          transition: "transform 0.32s cubic-bezier(0.2,0.8,0.2,1)",
+        }}
+      />
+      {/* Top tick */}
+      <span
+        aria-hidden
+        className="absolute left-0 top-0 h-[2px]"
+        style={{
+          width: hover ? "100%" : "0%",
+          background: INK,
+          transition: "width 0.24s cubic-bezier(0.2,0.8,0.2,1)",
+        }}
+      />
+      {/* Corner ping arrow — top-right */}
+      <ArrowUpRight
+        aria-hidden
+        className="absolute right-1 top-1 h-3 w-3"
+        style={{
+          color: hover ? INK : `${INK}55`,
+          opacity: hover ? 1 : 0.5,
+          transform: hover ? "translate(2px,-2px)" : "translate(0,0)",
+          transition:
+            "transform 0.22s cubic-bezier(0.2,0.8,0.2,1), opacity 0.18s, color 0.05s 0.14s linear",
+        }}
+      />
+      {/* Icon */}
+      <Icon
+        className="relative h-5 w-5 sm:h-6 sm:w-6"
+        style={{
+          color: hover ? INK : INK,
+          transform: hover ? "scale(1.12)" : "scale(1)",
+          transition: "transform 0.22s cubic-bezier(0.2,0.8,0.2,1)",
+        }}
+      />
+      {/* Label */}
+      <span
+        className="relative mt-1.5"
+        style={{
+          color: hover ? INK : INK,
+          transition: "color 0.05s 0.14s linear",
+        }}
+      >
+        {label.toUpperCase()}
+      </span>
+    </a>
+  );
 }
 
 /* ==================== Advanced animation helpers ==================== */
