@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { AboutInfo } from "@shared";
 import { Github, Linkedin, Twitter, Instagram, Download, ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/reveal";
+import { SectionHeader } from "@/components/section-header";
 
 const BG = "#0A0A0A";
 const INK = "#F2EFE6";
@@ -57,6 +58,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
       <div className="mx-auto w-full max-w-[1400px]">
         <Reveal>
           <SectionHeader
+            variant="center"
             num="06"
             name="ABOUT"
             kicker="// OPERATOR PROFILE"
@@ -65,6 +67,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
           />
         </Reveal>
 
+        <Reveal delay={160}>
         {/* Identity strip */}
         <div
           className="mt-10 grid grid-cols-1 gap-0 lg:grid-cols-12"
@@ -216,6 +219,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
             <StatCell key={s.label} stat={s} index={i} total={stats.length} />
           ))}
         </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -281,55 +285,3 @@ function StatCell({
   );
 }
 
-function SectionHeader({
-  num,
-  name,
-  kicker,
-  headline,
-  right,
-}: {
-  num: string;
-  name: string;
-  kicker: string;
-  headline: string;
-  right?: string;
-}) {
-  return (
-    <header className="grid grid-cols-12 gap-x-6">
-      <aside className="col-span-12 mb-6 lg:col-span-2 lg:mb-0">
-        <div className="font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
-          [ SECTION {num} ]
-        </div>
-        <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
-          / {name}
-        </div>
-        <div className="mt-3 h-[2px] w-12" style={{ background: ACCENT }} />
-      </aside>
-      <div className="col-span-12 lg:col-span-10">
-        <div className="flex items-baseline justify-between gap-4">
-          <span className="font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
-            {kicker}
-          </span>
-          {right && (
-            <span className="font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
-              {right}
-            </span>
-          )}
-        </div>
-        <h2
-          className="mt-2"
-          style={{
-            fontFamily: "Inter, sans-serif",
-            fontWeight: 800,
-            fontSize: "clamp(40px, 7vw, 96px)",
-            lineHeight: 0.92,
-            letterSpacing: "-0.035em",
-            textTransform: "uppercase",
-          }}
-        >
-          {headline}
-        </h2>
-      </div>
-    </header>
-  );
-}

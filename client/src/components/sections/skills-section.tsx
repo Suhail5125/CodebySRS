@@ -47,6 +47,7 @@ export function SkillsSection({ skills, isLoading }: SkillsSectionProps) {
           />
         </Reveal>
 
+        <Reveal delay={160}>
         {/* Category tabs */}
         <div
           className="mt-10 flex flex-wrap gap-0"
@@ -129,6 +130,7 @@ export function SkillsSection({ skills, isLoading }: SkillsSectionProps) {
             </div>
           ))}
         </div>
+        </Reveal>
       </div>
     </section>
   );

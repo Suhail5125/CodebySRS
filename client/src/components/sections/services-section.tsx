@@ -77,6 +77,7 @@ export function ServicesSection() {
           />
         </Reveal>
 
+        <Reveal delay={160}>
         {/* Grid */}
         <div
           className="mt-10 grid grid-cols-1 gap-0 md:grid-cols-2 lg:grid-cols-3"
@@ -102,6 +103,7 @@ export function ServicesSection() {
             <span>EU / NA TIMEZONES</span>
           </div>
         </div>
+        </Reveal>
       </div>
     </section>
   );
