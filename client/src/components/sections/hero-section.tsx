@@ -6,9 +6,6 @@ import {
   Mail,
   Twitter,
   Instagram,
-  Dribbble,
-  Codepen,
-  Youtube,
   ArrowUpRight,
   ArrowDown,
 } from "lucide-react";
@@ -53,16 +50,14 @@ const FOCUS_KEYWORDS = [
 
 /** Fallback social channels — used when `aboutInfo` is empty so the
  *  hero never collapses to "no socials". Real URLs from the admin
- *  override the matching label. */
+ *  override the matching label. Trimmed to the five core channels
+ *  by user request (Dribbble / Codepen / YouTube removed). */
 const FALLBACK_SOCIAL = {
   github: "https://github.com",
   linkedin: "https://linkedin.com",
   twitter: "https://twitter.com",
   instagram: "https://instagram.com",
   email: "hello@codebysrs.dev",
-  dribbble: "https://dribbble.com",
-  codepen: "https://codepen.io",
-  youtube: "https://youtube.com",
 };
 
 const TECH = [
@@ -130,17 +125,15 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   // Width of the longest role string in characters — locks the slot.
   const roleSlotCh = Math.max(...ROLES.map((r) => r.length));
 
-  // Always render a full row of channels — real URLs override the
-  // brand fallbacks so the visual never collapses while data loads.
+  // Five core channels — real URLs override the brand fallbacks so the
+  // visual never collapses while data loads. (Dribbble/Codepen/YouTube
+  // removed per user request to keep the row clean.)
   const socialLinks: { Icon: typeof Github; href: string; label: string }[] = [
     { Icon: Github, href: aboutInfo?.githubUrl || FALLBACK_SOCIAL.github, label: "GitHub" },
     { Icon: Linkedin, href: aboutInfo?.linkedinUrl || FALLBACK_SOCIAL.linkedin, label: "LinkedIn" },
     { Icon: Twitter, href: aboutInfo?.twitterUrl || FALLBACK_SOCIAL.twitter, label: "Twitter" },
     { Icon: Instagram, href: aboutInfo?.instagramUrl || FALLBACK_SOCIAL.instagram, label: "Instagram" },
     { Icon: Mail, href: aboutInfo?.email ? `mailto:${aboutInfo.email}` : `mailto:${FALLBACK_SOCIAL.email}`, label: "Email" },
-    { Icon: Dribbble, href: FALLBACK_SOCIAL.dribbble, label: "Dribbble" },
-    { Icon: Codepen, href: FALLBACK_SOCIAL.codepen, label: "Codepen" },
-    { Icon: Youtube, href: FALLBACK_SOCIAL.youtube, label: "YouTube" },
   ];
 
   const scrollTo = (id: string) =>
@@ -194,9 +187,10 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             />
           </span>
         </div>
+        {/* Right side: just the live clock — location was removed
+            because it already appears next to AVAILABLE FOR WORK
+            in the bottom strip below the hero. */}
         <div className="hidden items-center gap-3 md:flex">
-          <span className="opacity-50">{location}</span>
-          <span className="opacity-30">·</span>
           <span className="tabular-nums opacity-80" style={{ minWidth: "8ch", display: "inline-block", textAlign: "right" }}>
             {now}
           </span>
@@ -206,8 +200,11 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       {/* ==========  MAIN GRID ========== */}
       <main className="relative z-[3] mx-auto w-full max-w-[1600px] px-6 pt-4 pb-8 lg:px-10 lg:pt-6">
         <div className="grid grid-cols-12 gap-x-6 gap-y-6">
-          {/* Left aside — section index, manifesto + telemetry stack.
-              Brutalist sidebar: reads like a system console column. */}
+          {/* Left aside — section index + manifesto + coords.
+              Trimmed to remove duplication with the top status bar
+              (clock) and the bottom strip (status / version), so the
+              hero reads as one organized column instead of a noisy
+              telemetry dump. */}
           <aside className="col-span-12 lg:col-span-2">
             <div className="font-mono text-[10px] uppercase tracking-[0.22em]">
               {/* Section index */}
@@ -234,57 +231,16 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                 </p>
               </div>
 
-              <div className="mt-6 hidden h-px w-12 bg-[#F2EFE6]/30 lg:block" />
+              <div className="mt-8 hidden h-px w-12 bg-[#F2EFE6]/30 lg:block" />
 
-              {/* Local time — re-uses the 1Hz hero clock */}
-              <div className="mt-5 hidden lg:block">
-                <div className="opacity-50">LOCAL</div>
-                <div className="mt-2 flex items-center gap-2">
-                  <span
-                    className="inline-block h-1.5 w-1.5 brut-blink"
-                    style={{ background: ACCENT }}
-                    aria-hidden
-                  />
-                  <span className="tabular-nums opacity-90">{now}</span>
-                  <span className="opacity-50">IST</span>
-                </div>
-              </div>
-
-              {/* Coords — static placeholder, easily swapped via aboutInfo later */}
+              {/* Coords — non-duplicative with the bottom-strip
+                  location label (which shows "EARTH / GLOBAL"). */}
               <div className="mt-5 hidden lg:block">
                 <div className="opacity-50">COORDS</div>
                 <div className="mt-2 leading-snug opacity-90">
                   <div className="tabular-nums">13.0827° N</div>
                   <div className="tabular-nums">80.2707° E</div>
                 </div>
-              </div>
-
-              <div className="mt-6 hidden h-px w-12 bg-[#F2EFE6]/30 lg:block" />
-
-              {/* Status block */}
-              <div className="mt-5 hidden lg:block">
-                <div className="opacity-50">STATUS</div>
-                <div className="mt-2 flex items-center gap-2">
-                  <span
-                    className="inline-block h-1.5 w-1.5 brut-blink"
-                    style={{ background: available ? ACCENT : "#666" }}
-                    aria-hidden
-                  />
-                  <span className="opacity-90">
-                    {available ? "BUILDING" : "BOOKED"}
-                  </span>
-                </div>
-                <div className="mt-1 opacity-60">→ CODEBYSRS</div>
-              </div>
-
-              {/* Version pill */}
-              <div className="mt-6 hidden lg:flex items-center gap-2">
-                <span
-                  className="inline-block h-2 w-2"
-                  style={{ background: ACCENT }}
-                  aria-hidden
-                />
-                <span className="tabular-nums opacity-70">v2026.05</span>
               </div>
             </div>
           </aside>
