@@ -297,7 +297,8 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        overflow: "hidden",
+                        transform: "rotate(-10deg) scale(1.22)",
+                        transformOrigin: "center center",
                       }}
                     >
                       <span
@@ -308,9 +309,7 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
                           color: BG,
                           lineHeight: 1,
                           letterSpacing: "-0.04em",
-                          transform: "rotate(-12deg)",
                           display: "inline-block",
-                          opacity: 0.92,
                         }}
                       >
                         {String((hovered ?? 0) + 1).padStart(2, "0")}
@@ -453,22 +452,11 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
               project.title.toUpperCase()
             )}
           </h3>
-          {isActive && (
-            <div
-              className="shrink-0"
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: "50%",
-                border: `2px solid ${BG}`,
-              }}
-            />
-          )}
         </div>
 
         {/* tech stack — max 3 tags + overflow badge */}
         {shown.length > 0 && (
-          <div className="hidden shrink-0 items-center gap-1.5 lg:flex" style={{ marginRight: "2rem" }}>
+          <div className="hidden shrink-0 items-center gap-1.5 md:flex" style={{ marginRight: "2rem" }}>
             {shown.map((tag) => (
               <span
                 key={tag}
