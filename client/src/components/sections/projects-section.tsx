@@ -297,16 +297,20 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        overflow: "hidden",
                       }}
                     >
                       <span
                         style={{
                           fontFamily: "Inter, sans-serif",
                           fontWeight: 800,
-                          fontSize: 100,
+                          fontSize: 148,
                           color: BG,
                           lineHeight: 1,
                           letterSpacing: "-0.04em",
+                          transform: "rotate(-12deg)",
+                          display: "inline-block",
+                          opacity: 0.92,
                         }}
                       >
                         {String((hovered ?? 0) + 1).padStart(2, "0")}
@@ -391,9 +395,11 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
 ) {
   const { ref: revealRef, style: revealStyle } = useReveal({ delay, variant: "slide-left" });
 
-  const num  = `P-${String(index + 1).padStart(3, "0")}`;
-  const year = new Date(project.createdAt).getFullYear();
-  const link = project.liveUrl ?? project.githubUrl ?? null;
+  const num   = `P-${String(index + 1).padStart(3, "0")}`;
+  const link  = project.liveUrl ?? project.githubUrl ?? null;
+  const tech  = parseTech(project.technologies);
+  const shown = tech.slice(0, 3);
+  const extra = tech.length - shown.length;
 
   return (
     <div
@@ -460,18 +466,32 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
           )}
         </div>
 
-        {/* year */}
-        <span
-          className="hidden shrink-0 font-mono text-[12px] lg:block"
-          style={{
-            opacity: isActive ? 0.65 : 0.45,
-            minWidth: 48,
-            textAlign: "right",
-            marginRight: "2.5rem",
-          }}
-        >
-          {year}
-        </span>
+        {/* tech stack — max 3 tags + overflow badge */}
+        {shown.length > 0 && (
+          <div className="hidden shrink-0 items-center gap-1.5 lg:flex" style={{ marginRight: "2rem" }}>
+            {shown.map((tag) => (
+              <span
+                key={tag}
+                className="px-2 py-1 font-mono text-[9px] uppercase tracking-[0.16em]"
+                style={{
+                  border: `1.5px solid ${isActive ? BG : INK}`,
+                  color: isActive ? BG : INK,
+                  opacity: isActive ? 0.75 : 0.55,
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+            {extra > 0 && (
+              <span
+                className="font-mono text-[9px] uppercase tracking-[0.16em]"
+                style={{ color: isActive ? BG : ACCENT, opacity: isActive ? 0.75 : 1 }}
+              >
+                +{extra}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* VIEW button */}
         {link ? (
