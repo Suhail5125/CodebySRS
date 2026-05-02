@@ -1,27 +1,26 @@
 import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
 
-interface RevealProps {
-  children: ReactNode;
+type RevealVariant = "rise" | "fade";
+
+interface UseRevealOptions {
   delay?: number;
-  variant?: "rise" | "fade";
-  className?: string;
+  variant?: RevealVariant;
   threshold?: number;
 }
 
 /**
- * IntersectionObserver-based reveal wrapper.
- * Plays brut-rise or brut-fade once the element enters the viewport.
- * Honours prefers-reduced-motion and falls back to immediate reveal
- * after a short timeout if the observer never fires.
+ * IntersectionObserver-based reveal hook. Returns a ref to attach to the
+ * target element and a style object that holds the element invisible until
+ * it enters the viewport, then plays brut-rise / brut-fade with the given
+ * delay. Honours prefers-reduced-motion and has a 1.5 s safety fallback so
+ * content can never be permanently invisible.
  */
-export function Reveal({
-  children,
+export function useReveal({
   delay = 0,
   variant = "rise",
-  className,
   threshold = 0.12,
-}: RevealProps) {
-  const ref = useRef<HTMLDivElement>(null);
+}: UseRevealOptions = {}) {
+  const ref = useRef<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -62,8 +61,28 @@ export function Reveal({
         animationDelay: `${delay}ms`,
         opacity: 1,
       }
-    : { opacity: 0, transform: "translateY(12px)" };
+    : { opacity: 0, transform: "translateY(10px)" };
 
+  return { ref, style, visible };
+}
+
+interface RevealProps {
+  children: ReactNode;
+  delay?: number;
+  variant?: RevealVariant;
+  className?: string;
+  threshold?: number;
+}
+
+/** Wrapper component version of useReveal. */
+export function Reveal({
+  children,
+  delay = 0,
+  variant = "rise",
+  className,
+  threshold = 0.12,
+}: RevealProps) {
+  const { ref, style } = useReveal({ delay, variant, threshold });
   return (
     <div ref={ref} className={className} style={style}>
       {children}

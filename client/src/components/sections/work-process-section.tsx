@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Lightbulb, FileSearch, Palette, Code, TestTube, Rocket } from "lucide-react";
 import { Reveal } from "@/components/reveal";
+import { SectionHeader } from "@/components/section-header";
 
 const BG = "#0A0A0A";
 const INK = "#F2EFE6";
@@ -97,10 +98,12 @@ export function WorkProcessSection() {
             kicker="// DELIVERY PIPELINE"
             headline="HOW THE WORK GETS SHIPPED"
             right="06 PHASES · ~12 WEEKS"
+            variant="banner"
           />
         </Reveal>
 
         {/* Phase rail */}
+        <Reveal delay={120}>
         <div
           className="mt-10 grid grid-cols-2 gap-0 md:grid-cols-3 lg:grid-cols-6"
           style={{ border: `2px solid ${INK}` }}
