@@ -217,7 +217,7 @@ function computePaths(
 
     if (conn.kind === "loop-back") {
       // Route [NO] path along the right margin: exit diamond right tip → right rail → target right edge
-      const exitX = from.midX + 62;   // right corner of decision diamond
+      const exitX = from.midX + 74;   // right corner of decision diamond (104/2 × √2 ≈ 73.5)
       const exitY = from.midY;         // vertical center of decision node
       const entryX = to.right + 2;    // right edge of target phase node
       const entryY = to.midY;          // vertical center of target node
@@ -473,12 +473,17 @@ function DecisionNode({
 }) {
   return (
     <div
-      ref={nodeRef as (el: HTMLDivElement | null) => void}
-      className="flex flex-col items-center"
-      style={{ minHeight: 140 }}
+      className="flex flex-col items-center w-full"
+      style={{ maxWidth: 520, margin: "0 auto" }}
     >
-      {/* Diamond container */}
-      <div className="relative flex items-center justify-center" style={{ width: 240, height: 120 }}>
+      {/* nodeRef on the inner diamond box only — height=148 so from.bottom
+          lands at the diamond's actual bottom tip (104px × √2 / 2 ≈ 73.5px
+          below centre, centre at 74px → tip at 147.5 ≈ 148px). */}
+      <div
+        ref={nodeRef as (el: HTMLDivElement | null) => void}
+        className="relative flex items-center justify-center"
+        style={{ width: 240, height: 148 }}
+      >
         {/* Diamond shape */}
         <div
           className="absolute"
@@ -501,7 +506,7 @@ function DecisionNode({
         </div>
       </div>
 
-      {/* [YES] guard — rendered below the diamond, properly centred */}
+      {/* [YES] ↓ — centred below the diamond, outside nodeRef */}
       <div
         className="font-mono uppercase"
         style={{
@@ -509,7 +514,7 @@ function DecisionNode({
           letterSpacing: "0.16em",
           color: INK,
           opacity: 0.55,
-          marginTop: 2,
+          marginTop: 3,
           whiteSpace: "nowrap",
         }}
       >
