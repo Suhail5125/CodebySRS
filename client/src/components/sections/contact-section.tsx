@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertContactMessageSchema, type InsertContactMessage } from "@shared";
-import { CheckCircle2, Send, ArrowUpRight } from "lucide-react";
+import { CheckCircle2, ArrowUpRight, MoveRight, ChevronDown } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
 
@@ -22,7 +22,108 @@ const PROJECT_TYPES = [
   "Design System",
   "Performance Audit",
   "Consulting",
+  "Other",
 ];
+
+
+/* ── Inline underline input ───────────────────────────────────────────────── */
+
+const Blank = forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement> & { width?: string; error?: boolean }
+>(({ width = "180px", error: _error, style, ...props }, ref) => (
+  <input
+    ref={ref}
+    {...props}
+    style={{
+      display: "inline-block",
+      width,
+      background: "transparent",
+      border: "none",
+      borderBottom: `2px solid ${ACCENT}`,
+      color: ACCENT,
+      fontFamily: "inherit",
+      fontSize: "inherit",
+      letterSpacing: "inherit",
+      outline: "none",
+      paddingBottom: "2px",
+      paddingLeft: "6px",
+      verticalAlign: "baseline",
+      caretColor: ACCENT,
+      ...style,
+    }}
+    className="placeholder:opacity-30"
+  />
+));
+Blank.displayName = "Blank";
+
+/* ── Inline underline select ──────────────────────────────────────────────── */
+
+function BlankSelect({
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder?: string;
+}) {
+  return (
+    <span style={{ display: "inline-block", position: "relative", verticalAlign: "baseline" }}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          display: "inline-block",
+          width: "clamp(160px, 18vw, 240px)",
+          background: "transparent",
+          border: "none",
+          borderBottom: `2px solid ${ACCENT}`,
+          color: value ? ACCENT : `${INK}66`,
+          fontFamily: "inherit",
+          fontSize: "inherit",
+          letterSpacing: "inherit",
+          outline: "none",
+          paddingBottom: "2px",
+          paddingLeft: "6px",
+          paddingRight: "24px",
+          verticalAlign: "baseline",
+          appearance: "none",
+          WebkitAppearance: "none",
+          cursor: "pointer",
+          transition: "none",
+        }}
+      >
+        <option value="" disabled style={{ background: "#111", color: INK }}>
+          {placeholder ?? "select"}
+        </option>
+        {options.map((o) => (
+          <option key={o} value={o} style={{ background: "#111", color: INK }}>
+            {o}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        style={{ position: "absolute", right: 2, bottom: 5, pointerEvents: "none", color: ACCENT }}
+        size={14}
+      />
+    </span>
+  );
+}
+
+/* ── Validation error line ────────────────────────────────────────────────── */
+
+function ErrLine({ msg, field }: { msg: string; field: string }) {
+  return (
+    <div className="font-mono text-[9px] uppercase tracking-[0.18em]" style={{ color: ACCENT }}>
+      ⚑ {field}: {msg}
+    </div>
+  );
+}
+
+/* ── Main section ─────────────────────────────────────────────────────────── */
 
 export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) {
   const [success, setSuccess] = useState(false);
@@ -44,10 +145,12 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
     }
   };
 
+  const errors = form.formState.errors;
+
   return (
     <section
       id="contact"
-      className="snap-screen relative flex min-h-screen flex-col justify-center px-6 py-20 lg:px-10"
+      className="snap-screen relative flex min-h-screen flex-col justify-center px-6 py-10 lg:px-10"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
       <div className="mx-auto w-full max-w-[1400px]">
@@ -58,42 +161,41 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
             name="CONTACT"
             kicker="// OPEN A TICKET"
             headline="LET'S BUILD SOMETHING THAT SHIPS"
-            right="USUALLY REPLIES IN < 24H"
+            right="USUALLY REPLIES IN < 48H"
           />
         </Reveal>
 
         <Reveal delay={160} variant="slide-right">
-        <div
-          className="mt-10 grid grid-cols-1 gap-0 lg:grid-cols-12"
-          style={{ border: `2px solid ${INK}` }}
-        >
-          {/* Left: form */}
-          <div className="px-6 py-8 lg:col-span-8" style={{ borderRight: `2px solid ${INK}` }}>
+          <div className="mt-6">
+
+            {/* ── SUCCESS STATE ──────────────────────────────────────── */}
             {success ? (
-              <div className="flex flex-col items-start gap-5">
+              <div className="flex flex-col items-start gap-6 py-12 pl-2">
                 <div
-                  className="flex items-center gap-3 px-4 py-3 font-mono text-[12px] uppercase tracking-[0.22em]"
-                  style={{ background: ACCENT, color: BG, border: `2px solid ${INK}` }}
+                  className="flex items-center gap-3 px-5 py-4 font-mono text-[13px] uppercase tracking-[0.22em]"
+                  style={{ background: ACCENT, color: BG }}
                 >
                   <CheckCircle2 className="h-5 w-5" />
                   <span>TRANSMISSION RECEIVED</span>
                 </div>
-                <p className="max-w-xl text-[14px] leading-relaxed" style={{ opacity: 0.85 }}>
-                  Your message hit the queue. Expect a reply within 24 hours during EU/NA business hours.
+                <p className="max-w-2xl font-mono text-[15px] leading-relaxed" style={{ opacity: 0.7 }}>
+                  Your message hit the queue. Expect a reply within 48 hours during EU/NA business hours.
                 </p>
                 <button
                   type="button"
                   data-testid="button-send-another"
                   onClick={() => setSuccess(false)}
-                  className="inline-flex items-center gap-3 px-5 py-3 font-mono text-[12px] font-bold uppercase tracking-[0.22em]"
+                  className="inline-flex items-center gap-3 px-5 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
                   style={{ background: "transparent", color: INK, border: `2px solid ${INK}`, transition: "none" }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = ACCENT;
                     e.currentTarget.style.color = BG;
+                    e.currentTarget.style.borderColor = ACCENT;
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = "transparent";
                     e.currentTarget.style.color = INK;
+                    e.currentTarget.style.borderColor = INK;
                   }}
                 >
                   <span>SEND ANOTHER</span>
@@ -101,207 +203,126 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
                 </button>
               </div>
             ) : (
-              <form onSubmit={form.handleSubmit(submit)} className="space-y-5">
-                <div className="mb-2 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em]">
-                  <span style={{ color: ACCENT }}>●</span>
-                  <span>FORM://contact</span>
-                  <span className="opacity-60">END-TO-END ENCRYPTED</span>
-                </div>
+              /* ── FORM ─────────────────────────────────────────────── */
+              <form onSubmit={form.handleSubmit(submit)}>
+                <div className="px-2 pb-0 pt-8 lg:px-4">
 
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <Field label="01 / NAME" error={form.formState.errors.name?.message}>
-                    <input
+                  {/* Line 1: name + email */}
+                  <p className="font-mono text-[17px] leading-[3.2] tracking-wide lg:text-[20px]">
+                    Hi, I&apos;m{" "}
+                    <Blank
                       {...form.register("name")}
                       data-testid="input-name"
-                      placeholder="Jane Doe"
-                      className="w-full bg-transparent px-3 py-3 font-mono text-[13px] outline-none"
-                      style={{ border: `2px solid ${INK}`, color: INK, transition: "none" }}
+                      placeholder="your name"
+                      width="clamp(200px, 24vw, 320px)"
+                      error={!!errors.name}
                     />
-                  </Field>
-                  <Field label="02 / EMAIL" error={form.formState.errors.email?.message}>
-                    <input
+                    {" "}and you can reach me at{" "}
+                    <Blank
                       {...form.register("email")}
                       data-testid="input-email"
-                      placeholder="you@domain.com"
                       type="email"
-                      className="w-full bg-transparent px-3 py-3 font-mono text-[13px] outline-none"
-                      style={{ border: `2px solid ${INK}`, color: INK, transition: "none" }}
+                      placeholder="your@email.com"
+                      width="clamp(240px, 28vw, 380px)"
+                      error={!!errors.email}
                     />
-                  </Field>
-                </div>
+                    .
+                  </p>
 
-                <Field label="03 / SUBJECT" error={form.formState.errors.subject?.message}>
-                  <input
-                    {...form.register("subject")}
-                    data-testid="input-subject"
-                    placeholder="What needs building?"
-                    className="w-full bg-transparent px-3 py-3 font-mono text-[13px] outline-none"
-                    style={{ border: `2px solid ${INK}`, color: INK, transition: "none" }}
-                  />
-                </Field>
+                  {/* Line 2: subject + type dropdown */}
+                  <p className="font-mono text-[17px] leading-[3.2] tracking-wide lg:text-[20px]">
+                    I want to work on{" "}
+                    <Blank
+                      {...form.register("subject")}
+                      data-testid="input-subject"
+                      placeholder="project name or idea"
+                      width="clamp(240px, 32vw, 460px)"
+                      error={!!errors.subject}
+                    />
+                    {", specifically a "}
+                    <BlankSelect
+                      value={type}
+                      onChange={(v) => setType(v)}
+                      options={PROJECT_TYPES}
+                      placeholder="select type"
+                    />
+                    .
+                  </p>
 
-                {/* Project type chips */}
-                <div>
-                  <Label>04 / TYPE</Label>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {PROJECT_TYPES.map((t) => {
-                      const active = type === t;
-                      return (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => setType(active ? "" : t)}
-                          className="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.18em]"
-                          style={{
-                            background: active ? INK : "transparent",
-                            color: active ? BG : INK,
-                            border: `2px solid ${INK}`,
-                            transition: "none",
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!active) {
-                              e.currentTarget.style.background = ACCENT;
-                              e.currentTarget.style.color = BG;
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!active) {
-                              e.currentTarget.style.background = "transparent";
-                              e.currentTarget.style.color = INK;
-                            }
-                          }}
-                        >
-                          {t}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <Field label="05 / MESSAGE" error={form.formState.errors.message?.message}>
+                  {/* Line 3: message */}
+                  <p className="mb-2 mt-2 font-mono text-[17px] tracking-wide lg:text-[20px]">
+                    Here&apos;s what I&apos;m thinking:
+                  </p>
                   <textarea
                     {...form.register("message")}
                     data-testid="input-message"
                     placeholder="Goal · audience · constraints · deadline · budget…"
-                    rows={6}
-                    className="w-full resize-none bg-transparent px-3 py-3 font-mono text-[13px] outline-none"
-                    style={{ border: `2px solid ${INK}`, color: INK, transition: "none" }}
+                    onInput={(e) => {
+                      const el = e.currentTarget;
+                      el.style.height = "44px";
+                      el.style.height = el.scrollHeight + "px";
+                    }}
+                    className="w-full resize-none bg-transparent pl-6 font-mono text-[15px] outline-none placeholder:opacity-30 lg:text-[17px]"
+                    style={{
+                      color: ACCENT,
+                      caretColor: ACCENT,
+                      lineHeight: "44px",
+                      height: "44px",
+                      background: `repeating-linear-gradient(transparent 0px, transparent 42px, ${ACCENT} 42px, ${ACCENT} 44px)`,
+                      transition: "none",
+                    }}
                   />
-                </Field>
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  data-testid="button-submit-contact"
-                  className="inline-flex items-center gap-3 px-6 py-3 font-mono text-[12px] font-bold uppercase tracking-[0.22em]"
-                  style={{
-                    background: INK,
-                    color: BG,
-                    border: `2px solid ${INK}`,
-                    transition: "none",
-                    opacity: isSubmitting ? 0.6 : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (isSubmitting) return;
-                    e.currentTarget.style.background = ACCENT;
-                    e.currentTarget.style.color = BG;
-                  }}
-                  onMouseLeave={(e) => {
-                    if (isSubmitting) return;
-                    e.currentTarget.style.background = INK;
-                    e.currentTarget.style.color = BG;
-                  }}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span>TRANSMITTING…</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4" />
-                      <span>SEND MESSAGE</span>
-                    </>
+                  {/* Validation errors */}
+                  {(errors.name || errors.email || errors.subject || errors.message) && (
+                    <div className="mt-2 flex flex-col gap-0.5">
+                      {errors.name && <ErrLine msg={errors.name.message!} field="name" />}
+                      {errors.email && <ErrLine msg={errors.email.message!} field="email" />}
+                      {errors.subject && <ErrLine msg={errors.subject.message!} field="project" />}
+                      {errors.message && <ErrLine msg={errors.message.message!} field="message" />}
+                    </div>
                   )}
-                </button>
+                </div>
+
+                {/* ── FOOTER: submit ─────────────────────────────────── */}
+                <div className="flex items-center justify-end px-5 py-3">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    data-testid="button-submit-contact"
+                    className="ml-auto inline-flex items-center gap-3 px-6 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
+                    style={{
+                      background: INK,
+                      color: BG,
+                      transition: "none",
+                      opacity: isSubmitting ? 0.6 : 1,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (isSubmitting) return;
+                      e.currentTarget.style.background = ACCENT;
+                      e.currentTarget.style.color = BG;
+                    }}
+                    onMouseLeave={(e) => {
+                      if (isSubmitting) return;
+                      e.currentTarget.style.background = INK;
+                      e.currentTarget.style.color = BG;
+                    }}
+                  >
+                    {isSubmitting ? (
+                      <span>TRANSMITTING…</span>
+                    ) : (
+                      <>
+                        <span>TRANSMIT</span>
+                        <MoveRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
               </form>
             )}
           </div>
-
-          {/* Right: meta panel */}
-          <aside className="lg:col-span-4">
-            <Meta k="STATUS" v="OPEN FOR Q3/Q4" accent />
-            <Meta k="REPLY" v="< 24H" />
-            <Meta k="TIMEZONE" v="EU / NA" />
-            <Meta k="MODE" v="ASYNC + CALLS" />
-            <div className="px-5 py-6" style={{ borderTop: `2px solid ${INK}` }}>
-              <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
-                // GROUND RULES
-              </div>
-              <ul className="space-y-2">
-                {[
-                  "No NDAs before scoping call",
-                  "Fixed timelines, fixed budgets",
-                  "Source code always belongs to you",
-                  "Weekly demos, no surprises",
-                ].map((line) => (
-                  <li key={line} className="flex items-baseline gap-2 font-mono text-[12px] uppercase tracking-[0.06em]">
-                    <span style={{ color: ACCENT }}>›</span>
-                    <span style={{ opacity: 0.85 }}>{line}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
-        </div>
         </Reveal>
       </div>
     </section>
   );
 }
-
-function Field({
-  label,
-  children,
-  error,
-}: {
-  label: string;
-  children: React.ReactNode;
-  error?: string;
-}) {
-  return (
-    <div>
-      <Label>{label}</Label>
-      <div className="mt-2">{children}</div>
-      {error && (
-        <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em]" style={{ color: ACCENT }}>
-          ! {error}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="font-mono text-[10px] uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
-      {children}
-    </div>
-  );
-}
-
-function Meta({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
-  return (
-    <div
-      className="flex items-center justify-between px-5 py-4 font-mono text-[11px] uppercase tracking-[0.22em]"
-      style={{
-        borderBottom: `2px solid ${INK}`,
-        background: accent ? ACCENT : "transparent",
-        color: accent ? BG : INK,
-      }}
-    >
-      <span style={{ opacity: accent ? 0.85 : 0.65 }}>{k}</span>
-      <span className="font-bold">{v}</span>
-    </div>
-  );
-}
-
