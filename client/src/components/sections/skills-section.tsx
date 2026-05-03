@@ -260,7 +260,7 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
       </div>
 
       {/* ── Full-remaining-height canvas ── */}
-      <div style={{ position: "relative", flex: 1, marginTop: 12 }}>
+      <div style={{ position: "relative", flex: 1, marginTop: 40 }}>
 
         {/* Ghost watermark */}
         <div
