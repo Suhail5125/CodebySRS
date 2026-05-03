@@ -3,6 +3,7 @@ import type { AboutInfo, Experience } from "@shared";
 import { Github, Linkedin, Twitter, Instagram, Download } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { useQuery } from "@tanstack/react-query";
+import { DUMMY_EXPERIENCE } from "@/lib/dummy-data";
 
 const BG     = "#0A0A0A";
 const INK    = "#F2EFE6";
@@ -76,16 +77,18 @@ interface AboutSectionProps {
    MAIN EXPORT
 ══════════════════════════════════════════════════════════════════════════ */
 export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
-  const { data: experienceEntries = [] } = useQuery<Experience[]>({
+  const { data: rawExperience = [] } = useQuery<Experience[]>({
     queryKey: ["/api/experience"],
-    select: (data) =>
-      [...data].sort((a, b) => {
-        const aEnd = a.endYear ?? 9999;
-        const bEnd = b.endYear ?? 9999;
-        if (bEnd !== aEnd) return bEnd - aEnd;
-        return b.startYear - a.startYear;
-      }),
   });
+
+  const experienceEntries = [...(rawExperience.length > 0 ? rawExperience : DUMMY_EXPERIENCE)].sort(
+    (a, b) => {
+      const aEnd = a.endYear ?? 9999;
+      const bEnd = b.endYear ?? 9999;
+      if (bEnd !== aEnd) return bEnd - aEnd;
+      return b.startYear - a.startYear;
+    }
+  );
 
   if (isLoading || !aboutInfo) {
     return (

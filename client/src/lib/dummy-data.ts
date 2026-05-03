@@ -1,4 +1,4 @@
-import type { AboutInfo, Project, Skill, Testimonial } from "@shared";
+import type { AboutInfo, Project, Skill, Testimonial, Experience } from "@shared";
 
 export const DUMMY_ABOUT: AboutInfo = {
   id: "dummy-about",
@@ -136,6 +136,53 @@ export const DUMMY_SKILLS: Skill[] = [
   { id: "s-17", name: "GitHub Actions", category: "Tools", proficiency: 86, order: 3, icon: null, createdAt: new Date(), updatedAt: new Date() },
   { id: "s-18", name: "Figma", category: "Tools", proficiency: 79, order: 4, icon: null, createdAt: new Date(), updatedAt: new Date() },
 ] as unknown as Skill[];
+
+export const DUMMY_EXPERIENCE: Experience[] = [
+  {
+    id: "e-001",
+    role: "Senior Full Stack Engineer",
+    company: "Tech Corp",
+    type: "JOB",
+    startYear: 2021,
+    endYear: 2024,
+    description: "Led frontend architecture and built scalable React applications. Mentored junior developers and drove performance optimizations across the stack.",
+    order: 1,
+    createdAt: new Date(),
+  },
+  {
+    id: "e-002",
+    role: "Freelance Creative Developer",
+    company: "Self",
+    type: "FREELANCE",
+    startYear: 2019,
+    endYear: 2021,
+    description: "Built custom websites and immersive WebGL experiences for startups and agencies worldwide. Full-stack delivery from brief to production.",
+    order: 2,
+    createdAt: new Date(),
+  },
+  {
+    id: "e-003",
+    role: "Frontend Engineer",
+    company: "Web Agency",
+    type: "JOB",
+    startYear: 2017,
+    endYear: 2019,
+    description: "Developed pixel-perfect React interfaces and design systems. Collaborated directly with design teams to ship brand-consistent products.",
+    order: 3,
+    createdAt: new Date(),
+  },
+  {
+    id: "e-004",
+    role: "Junior Developer",
+    company: "StartUp XYZ",
+    type: "JOB",
+    startYear: 2015,
+    endYear: 2017,
+    description: "Full-stack development with JavaScript and Node.js. Built REST APIs and interactive dashboards for B2B SaaS clients.",
+    order: 4,
+    createdAt: new Date(),
+  },
+] as unknown as Experience[];
 
 export const DUMMY_TESTIMONIALS: Testimonial[] = [
   {
