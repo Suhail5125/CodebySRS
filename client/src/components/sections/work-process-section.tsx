@@ -1,10 +1,4 @@
-import {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  type ReactNode,
-} from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Lightbulb, FileSearch, Palette, Code, TestTube, Rocket } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
@@ -13,10 +7,11 @@ const BG = "#0A0A0A";
 const INK = "#F2EFE6";
 const ACCENT = "#FF3D00";
 
-// Animation constants
-const CONN_STEP_MS = 130;       // delay increment per connector index
-const CONN_DURATION_MS = 380;   // stroke-dashoffset transition duration
-const FORK_OFFSET_PX = 72;
+const CONN_STEP_MS = 140;
+const CONN_DURATION_MS = 360;
+const CONN_H = 44;
+const FORK_H = 128;
+const FORK_SPREAD_PX = 90;
 
 // ── Step data ────────────────────────────────────────────────────────────────
 
@@ -96,11 +91,11 @@ type NodeKind = "start" | "phase" | "decision" | "fork" | "join" | "end";
 interface DiagramEl {
   id: string;
   kind: NodeKind;
-  stepIndex?: number; // phase only
-  label?: string;     // decision only
+  stepIndex?: number;
+  label?: string;
 }
 
-// Flat ordered list — drives both DOM rendering and SVG path generation
+// Flat ordered list that drives rendering and sequencing
 const DIAGRAM: DiagramEl[] = [
   { id: "start",   kind: "start" },
   { id: "phase-0", kind: "phase",    stepIndex: 0 },
@@ -117,18 +112,10 @@ const DIAGRAM: DiagramEl[] = [
   { id: "end",     kind: "end" },
 ];
 
-// ── Connection definitions ───────────────────────────────────────────────────
-
+// Connection list — index = animation sequence number
 type ConnKind = "straight" | "fork-left" | "fork-right";
+interface ConnDef { from: string; to: string; kind: ConnKind; trackLabel?: string; }
 
-interface ConnDef {
-  from: string;
-  to: string;
-  kind: ConnKind;
-  trackLabel?: string; // FRONTEND / BACKEND label on fork branches
-}
-
-// Ordered list — index position doubles as animation sequence number
 const CONNECTIONS: ConnDef[] = [
   { from: "start",   to: "phase-0", kind: "straight" },                           // 0
   { from: "phase-0", to: "dec-0",   kind: "straight" },                           // 1
@@ -145,289 +132,285 @@ const CONNECTIONS: ConnDef[] = [
   { from: "phase-5", to: "end",     kind: "straight" },                           // 12
 ];
 
-// Pre-compute node reveal delays:
-// Each node appears after its incoming connector(s) finish drawing.
-// delay = max(incomingConnIdx) * CONN_STEP_MS + CONN_DURATION_MS
+// Node reveal delay = incoming connector start delay + connector draw duration
+// Both fork branches share connIdx 6 (simultaneous draw)
 const NODE_REVEAL_DELAYS: Record<string, number> = (() => {
-  const delays: Record<string, number> = { start: 0 };
+  const d: Record<string, number> = { start: 0 };
   CONNECTIONS.forEach((conn, idx) => {
-    const connFinish = idx * CONN_STEP_MS + CONN_DURATION_MS;
-    if (delays[conn.to] === undefined || connFinish > delays[conn.to]) {
-      delays[conn.to] = connFinish;
-    }
+    const effectiveIdx = conn.kind === "fork-right" ? idx - 1 : idx;
+    const finish = effectiveIdx * CONN_STEP_MS + CONN_DURATION_MS;
+    if (d[conn.to] === undefined || finish > d[conn.to]) d[conn.to] = finish;
   });
-  return delays;
+  return d;
 })();
 
-// ── Computed path data ───────────────────────────────────────────────────────
-
-interface PathData {
-  d: string;
-  length: number;
-  connIdx: number;
-  hasArrow: boolean;
-  trackLabel?: { x: number; y: number; anchor: "start" | "end"; text: string };
+// Helper: find connIdx for a straight connection between two node IDs
+function connIdxBetween(fromId: string, toId: string): number {
+  return CONNECTIONS.findIndex(c => c.from === fromId && c.to === toId);
 }
 
-function computePaths(
-  containerEl: HTMLElement,
-  nodeMap: Map<string, HTMLElement>
-): PathData[] {
-  const cRect = containerEl.getBoundingClientRect();
-  const cx = cRect.width / 2;
+// ── Inline connector components ──────────────────────────────────────────────
 
-  const getRect = (id: string) => {
-    const el = nodeMap.get(id);
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return {
-      top: r.top - cRect.top,
-      bottom: r.bottom - cRect.top,
-      midX: r.left - cRect.left + r.width / 2,
-    };
-  };
-
-  const results: PathData[] = [];
-
-  CONNECTIONS.forEach((conn, connIdx) => {
-    const from = getRect(conn.from);
-    const to = getRect(conn.to);
-    if (!from || !to) return;
-
-    const fx = from.midX;
-    const fy = from.bottom;
-    const tx = to.midX;
-    const ty = to.top;
-
-    if (conn.kind === "straight") {
-      const d = `M ${fx} ${fy} L ${tx} ${ty}`;
-      const length = Math.hypot(tx - fx, ty - fy);
-      results.push({ d, length, connIdx, hasArrow: true });
-      return;
-    }
-
-    // fork-left or fork-right — polyline that fans out then converges.
-    // Both fork branches use the same connIdx so they draw simultaneously.
-    const effectiveConnIdx = conn.kind === "fork-right" ? connIdx - 1 : connIdx;
-    const offset = conn.kind === "fork-left" ? -FORK_OFFSET_PX : FORK_OFFSET_PX;
-    const branchX = cx + offset;
-    const spread = 20;
-
-    const d = [
-      `M ${fx} ${fy}`,
-      `L ${branchX} ${fy + spread}`,
-      `L ${branchX} ${ty - spread}`,
-      `L ${tx} ${ty}`,
-    ].join(" ");
-
-    const seg1 = Math.hypot(branchX - fx, spread);
-    const seg2 = Math.abs(ty - spread - (fy + spread));
-    const seg3 = Math.hypot(tx - branchX, spread);
-    const length = seg1 + seg2 + seg3;
-
-    const labelAnchor: "start" | "end" = conn.kind === "fork-left" ? "end" : "start";
-    const labelX = branchX + (conn.kind === "fork-left" ? -6 : 6);
-    const labelY = fy + spread + (ty - spread - fy - spread) / 2;
-
-    results.push({
-      d,
-      length,
-      connIdx: effectiveConnIdx,
-      hasArrow: true,
-      ...(conn.trackLabel && {
-        trackLabel: { x: labelX, y: labelY, anchor: labelAnchor, text: conn.trackLabel },
-      }),
-    });
-  });
-
-  return results;
-}
-
-// ── SVG connector overlay ────────────────────────────────────────────────────
-
-function ConnectorOverlay({
-  paths,
-  svgSize,
+// A straight vertical connector with arrowhead, self-contained in its own div.
+// Because it's in normal DOM flow, it's always perfectly aligned with adjacent nodes.
+function StraightConnector({
+  connIdx,
   triggered,
 }: {
-  paths: PathData[];
-  svgSize: { w: number; h: number };
+  connIdx: number;
   triggered: boolean;
 }) {
+  const len = CONN_H;
+  const delay = connIdx * CONN_STEP_MS;
+  const markerId = `uml-arr-${connIdx}`;
+
   return (
-    <svg
+    <div style={{ display: "flex", justifyContent: "center", height: CONN_H, flexShrink: 0 }}>
+      <svg width="24" height={CONN_H} overflow="visible" style={{ display: "block" }}>
+        <defs>
+          <marker id={markerId} markerWidth="8" markerHeight="8" refX="4" refY="7" orient="auto">
+            <polygon points="0 0, 8 0, 4 8" fill={INK} opacity="0.85" />
+          </marker>
+        </defs>
+        <line
+          x1="12" y1="2"
+          x2="12" y2={CONN_H - 6}
+          stroke={INK}
+          strokeWidth="2"
+          opacity="0.8"
+          strokeDasharray={len}
+          strokeDashoffset={triggered ? 0 : len}
+          markerEnd={`url(#${markerId})`}
+          style={{
+            transition: triggered
+              ? `stroke-dashoffset ${CONN_DURATION_MS}ms cubic-bezier(0.85,0,0.15,1) ${delay}ms`
+              : "none",
+          }}
+        />
+      </svg>
+    </div>
+  );
+}
+
+// Fork connector: two diverging then converging paths, representing parallel tracks.
+// Rendered in flow between fork bar and join bar — always perfectly aligned.
+function ForkConnector({
+  connIdxLeft,
+  triggered,
+}: {
+  connIdxLeft: number;
+  triggered: boolean;
+}) {
+  const W = 400;
+  const H = FORK_H;
+  const cx = W / 2;
+  const ox = FORK_SPREAD_PX;
+  const spread = 22;
+  const delay = connIdxLeft * CONN_STEP_MS;
+
+  // Left branch: center → cx-ox → cx-ox → center
+  const leftD = `M ${cx} 2 L ${cx - ox} ${spread} L ${cx - ox} ${H - spread} L ${cx} ${H - 2}`;
+  const rightD = `M ${cx} 2 L ${cx + ox} ${spread} L ${cx + ox} ${H - spread} L ${cx} ${H - 2}`;
+
+  const seg1 = Math.hypot(ox, spread - 2);
+  const seg2 = H - 2 * spread;
+  const seg3 = Math.hypot(ox, spread - 2);
+  const pathLen = seg1 + seg2 + seg3;
+
+  const markL = "uml-fork-l";
+  const markR = "uml-fork-r";
+
+  return (
+    <div
       style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: svgSize.w,
-        height: svgSize.h,
-        pointerEvents: "none",
-        overflow: "visible",
+        display: "flex",
+        justifyContent: "center",
+        height: H,
+        flexShrink: 0,
+        position: "relative",
       }}
     >
-      <defs>
-        <marker id="uml-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
-          <polygon points="0 0, 7 3.5, 0 7" fill={INK} opacity="0.8" />
-        </marker>
-      </defs>
-
-      {paths.map((path, i) => {
-        const delay = path.connIdx * CONN_STEP_MS;
-        return (
-          <g key={i}>
-            <path
-              d={path.d}
-              fill="none"
-              stroke={INK}
-              strokeWidth="1.75"
-              opacity="0.7"
-              strokeDasharray={path.length}
-              strokeDashoffset={triggered ? 0 : path.length}
-              markerEnd={path.hasArrow ? "url(#uml-arrow)" : undefined}
-              style={{
-                transition: triggered
-                  ? `stroke-dashoffset ${CONN_DURATION_MS}ms cubic-bezier(0.85,0,0.15,1) ${delay}ms`
-                  : "none",
-              }}
-            />
-            {path.trackLabel && (
-              <text
-                x={path.trackLabel.x}
-                y={path.trackLabel.y}
-                fontFamily="monospace"
-                fontSize="9"
-                textAnchor={path.trackLabel.anchor}
-                fill={ACCENT}
-                opacity={triggered ? 0.8 : 0}
-                letterSpacing="2"
-                style={{
-                  transition: triggered
-                    ? `opacity 0.3s ease ${delay + CONN_DURATION_MS}ms`
-                    : "none",
-                }}
-              >
-                {path.trackLabel.text}
-              </text>
-            )}
-          </g>
-        );
-      })}
-    </svg>
+      <svg
+        width={W}
+        height={H}
+        style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", overflow: "visible" }}
+      >
+        <defs>
+          <marker id={markL} markerWidth="8" markerHeight="8" refX="4" refY="7" orient="auto">
+            <polygon points="0 0, 8 0, 4 8" fill={INK} opacity="0.85" />
+          </marker>
+          <marker id={markR} markerWidth="8" markerHeight="8" refX="4" refY="7" orient="auto">
+            <polygon points="0 0, 8 0, 4 8" fill={INK} opacity="0.85" />
+          </marker>
+        </defs>
+        {/* Left branch (FRONTEND) */}
+        <path
+          d={leftD}
+          fill="none"
+          stroke={INK}
+          strokeWidth="2"
+          opacity="0.8"
+          strokeDasharray={pathLen}
+          strokeDashoffset={triggered ? 0 : pathLen}
+          markerEnd={`url(#${markL})`}
+          style={{
+            transition: triggered
+              ? `stroke-dashoffset ${CONN_DURATION_MS}ms cubic-bezier(0.85,0,0.15,1) ${delay}ms`
+              : "none",
+          }}
+        />
+        {/* Right branch (BACKEND) */}
+        <path
+          d={rightD}
+          fill="none"
+          stroke={INK}
+          strokeWidth="2"
+          opacity="0.8"
+          strokeDasharray={pathLen}
+          strokeDashoffset={triggered ? 0 : pathLen}
+          markerEnd={`url(#${markR})`}
+          style={{
+            transition: triggered
+              ? `stroke-dashoffset ${CONN_DURATION_MS}ms cubic-bezier(0.85,0,0.15,1) ${delay}ms`
+              : "none",
+          }}
+        />
+        {/* Track labels */}
+        <text
+          x={cx - ox - 10}
+          y={H / 2}
+          textAnchor="end"
+          fontFamily="monospace"
+          fontSize="9"
+          letterSpacing="2"
+          fill={ACCENT}
+          opacity={triggered ? 0.85 : 0}
+          style={{ transition: triggered ? `opacity 0.3s ease ${delay + CONN_DURATION_MS}ms` : "none" }}
+        >
+          FRONTEND
+        </text>
+        <text
+          x={cx + ox + 10}
+          y={H / 2}
+          textAnchor="start"
+          fontFamily="monospace"
+          fontSize="9"
+          letterSpacing="2"
+          fill={ACCENT}
+          opacity={triggered ? 0.85 : 0}
+          style={{ transition: triggered ? `opacity 0.3s ease ${delay + CONN_DURATION_MS}ms` : "none" }}
+        >
+          BACKEND
+        </text>
+      </svg>
+    </div>
   );
 }
 
 // ── Node components ──────────────────────────────────────────────────────────
 
-function StartNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
-  return (
-    <div ref={nodeRef as (el: HTMLDivElement | null) => void} className="flex justify-center py-1">
-      <div className="flex flex-col items-center gap-1">
-        <div style={{ width: 20, height: 20, borderRadius: "50%", background: INK }} />
-        <span
-          className="font-mono uppercase"
-          style={{ fontSize: "8px", letterSpacing: "0.2em", opacity: 0.5, color: INK }}
-        >
-          START
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function EndNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
-  return (
-    <div ref={nodeRef as (el: HTMLDivElement | null) => void} className="flex justify-center py-1">
-      <div className="flex flex-col items-center gap-1">
-        <div
-          style={{
-            width: 24,
-            height: 24,
-            borderRadius: "50%",
-            border: `3px solid ${INK}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: INK }} />
-        </div>
-        <span
-          className="font-mono uppercase"
-          style={{ fontSize: "8px", letterSpacing: "0.2em", opacity: 0.5, color: INK }}
-        >
-          END
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function ForkBarNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
+function StartTerminator({ triggered }: { triggered: boolean }) {
+  const delay = NODE_REVEAL_DELAYS["start"] ?? 0;
   return (
     <div
-      ref={nodeRef as (el: HTMLDivElement | null) => void}
-      className="w-full"
-      style={{ maxWidth: 520, margin: "0 auto" }}
+      className="flex flex-col items-center gap-1"
+      style={{
+        opacity: triggered ? 1 : 0,
+        transform: triggered ? "scale(1)" : "scale(0.4)",
+        transition: triggered
+          ? `opacity 0.35s ease ${delay}ms, transform 0.35s cubic-bezier(0.85,0,0.15,1) ${delay}ms`
+          : "none",
+      }}
     >
-      <div style={{ height: 4, background: INK, opacity: 0.85 }} />
+      <div style={{ width: 22, height: 22, borderRadius: "50%", background: INK }} />
+      <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.22em", opacity: 0.5 }}>
+        START
+      </span>
     </div>
   );
 }
 
-function JoinBarNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
+function EndTerminator({ triggered }: { triggered: boolean }) {
+  const delay = NODE_REVEAL_DELAYS["end"] ?? 0;
   return (
     <div
-      ref={nodeRef as (el: HTMLDivElement | null) => void}
-      className="w-full"
-      style={{ maxWidth: 520, margin: "0 auto" }}
+      className="flex flex-col items-center gap-1"
+      style={{
+        opacity: triggered ? 1 : 0,
+        transform: triggered ? "scale(1)" : "scale(0.4)",
+        transition: triggered
+          ? `opacity 0.35s ease ${delay}ms, transform 0.35s cubic-bezier(0.85,0,0.15,1) ${delay}ms`
+          : "none",
+      }}
     >
-      <div style={{ height: 4, background: INK, opacity: 0.85 }} />
+      <div
+        style={{
+          width: 26,
+          height: 26,
+          borderRadius: "50%",
+          border: `3px solid ${INK}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ width: 11, height: 11, borderRadius: "50%", background: INK }} />
+      </div>
+      <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.22em", opacity: 0.5 }}>
+        END
+      </span>
     </div>
   );
 }
 
-function DecisionNode({
-  label,
-  nodeRef,
-  pulsing,
+function DecisionDiamond({
+  el,
+  triggered,
 }: {
-  label: string;
-  nodeRef: (el: HTMLElement | null) => void;
-  pulsing: boolean;
+  el: DiagramEl;
+  triggered: boolean;
 }) {
+  const delay = NODE_REVEAL_DELAYS[el.id] ?? 0;
+  const size = 84;
+
   return (
     <div
-      ref={nodeRef as (el: HTMLDivElement | null) => void}
       className="flex justify-center"
-      style={{ minHeight: 80 }}
+      style={{
+        opacity: triggered ? 1 : 0,
+        transition: triggered ? `opacity 0.38s ease ${delay}ms` : "none",
+        minHeight: size + 20,
+      }}
     >
-      <div className="relative flex items-center justify-center" style={{ width: 180, height: 80 }}>
+      <div className="relative flex items-center justify-center" style={{ width: size * 2, height: size }}>
+        {/* The diamond: a square rotated 45° */}
         <div
           className="absolute"
           style={{
-            width: 80,
-            height: 80,
+            width: size,
+            height: size,
             transform: "rotate(45deg)",
             border: `2px solid ${ACCENT}`,
             background: BG,
-            animation: pulsing ? "diamond-pulse 2.5s ease-in-out infinite" : "none",
+            animation: triggered ? `diamond-pulse 2.6s ease-in-out ${delay + 400}ms infinite` : "none",
           }}
         />
+        {/* Label — not rotated */}
         <div
           className="relative z-10 text-center font-mono uppercase"
-          style={{ fontSize: "9px", letterSpacing: "0.14em", color: ACCENT, maxWidth: 90 }}
+          style={{ fontSize: "9px", letterSpacing: "0.14em", color: ACCENT, maxWidth: size - 8, lineHeight: 1.4 }}
         >
-          {label}
+          {el.label}
         </div>
+        {/* YES label beneath */}
         <div
           className="absolute font-mono uppercase"
           style={{
             fontSize: "8px",
             letterSpacing: "0.16em",
             color: INK,
-            opacity: 0.45,
-            bottom: -10,
+            opacity: 0.4,
+            bottom: -2,
             left: "50%",
             transform: "translateX(-50%)",
             whiteSpace: "nowrap",
@@ -435,43 +418,73 @@ function DecisionNode({
         >
           YES ↓
         </div>
+        {/* Decorative NO branch loop */}
         <svg
           className="absolute"
-          style={{ right: -56, top: "50%", transform: "translateY(-50%)" }}
-          width="56"
+          style={{ right: -60, top: "50%", transform: "translateY(-50%)", overflow: "visible" }}
+          width="60"
           height="60"
-          overflow="visible"
         >
           <path
-            d="M 0 30 L 24 30 L 24 -4 L -6 -4"
+            d="M 0 30 L 26 30 L 26 -2 L -2 -2"
             fill="none"
             stroke={INK}
             strokeWidth="1.5"
             strokeDasharray="4 3"
-            opacity="0.3"
+            opacity="0.28"
           />
-          <text x="26" y="33" fontFamily="monospace" fontSize="8" fill={INK} opacity="0.35" letterSpacing="2">
-            NO
-          </text>
+          <text x="28" y="34" fontFamily="monospace" fontSize="8" fill={INK} opacity="0.32" letterSpacing="2">NO</text>
         </svg>
       </div>
     </div>
   );
 }
 
+function ForkBar({ el, triggered }: { el: DiagramEl; triggered: boolean }) {
+  const delay = NODE_REVEAL_DELAYS[el.id] ?? 0;
+  return (
+    <div
+      style={{
+        opacity: triggered ? 0.9 : 0,
+        transition: triggered ? `opacity 0.32s ease ${delay}ms` : "none",
+        height: 6,
+        background: INK,
+        borderRadius: 1,
+      }}
+    />
+  );
+}
+
+function JoinBar({ el, triggered }: { el: DiagramEl; triggered: boolean }) {
+  const delay = NODE_REVEAL_DELAYS[el.id] ?? 0;
+  return (
+    <div
+      style={{
+        opacity: triggered ? 0.9 : 0,
+        transition: triggered ? `opacity 0.32s ease ${delay}ms` : "none",
+        height: 6,
+        background: INK,
+        borderRadius: 1,
+      }}
+    />
+  );
+}
+
 function PhaseNode({
-  step,
-  nodeRef,
+  el,
+  triggered,
   onActivate,
 }: {
-  step: StepData;
-  nodeRef: (el: HTMLElement | null) => void;
+  el: DiagramEl;
+  triggered: boolean;
   onActivate: (num: string | null) => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const [clicked, setClicked] = useState(false);
   const expanded = hovered || clicked;
+  const step = STEPS[el.stepIndex!];
   const Icon = step.icon;
+  const delay = NODE_REVEAL_DELAYS[el.id] ?? 0;
 
   const handleClick = () => {
     const next = !clicked;
@@ -481,93 +494,96 @@ function PhaseNode({
 
   return (
     <div
-      ref={nodeRef as (el: HTMLDivElement | null) => void}
-      className="w-full cursor-pointer"
       style={{
-        maxWidth: 520,
-        margin: "0 auto",
-        border: `2px solid ${INK}`,
-        background: expanded ? INK : BG,
-        color: expanded ? BG : INK,
-        transition: "background 0.25s ease, color 0.25s ease",
+        opacity: triggered ? 1 : 0,
+        transform: triggered ? "translateY(0)" : "translateY(10px)",
+        transition: triggered
+          ? `opacity 0.42s ease ${delay}ms, transform 0.42s cubic-bezier(0.85,0,0.15,1) ${delay}ms`
+          : "none",
       }}
-      onMouseEnter={() => { setHovered(true); onActivate(step.num); }}
-      onMouseLeave={() => { setHovered(false); if (!clicked) onActivate(null); }}
-      onClick={handleClick}
     >
       <div
-        className="flex items-center gap-4 px-5 py-4"
-        style={{ borderBottom: expanded ? `2px solid ${BG}` : "none" }}
-      >
-        <div
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center"
-          style={{ background: ACCENT, color: BG }}
-        >
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-3">
-            <span
-              className="font-mono text-[11px] uppercase tracking-[0.22em]"
-              style={{ color: expanded ? BG : ACCENT }}
-            >
-              PHASE {step.num}
-            </span>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-60">
-              {step.duration}
-            </span>
-          </div>
-          <div
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 800,
-              fontSize: "clamp(14px, 2vw, 18px)",
-              lineHeight: 1.1,
-              textTransform: "uppercase",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            {step.title}
-          </div>
-        </div>
-        <span className="font-mono text-[9px] uppercase tracking-[0.15em] opacity-40 flex-shrink-0">
-          {expanded ? "▲" : "▼"}
-        </span>
-      </div>
-
-      <div
+        className="w-full cursor-pointer"
         style={{
-          maxHeight: expanded ? 360 : 0,
-          overflow: "hidden",
-          transition: "max-height 0.4s cubic-bezier(0.85,0,0.15,1)",
+          border: `2px solid ${INK}`,
+          background: expanded ? INK : BG,
+          color: expanded ? BG : INK,
+          transition: "background 0.22s ease, color 0.22s ease",
         }}
+        onMouseEnter={() => { setHovered(true); onActivate(step.num); }}
+        onMouseLeave={() => { setHovered(false); if (!clicked) onActivate(null); }}
+        onClick={handleClick}
       >
-        <div className="px-5 py-4">
-          <p className="mb-4 text-[13px] leading-relaxed" style={{ opacity: 0.82 }}>
-            {step.description}
-          </p>
-          <div className="grid grid-cols-2 gap-4">
-            {(["ACTIVITIES", "DELIVERABLES"] as const).map((col) => (
-              <div key={col}>
-                <div
-                  className="mb-2 font-mono text-[10px] uppercase tracking-[0.22em]"
-                  style={{ color: ACCENT }}
-                >
-                  {col}
+        {/* Header row */}
+        <div
+          className="flex items-center gap-4 px-5 py-4"
+          style={{ borderBottom: expanded ? `2px solid ${BG}` : "none" }}
+        >
+          <div
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center"
+            style={{ background: ACCENT, color: BG }}
+          >
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-3 flex-wrap">
+              <span
+                className="font-mono text-[11px] uppercase tracking-[0.22em]"
+                style={{ color: expanded ? BG : ACCENT }}
+              >
+                PHASE {step.num}
+              </span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-60">
+                {step.duration}
+              </span>
+            </div>
+            <div
+              style={{
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 800,
+                fontSize: "clamp(14px, 2vw, 17px)",
+                lineHeight: 1.15,
+                textTransform: "uppercase",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {step.title}
+            </div>
+          </div>
+          <span className="font-mono text-[9px] uppercase tracking-[0.14em] opacity-35 flex-shrink-0">
+            {expanded ? "▲" : "▼"}
+          </span>
+        </div>
+
+        {/* Expandable detail */}
+        <div
+          style={{
+            maxHeight: expanded ? 400 : 0,
+            overflow: "hidden",
+            transition: "max-height 0.42s cubic-bezier(0.85,0,0.15,1)",
+          }}
+        >
+          <div className="px-5 py-4">
+            <p className="mb-4 text-[13px] leading-relaxed" style={{ opacity: 0.82 }}>
+              {step.description}
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              {(["ACTIVITIES", "DELIVERABLES"] as const).map((col) => (
+                <div key={col}>
+                  <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
+                    {col}
+                  </div>
+                  <ul className="space-y-1">
+                    {(col === "ACTIVITIES" ? step.activities : step.deliverables).map((item, i) => (
+                      <li key={i} className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.08em]">
+                        <span style={{ color: ACCENT }}>›</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="space-y-1">
-                  {(col === "ACTIVITIES" ? step.activities : step.deliverables).map((item, i) => (
-                    <li
-                      key={i}
-                      className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.08em]"
-                    >
-                      <span style={{ color: ACCENT }}>›</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -575,98 +591,60 @@ function PhaseNode({
   );
 }
 
-// ── Render a diagram element by kind ────────────────────────────────────────
+// ── Diagram renderer ─────────────────────────────────────────────────────────
 
-function renderNode(
-  el: DiagramEl,
-  opts: {
-    nodeRef: (e: HTMLElement | null) => void;
-    onActivate: (num: string | null) => void;
-    triggered: boolean;
-  }
-): ReactNode {
-  const { nodeRef, onActivate, triggered } = opts;
-  const delay = NODE_REVEAL_DELAYS[el.id] ?? 0;
-
-  const fadeIn: React.CSSProperties = {
-    opacity: triggered ? 1 : 0,
-    transform: triggered ? "translateY(0)" : "translateY(8px)",
-    transition: triggered
-      ? `opacity 0.4s ease ${delay}ms, transform 0.4s cubic-bezier(0.85,0,0.15,1) ${delay}ms`
-      : "none",
-  };
-
+// Renders one diagram element based on its kind
+function DiagramNode({
+  el,
+  triggered,
+  onActivate,
+}: {
+  el: DiagramEl;
+  triggered: boolean;
+  onActivate: (num: string | null) => void;
+}) {
   switch (el.kind) {
-    case "start":
-      return <div style={fadeIn}><StartNode nodeRef={nodeRef} /></div>;
-    case "end":
-      return <div style={fadeIn}><EndNode nodeRef={nodeRef} /></div>;
-    case "phase":
-      return (
-        <div style={fadeIn}>
-          <PhaseNode step={STEPS[el.stepIndex!]} nodeRef={nodeRef} onActivate={onActivate} />
-        </div>
-      );
-    case "decision":
-      return (
-        <div style={fadeIn}>
-          <DecisionNode label={el.label!} nodeRef={nodeRef} pulsing={triggered} />
-        </div>
-      );
-    case "fork":
-      return <div style={fadeIn}><ForkBarNode nodeRef={nodeRef} /></div>;
-    case "join":
-      return <div style={fadeIn}><JoinBarNode nodeRef={nodeRef} /></div>;
-    default:
-      return null;
+    case "start":    return <StartTerminator triggered={triggered} />;
+    case "end":      return <EndTerminator triggered={triggered} />;
+    case "phase":    return <PhaseNode el={el} triggered={triggered} onActivate={onActivate} />;
+    case "decision": return <DecisionDiamond el={el} triggered={triggered} />;
+    case "fork":     return <ForkBar el={el} triggered={triggered} />;
+    case "join":     return <JoinBar el={el} triggered={triggered} />;
+    default:         return null;
   }
 }
 
-// ── Main section export ──────────────────────────────────────────────────────
+// Renders the connector that follows a given element.
+// Returns null for the final element (end) or the fork→join span (handled specially).
+function ConnectorAfter({
+  el,
+  nextEl,
+  triggered,
+}: {
+  el: DiagramEl;
+  nextEl: DiagramEl;
+  triggered: boolean;
+}) {
+  if (el.kind === "fork") {
+    // Fork→Join: use the branching fork connector
+    const leftConnIdx = CONNECTIONS.findIndex(c => c.from === "fork" && c.kind === "fork-left");
+    return <ForkConnector connIdxLeft={leftConnIdx} triggered={triggered} />;
+  }
+  const idx = connIdxBetween(el.id, nextEl.id);
+  if (idx < 0) return null;
+  return <StraightConnector connIdx={idx} triggered={triggered} />;
+}
+
+// ── Main section ─────────────────────────────────────────────────────────────
 
 export function WorkProcessSection() {
   const [triggered, setTriggered] = useState(false);
   const [activePhase, setActivePhase] = useState<string | null>(null);
-  const [paths, setPaths] = useState<PathData[]>([]);
-  const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
+  const diagramRef = useRef<HTMLDivElement>(null);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const nodeRefs = useRef<Map<string, HTMLElement>>(new Map());
-
-  const setNodeRef = useCallback(
-    (id: string) => (el: HTMLElement | null) => {
-      if (el) nodeRefs.current.set(id, el);
-      else nodeRefs.current.delete(id);
-    },
-    []
-  );
-
-  const recomputePaths = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const r = container.getBoundingClientRect();
-    setSvgSize({ w: r.width, h: r.height });
-    setPaths(computePaths(container, nodeRefs.current));
-  }, []);
-
-  // Initial measurement after mount
   useEffect(() => {
-    recomputePaths();
-  }, [recomputePaths]);
-
-  // Re-measure on container resize (handles node expand/collapse)
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const ro = new ResizeObserver(recomputePaths);
-    ro.observe(container);
-    return () => ro.disconnect();
-  }, [recomputePaths]);
-
-  // Scroll-triggered animation via IntersectionObserver
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const node = diagramRef.current;
+    if (!node) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setTriggered(true);
       return;
@@ -679,13 +657,12 @@ export function WorkProcessSection() {
       },
       { threshold: 0.06 }
     );
-    obs.observe(container);
+    obs.observe(node);
     const fallback = setTimeout(() => setTriggered(true), 2500);
     return () => { obs.disconnect(); clearTimeout(fallback); };
   }, []);
 
   const handleActivate = useCallback((num: string | null) => setActivePhase(num), []);
-
   const currentPhase = activePhase ? STEPS.find((s) => s.num === activePhase) : null;
 
   return (
@@ -696,8 +673,8 @@ export function WorkProcessSection() {
     >
       <style>{`
         @keyframes diamond-pulse {
-          0%,100% { box-shadow: 0 0 0 0 ${ACCENT}00; }
-          50%      { box-shadow: 0 0 0 10px ${ACCENT}33; }
+          0%, 100% { box-shadow: 0 0 0 0 ${ACCENT}00; }
+          50%       { box-shadow: 0 0 0 10px ${ACCENT}33; }
         }
       `}</style>
 
@@ -713,30 +690,29 @@ export function WorkProcessSection() {
           />
         </Reveal>
 
-        <p className="mt-6 block text-center font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 md:hidden">
+        <p className="mt-6 block text-center font-mono text-[10px] uppercase tracking-[0.22em] opacity-38 md:hidden">
           SCROLL →
         </p>
 
-        <div className="mt-8" style={{ overflowX: "auto", overflowY: "visible" }}>
+        {/* Diagram — inline connectors in normal DOM flow for perfect alignment */}
+        <div className="mt-10" style={{ overflowX: "auto", overflowY: "visible" }}>
           <div
-            ref={containerRef}
-            className="relative mx-auto flex flex-col"
-            style={{ minWidth: 420, maxWidth: 560, gap: 40 }}
+            ref={diagramRef}
+            className="mx-auto flex flex-col"
+            style={{ minWidth: 380, maxWidth: 560 }}
           >
-            <ConnectorOverlay paths={paths} svgSize={svgSize} triggered={triggered} />
-
-            {DIAGRAM.map((el) => (
-              <div key={el.id} style={{ position: "relative", zIndex: 1 }}>
-                {renderNode(el, {
-                  nodeRef: setNodeRef(el.id),
-                  onActivate: handleActivate,
-                  triggered,
-                })}
+            {DIAGRAM.map((el, i) => (
+              <div key={el.id}>
+                <DiagramNode el={el} triggered={triggered} onActivate={handleActivate} />
+                {i < DIAGRAM.length - 1 && (
+                  <ConnectorAfter el={el} nextEl={DIAGRAM[i + 1]} triggered={triggered} />
+                )}
               </div>
             ))}
           </div>
         </div>
 
+        {/* Status bar */}
         <div
           className="mt-10 grid grid-cols-3 gap-0 font-mono text-[11px] uppercase tracking-[0.2em]"
           style={{ border: `2px solid ${INK}` }}
