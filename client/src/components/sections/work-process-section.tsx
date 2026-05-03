@@ -119,7 +119,7 @@ const DIAGRAM: DiagramEl[] = [
 
 // ── Connection definitions ───────────────────────────────────────────────────
 
-type ConnKind = "straight" | "fork-left" | "fork-right";
+type ConnKind = "straight" | "fork-left" | "fork-right" | "loop-back";
 
 interface ConnDef {
   from: string;
@@ -143,14 +143,20 @@ const CONNECTIONS: ConnDef[] = [
   { from: "phase-4", to: "dec-2",   kind: "straight" },                           // 10
   { from: "dec-2",   to: "phase-5", kind: "straight" },                           // 11
   { from: "phase-5", to: "end",     kind: "straight" },                           // 12
+  // [NO] loop-back paths — routed along right margin back to revision start
+  { from: "dec-0",   to: "phase-0", kind: "loop-back", trackLabel: "[NO] REVISE" }, // 13
+  { from: "dec-1",   to: "phase-2", kind: "loop-back", trackLabel: "[NO] REVISE" }, // 14
+  { from: "dec-2",   to: "phase-4", kind: "loop-back", trackLabel: "[NO] REVISE" }, // 15
 ];
 
 // Pre-compute node reveal delays:
 // Each node appears after its incoming connector(s) finish drawing.
 // delay = max(incomingConnIdx) * CONN_STEP_MS + CONN_DURATION_MS
+// loop-back connections are excluded — they go to already-revealed nodes.
 const NODE_REVEAL_DELAYS: Record<string, number> = (() => {
   const delays: Record<string, number> = { start: 0 };
   CONNECTIONS.forEach((conn, idx) => {
+    if (conn.kind === "loop-back") return; // skip — target already revealed
     const connFinish = idx * CONN_STEP_MS + CONN_DURATION_MS;
     if (delays[conn.to] === undefined || connFinish > delays[conn.to]) {
       delays[conn.to] = connFinish;
@@ -166,6 +172,7 @@ interface PathData {
   length: number;
   connIdx: number;
   hasArrow: boolean;
+  loopBack?: boolean;
   trackLabel?: { x: number; y: number; anchor: "start" | "end"; text: string };
 }
 
@@ -184,6 +191,8 @@ function computePaths(
       top: r.top - cRect.top,
       bottom: r.bottom - cRect.top,
       midX: r.left - cRect.left + r.width / 2,
+      midY: r.top - cRect.top + r.height / 2,
+      right: r.right - cRect.left,
     };
   };
 
@@ -203,6 +212,41 @@ function computePaths(
       const d = `M ${fx} ${fy} L ${tx} ${ty}`;
       const length = Math.hypot(tx - fx, ty - fy);
       results.push({ d, length, connIdx, hasArrow: true });
+      return;
+    }
+
+    if (conn.kind === "loop-back") {
+      // Route [NO] path along the right margin: exit diamond right tip → right rail → target right edge
+      const exitX = from.midX + 62;   // right corner of decision diamond
+      const exitY = from.midY;         // vertical center of decision node
+      const entryX = to.right + 2;    // right edge of target phase node
+      const entryY = to.midY;          // vertical center of target node
+      const railX = cRect.width - 18; // right-margin routing channel
+
+      const d = [
+        `M ${exitX} ${exitY}`,
+        `L ${railX} ${exitY}`,
+        `L ${railX} ${entryY}`,
+        `L ${entryX} ${entryY}`,
+      ].join(" ");
+
+      const seg1 = railX - exitX;
+      const seg2 = Math.abs(entryY - exitY);
+      const seg3 = railX - entryX;
+      const length = seg1 + seg2 + seg3;
+
+      const labelY = exitY + (entryY - exitY) / 2;
+
+      results.push({
+        d,
+        length,
+        connIdx,
+        hasArrow: true,
+        loopBack: true,
+        ...(conn.trackLabel && {
+          trackLabel: { x: railX + 4, y: labelY, anchor: "start", text: conn.trackLabel },
+        }),
+      });
       return;
     }
 
@@ -270,27 +314,44 @@ function ConnectorOverlay({
         <marker id="uml-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
           <polygon points="0 0, 7 3.5, 0 7" fill={INK} opacity="0.8" />
         </marker>
+        <marker id="uml-arrow-accent" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+          <polygon points="0 0, 7 3.5, 0 7" fill={ACCENT} opacity="0.75" />
+        </marker>
       </defs>
 
       {paths.map((path, i) => {
         const delay = path.connIdx * CONN_STEP_MS;
+        const isLoop = path.loopBack;
         return (
           <g key={i}>
             <path
               d={path.d}
               fill="none"
-              stroke={INK}
-              strokeWidth="1.75"
-              opacity="0.7"
-              strokeDasharray={path.length}
+              stroke={isLoop ? ACCENT : INK}
+              strokeWidth={isLoop ? 1.5 : 1.75}
+              opacity={isLoop ? 0.55 : 0.7}
+              strokeDasharray={isLoop ? `${path.length} ${path.length}` : String(path.length)}
               strokeDashoffset={triggered ? 0 : path.length}
-              markerEnd={path.hasArrow ? "url(#uml-arrow)" : undefined}
+              strokeLinecap="round"
+              markerEnd={path.hasArrow ? (isLoop ? "url(#uml-arrow-accent)" : "url(#uml-arrow)") : undefined}
               style={{
                 transition: triggered
                   ? `stroke-dashoffset ${CONN_DURATION_MS}ms cubic-bezier(0.85,0,0.15,1) ${delay}ms`
                   : "none",
               }}
             />
+            {/* dashed pattern overlay for loop-back (renders after animation) */}
+            {isLoop && triggered && (
+              <path
+                d={path.d}
+                fill="none"
+                stroke={ACCENT}
+                strokeWidth="1.5"
+                opacity="0.55"
+                strokeDasharray="6 5"
+                strokeLinecap="round"
+              />
+            )}
             {path.trackLabel && (
               <text
                 x={path.trackLabel.x}
@@ -298,8 +359,8 @@ function ConnectorOverlay({
                 fontFamily="monospace"
                 fontSize="9"
                 textAnchor={path.trackLabel.anchor}
-                fill={ACCENT}
-                opacity={triggered ? 0.8 : 0}
+                fill={isLoop ? ACCENT : ACCENT}
+                opacity={triggered ? (isLoop ? 0.7 : 0.8) : 0}
                 letterSpacing="2"
                 style={{
                   transition: triggered
@@ -354,7 +415,7 @@ function EndNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
           <div style={{ width: 18, height: 18, borderRadius: "50%", background: INK }} />
         </div>
         <span className="font-mono uppercase" style={{ fontSize: "9px", letterSpacing: "0.2em", opacity: 0.55, color: ACCENT }}>
-          SHIPPED ✓
+          FINISH PROCESS
         </span>
       </div>
     </div>
@@ -438,43 +499,38 @@ function DecisionNode({
           {label}
         </div>
 
-        {/* YES guard — below */}
+        {/* NO guard label — right side, outside diamond */}
         <div
           className="absolute font-mono uppercase"
           style={{
             fontSize: "8px",
-            letterSpacing: "0.16em",
-            color: INK,
-            opacity: 0.55,
-            bottom: 0,
-            left: "50%",
-            transform: "translateX(-50%)",
+            letterSpacing: "0.14em",
+            color: ACCENT,
+            opacity: 0.6,
+            right: -52,
+            top: "50%",
+            transform: "translateY(-50%)",
             whiteSpace: "nowrap",
           }}
         >
-          [YES] ↓
+          [NO] →
         </div>
+      </div>
 
-        {/* NO guard — right, with dashed loop-back line */}
-        <svg
-          className="absolute"
-          style={{ right: -72, top: "50%", transform: "translateY(-50%)" }}
-          width="74"
-          height="80"
-          overflow="visible"
-        >
-          {/* Horizontal line right + arc up (loop back) */}
-          <path
-            d="M 0 40 L 32 40 L 32 -14 L -4 -14"
-            fill="none"
-            stroke={ACCENT}
-            strokeWidth="1.5"
-            strokeDasharray="4 3"
-            opacity="0.45"
-          />
-          <text x="34" y="44" fontFamily="monospace" fontSize="8" fill={INK} opacity="0.55" letterSpacing="1.5">[NO]</text>
-          <text x="34" y="56" fontFamily="monospace" fontSize="8" fill={ACCENT} opacity="0.5" letterSpacing="1">↑ REVISE</text>
-        </svg>
+      {/* YES guard — below the diamond container, never overlapping */}
+      <div
+        className="font-mono uppercase"
+        style={{
+          fontSize: "8px",
+          letterSpacing: "0.16em",
+          color: INK,
+          opacity: 0.55,
+          marginTop: 4,
+          textAlign: "center",
+          whiteSpace: "nowrap",
+        }}
+      >
+        [YES] ↓
       </div>
     </div>
   );
