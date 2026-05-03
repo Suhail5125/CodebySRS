@@ -429,10 +429,10 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
           {num}
         </span>
 
-        {/* title + scramble + dot */}
-        <div className="flex min-w-0 flex-1 items-center gap-5">
+        {/* title + tech stack stacked */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
           <h3
-            className="min-w-0 flex-1 truncate"
+            className="min-w-0 truncate"
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 800,
@@ -452,34 +452,32 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
               project.title.toUpperCase()
             )}
           </h3>
+          {shown.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {shown.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2 py-1 font-mono text-[9px] uppercase tracking-[0.16em]"
+                  style={{
+                    border: `1.5px solid ${isActive ? BG : INK}`,
+                    color: isActive ? BG : INK,
+                    opacity: isActive ? 0.75 : 0.55,
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
+              {extra > 0 && (
+                <span
+                  className="font-mono text-[9px] uppercase tracking-[0.16em]"
+                  style={{ color: isActive ? BG : ACCENT, opacity: isActive ? 0.75 : 1 }}
+                >
+                  +{extra}
+                </span>
+              )}
+            </div>
+          )}
         </div>
-
-        {/* tech stack — max 3 tags + overflow badge */}
-        {shown.length > 0 && (
-          <div className="hidden shrink-0 items-center gap-1.5 md:flex" style={{ marginRight: "2rem" }}>
-            {shown.map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-1 font-mono text-[9px] uppercase tracking-[0.16em]"
-                style={{
-                  border: `1.5px solid ${isActive ? BG : INK}`,
-                  color: isActive ? BG : INK,
-                  opacity: isActive ? 0.75 : 0.55,
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-            {extra > 0 && (
-              <span
-                className="font-mono text-[9px] uppercase tracking-[0.16em]"
-                style={{ color: isActive ? BG : ACCENT, opacity: isActive ? 0.75 : 1 }}
-              >
-                +{extra}
-              </span>
-            )}
-          </div>
-        )}
 
         {/* VIEW button */}
         {link ? (
