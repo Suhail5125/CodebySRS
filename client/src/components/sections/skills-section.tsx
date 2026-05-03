@@ -238,8 +238,7 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
     <section
       id="skills"
       style={{
-        height: "100vh",
-        overflow: "hidden",
+        minHeight: "100vh",
         background: BG,
         color: INK,
         display: "flex",
@@ -290,14 +289,12 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
         {/* ── 7-column full-width grid ── */}
         <div
           style={{
-            position: "absolute",
-            inset: 0,
+            position: "relative",
             zIndex: 5,
             display: "grid",
             gridTemplateColumns: "repeat(7, 1fr)",
             gap: "12px 0",
-            alignContent: "center",
-            paddingBottom: 60,
+            paddingBottom: 72,
           }}
         >
           {source.map((skill) => {
