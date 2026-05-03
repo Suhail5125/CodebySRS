@@ -178,12 +178,20 @@ function Strip({
   const PY     = isActive ? PY_EXPANDED : PY_COLLAPSED;
 
   /*
-   * Parallelogram clip-path — right side is LEAN px higher than left side.
-   * Top  edge: from (0, LEAN) on the left  → (100%, 0)   on the right.
-   * Bottom edge: from (0, 100%) on the left → (100%, calc(100%-LEAN)) on the right.
-   * This creates a consistent / lean. All 6 strips lean the same way.
+   * Alternating parallelogram clip-paths:
+   *   Even strips (0,2,4) lean /  — right side is LEAN px higher than left.
+   *     Top:    (0, LEAN) → (100%, 0)
+   *     Bottom: (0, 100%) → (100%, calc(100%-LEAN))
+   *   Odd  strips (1,3,5) lean \  — left side is LEAN px higher than right.
+   *     Top:    (0, 0) → (100%, LEAN)
+   *     Bottom: (0, calc(100%-LEAN)) → (100%, 100%)
+   * The small wedge-shaped gap between adjacent opposite-direction strips
+   * shows the dark section background — an intentional chevron divider.
    */
-  const clipPath = `polygon(0 ${LEAN}px, 100% 0, 100% calc(100% - ${LEAN}px), 0 100%)`;
+  const leanRight = index % 2 === 0;
+  const clipPath  = leanRight
+    ? `polygon(0 ${LEAN}px, 100% 0, 100% calc(100% - ${LEAN}px), 0 100%)`
+    : `polygon(0 0, 100% ${LEAN}px, 100% 100%, 0 calc(100% - ${LEAN}px))`;
 
   return (
     <div
@@ -240,16 +248,16 @@ function Strip({
       </div>
 
       {/*
-       * Content row — skewY(-1.5deg) gives the text a subtle lean
-       * that echoes the parallelogram's diagonal, making it feel like
-       * the text physically sits inside the tilted strip.
-       * This stays skewed on hover (strip never straightens).
+       * Content row — text skew matches the strip lean direction so
+       * the text feels like it physically sits inside the tilted plane.
+       * Even strips (/): skewY(-1.5deg) | Odd strips (\): skewY(1.5deg)
+       * Skew stays the same on hover — strip never straightens.
        */}
       <div
         className="relative mx-auto flex w-full max-w-[1400px] items-center gap-5 px-6 lg:gap-8 lg:px-10"
         style={{
           zIndex:    1,
-          transform: "skewY(-1.5deg)",
+          transform: leanRight ? "skewY(-1.5deg)" : "skewY(1.5deg)",
           transformOrigin: "left center",
         }}
       >
