@@ -2,7 +2,6 @@ import {
   useState,
   useRef,
   useEffect,
-  useLayoutEffect,
   useCallback,
   type ReactNode,
 } from "react";
@@ -14,9 +13,12 @@ const BG = "#0A0A0A";
 const INK = "#F2EFE6";
 const ACCENT = "#FF3D00";
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   DATA MODEL
-   ═══════════════════════════════════════════════════════════════════════════ */
+// Animation constants
+const CONN_STEP_MS = 130;       // delay increment per connector index
+const CONN_DURATION_MS = 380;   // stroke-dashoffset transition duration
+const FORK_OFFSET_PX = 72;
+
+// ── Step data ────────────────────────────────────────────────────────────────
 
 type StepData = {
   num: string;
@@ -87,7 +89,8 @@ const STEPS: StepData[] = [
   },
 ];
 
-/* ── Diagram element types ─────────────────────────────────────────────── */
+// ── Diagram data model ───────────────────────────────────────────────────────
+
 type NodeKind = "start" | "phase" | "decision" | "fork" | "join" | "end";
 
 interface DiagramEl {
@@ -97,65 +100,74 @@ interface DiagramEl {
   label?: string;     // decision only
 }
 
-/** Flat ordered list that drives both rendering and SVG path generation */
+// Flat ordered list — drives both DOM rendering and SVG path generation
 const DIAGRAM: DiagramEl[] = [
-  { id: "start", kind: "start" },
-  { id: "phase-0", kind: "phase", stepIndex: 0 },
-  { id: "dec-0", kind: "decision", label: "BRIEF APPROVED?" },
-  { id: "phase-1", kind: "phase", stepIndex: 1 },
-  { id: "phase-2", kind: "phase", stepIndex: 2 },
-  { id: "dec-1", kind: "decision", label: "PROTOTYPE SIGNED OFF?" },
-  { id: "fork", kind: "fork" },
-  { id: "join", kind: "join" },
-  { id: "phase-3", kind: "phase", stepIndex: 3 },
-  { id: "phase-4", kind: "phase", stepIndex: 4 },
-  { id: "dec-2", kind: "decision", label: "QA PASS?" },
-  { id: "phase-5", kind: "phase", stepIndex: 5 },
-  { id: "end", kind: "end" },
+  { id: "start",   kind: "start" },
+  { id: "phase-0", kind: "phase",    stepIndex: 0 },
+  { id: "dec-0",   kind: "decision", label: "BRIEF APPROVED?" },
+  { id: "phase-1", kind: "phase",    stepIndex: 1 },
+  { id: "phase-2", kind: "phase",    stepIndex: 2 },
+  { id: "dec-1",   kind: "decision", label: "PROTOTYPE SIGNED OFF?" },
+  { id: "fork",    kind: "fork" },
+  { id: "join",    kind: "join" },
+  { id: "phase-3", kind: "phase",    stepIndex: 3 },
+  { id: "phase-4", kind: "phase",    stepIndex: 4 },
+  { id: "dec-2",   kind: "decision", label: "QA PASS?" },
+  { id: "phase-5", kind: "phase",    stepIndex: 5 },
+  { id: "end",     kind: "end" },
 ];
 
-/* ── Connection definitions ────────────────────────────────────────────── */
+// ── Connection definitions ───────────────────────────────────────────────────
+
 type ConnKind = "straight" | "fork-left" | "fork-right";
 
 interface ConnDef {
   from: string;
   to: string;
   kind: ConnKind;
-  /** FRONTEND / BACKEND label drawn alongside fork paths */
-  trackLabel?: string;
+  trackLabel?: string; // FRONTEND / BACKEND label on fork branches
 }
 
-const FORK_OFFSET_PX = 72;
-
-/** Ordered connection list — drives SVG path rendering and sequencing */
+// Ordered list — index position doubles as animation sequence number
 const CONNECTIONS: ConnDef[] = [
-  { from: "start",   to: "phase-0", kind: "straight" },
-  { from: "phase-0", to: "dec-0",   kind: "straight" },
-  { from: "dec-0",   to: "phase-1", kind: "straight" },
-  { from: "phase-1", to: "phase-2", kind: "straight" },
-  { from: "phase-2", to: "dec-1",   kind: "straight" },
-  { from: "dec-1",   to: "fork",    kind: "straight" },
-  { from: "fork",    to: "join",    kind: "fork-left",  trackLabel: "FRONTEND" },
-  { from: "fork",    to: "join",    kind: "fork-right", trackLabel: "BACKEND"  },
-  { from: "join",    to: "phase-3", kind: "straight" },
-  { from: "phase-3", to: "phase-4", kind: "straight" },
-  { from: "phase-4", to: "dec-2",   kind: "straight" },
-  { from: "dec-2",   to: "phase-5", kind: "straight" },
-  { from: "phase-5", to: "end",     kind: "straight" },
+  { from: "start",   to: "phase-0", kind: "straight" },                           // 0
+  { from: "phase-0", to: "dec-0",   kind: "straight" },                           // 1
+  { from: "dec-0",   to: "phase-1", kind: "straight" },                           // 2
+  { from: "phase-1", to: "phase-2", kind: "straight" },                           // 3
+  { from: "phase-2", to: "dec-1",   kind: "straight" },                           // 4
+  { from: "dec-1",   to: "fork",    kind: "straight" },                           // 5
+  { from: "fork",    to: "join",    kind: "fork-left",  trackLabel: "FRONTEND" }, // 6
+  { from: "fork",    to: "join",    kind: "fork-right", trackLabel: "BACKEND"  }, // 7
+  { from: "join",    to: "phase-3", kind: "straight" },                           // 8
+  { from: "phase-3", to: "phase-4", kind: "straight" },                           // 9
+  { from: "phase-4", to: "dec-2",   kind: "straight" },                           // 10
+  { from: "dec-2",   to: "phase-5", kind: "straight" },                           // 11
+  { from: "phase-5", to: "end",     kind: "straight" },                           // 12
 ];
 
-/* ── Computed path data (post-layout) ──────────────────────────────────── */
+// Pre-compute node reveal delays:
+// Each node appears after its incoming connector(s) finish drawing.
+// delay = max(incomingConnIdx) * CONN_STEP_MS + CONN_DURATION_MS
+const NODE_REVEAL_DELAYS: Record<string, number> = (() => {
+  const delays: Record<string, number> = { start: 0 };
+  CONNECTIONS.forEach((conn, idx) => {
+    const connFinish = idx * CONN_STEP_MS + CONN_DURATION_MS;
+    if (delays[conn.to] === undefined || connFinish > delays[conn.to]) {
+      delays[conn.to] = connFinish;
+    }
+  });
+  return delays;
+})();
+
+// ── Computed path data ───────────────────────────────────────────────────────
+
 interface PathData {
   d: string;
   length: number;
-  connIdx: number;       // maps to CONNECTIONS index for sequencing
+  connIdx: number;
   hasArrow: boolean;
   trackLabel?: { x: number; y: number; anchor: "start" | "end"; text: string };
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   PATH COMPUTATION
-   ═══════════════════════════════════════════════════════════════════════════ */
 
 function computePaths(
   containerEl: HTMLElement,
@@ -171,59 +183,49 @@ function computePaths(
     return {
       top: r.top - cRect.top,
       bottom: r.bottom - cRect.top,
-      left: r.left - cRect.left,
-      right: r.right - cRect.left,
-      width: r.width,
-      height: r.height,
       midX: r.left - cRect.left + r.width / 2,
     };
-  };
-
-  const bottom = (id: string) => {
-    const r = getRect(id);
-    return r ? { x: r.midX, y: r.bottom } : null;
-  };
-
-  const top = (id: string) => {
-    const r = getRect(id);
-    return r ? { x: r.midX, y: r.top } : null;
   };
 
   const results: PathData[] = [];
 
   CONNECTIONS.forEach((conn, connIdx) => {
-    const from = bottom(conn.from);
-    const to = top(conn.to);
+    const from = getRect(conn.from);
+    const to = getRect(conn.to);
     if (!from || !to) return;
 
+    const fx = from.midX;
+    const fy = from.bottom;
+    const tx = to.midX;
+    const ty = to.top;
+
     if (conn.kind === "straight") {
-      const d = `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
-      const length = Math.hypot(to.x - from.x, to.y - from.y);
+      const d = `M ${fx} ${fy} L ${tx} ${ty}`;
+      const length = Math.hypot(tx - fx, ty - fy);
       results.push({ d, length, connIdx, hasArrow: true });
       return;
     }
 
-    // fork-left or fork-right
+    // fork-left or fork-right — polyline that fans out then converges
     const offset = conn.kind === "fork-left" ? -FORK_OFFSET_PX : FORK_OFFSET_PX;
     const branchX = cx + offset;
-    const spread = 24; // px over which the path fans out / converges
+    const spread = 20;
 
     const d = [
-      `M ${from.x} ${from.y}`,
-      `L ${branchX} ${from.y + spread}`,
-      `L ${branchX} ${to.y - spread}`,
-      `L ${to.x} ${to.y}`,
+      `M ${fx} ${fy}`,
+      `L ${branchX} ${fy + spread}`,
+      `L ${branchX} ${ty - spread}`,
+      `L ${tx} ${ty}`,
     ].join(" ");
 
-    // Approximate length of the polyline
-    const seg1 = Math.hypot(branchX - from.x, spread);
-    const seg2 = Math.abs(to.y - spread - (from.y + spread));
-    const seg3 = Math.hypot(to.x - branchX, spread);
+    const seg1 = Math.hypot(branchX - fx, spread);
+    const seg2 = Math.abs(ty - spread - (fy + spread));
+    const seg3 = Math.hypot(tx - branchX, spread);
     const length = seg1 + seg2 + seg3;
 
     const labelAnchor: "start" | "end" = conn.kind === "fork-left" ? "end" : "start";
     const labelX = branchX + (conn.kind === "fork-left" ? -6 : 6);
-    const labelY = from.y + spread + (to.y - spread - from.y - spread) / 2;
+    const labelY = fy + spread + (ty - spread - fy - spread) / 2;
 
     results.push({
       d,
@@ -239,9 +241,81 @@ function computePaths(
   return results;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   NODE COMPONENTS
-   ═══════════════════════════════════════════════════════════════════════════ */
+// ── SVG connector overlay ────────────────────────────────────────────────────
+
+function ConnectorOverlay({
+  paths,
+  svgSize,
+  triggered,
+}: {
+  paths: PathData[];
+  svgSize: { w: number; h: number };
+  triggered: boolean;
+}) {
+  return (
+    <svg
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: svgSize.w,
+        height: svgSize.h,
+        pointerEvents: "none",
+        overflow: "visible",
+      }}
+    >
+      <defs>
+        <marker id="uml-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+          <polygon points="0 0, 7 3.5, 0 7" fill={INK} opacity="0.8" />
+        </marker>
+      </defs>
+
+      {paths.map((path, i) => {
+        const delay = path.connIdx * CONN_STEP_MS;
+        return (
+          <g key={i}>
+            <path
+              d={path.d}
+              fill="none"
+              stroke={INK}
+              strokeWidth="1.75"
+              opacity="0.7"
+              strokeDasharray={path.length}
+              strokeDashoffset={triggered ? 0 : path.length}
+              markerEnd={path.hasArrow ? "url(#uml-arrow)" : undefined}
+              style={{
+                transition: triggered
+                  ? `stroke-dashoffset ${CONN_DURATION_MS}ms cubic-bezier(0.85,0,0.15,1) ${delay}ms`
+                  : "none",
+              }}
+            />
+            {path.trackLabel && (
+              <text
+                x={path.trackLabel.x}
+                y={path.trackLabel.y}
+                fontFamily="monospace"
+                fontSize="9"
+                textAnchor={path.trackLabel.anchor}
+                fill={ACCENT}
+                opacity={triggered ? 0.8 : 0}
+                letterSpacing="2"
+                style={{
+                  transition: triggered
+                    ? `opacity 0.3s ease ${delay + CONN_DURATION_MS}ms`
+                    : "none",
+                }}
+              >
+                {path.trackLabel.text}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ── Node components ──────────────────────────────────────────────────────────
 
 function StartNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
   return (
@@ -287,7 +361,7 @@ function EndNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
   );
 }
 
-function ForkNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
+function ForkBarNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
   return (
     <div
       ref={nodeRef as (el: HTMLDivElement | null) => void}
@@ -299,7 +373,7 @@ function ForkNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
   );
 }
 
-function JoinNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
+function JoinBarNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
   return (
     <div
       ref={nodeRef as (el: HTMLDivElement | null) => void}
@@ -344,7 +418,6 @@ function DecisionNode({
         >
           {label}
         </div>
-        {/* YES label below */}
         <div
           className="absolute font-mono uppercase"
           style={{
@@ -360,7 +433,6 @@ function DecisionNode({
         >
           YES ↓
         </div>
-        {/* Decorative NO loop */}
         <svg
           className="absolute"
           style={{ right: -56, top: "50%", transform: "translateY(-50%)" }}
@@ -376,15 +448,7 @@ function DecisionNode({
             strokeDasharray="4 3"
             opacity="0.3"
           />
-          <text
-            x="26"
-            y="33"
-            fontFamily="monospace"
-            fontSize="8"
-            fill={INK}
-            opacity="0.35"
-            letterSpacing="2"
-          >
+          <text x="26" y="33" fontFamily="monospace" fontSize="8" fill={INK} opacity="0.35" letterSpacing="2">
             NO
           </text>
         </svg>
@@ -396,14 +460,22 @@ function DecisionNode({
 function PhaseNode({
   step,
   nodeRef,
-  onHover,
+  onActivate,
 }: {
   step: StepData;
   nodeRef: (el: HTMLElement | null) => void;
-  onHover: (num: string | null) => void;
+  onActivate: (num: string | null) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [clicked, setClicked] = useState(false);
+  const expanded = hovered || clicked;
   const Icon = step.icon;
+
+  const handleClick = () => {
+    const next = !clicked;
+    setClicked(next);
+    onActivate(next ? step.num : null);
+  };
 
   return (
     <div
@@ -417,10 +489,10 @@ function PhaseNode({
         color: expanded ? BG : INK,
         transition: "background 0.25s ease, color 0.25s ease",
       }}
-      onMouseEnter={() => { setExpanded(true); onHover(step.num); }}
-      onMouseLeave={() => { setExpanded(false); onHover(null); }}
+      onMouseEnter={() => { setHovered(true); onActivate(step.num); }}
+      onMouseLeave={() => { setHovered(false); if (!clicked) onActivate(null); }}
+      onClick={handleClick}
     >
-      {/* Header */}
       <div
         className="flex items-center gap-4 px-5 py-4"
         style={{ borderBottom: expanded ? `2px solid ${BG}` : "none" }}
@@ -461,7 +533,6 @@ function PhaseNode({
         </span>
       </div>
 
-      {/* Expandable body */}
       <div
         style={{
           maxHeight: expanded ? 360 : 0,
@@ -502,99 +573,18 @@ function PhaseNode({
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   SVG CONNECTOR OVERLAY
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function ConnectorOverlay({
-  paths,
-  svgSize,
-  triggered,
-}: {
-  paths: PathData[];
-  svgSize: { w: number; h: number };
-  triggered: boolean;
-}) {
-  const STEP_MS = 130;
-
-  return (
-    <svg
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: svgSize.w,
-        height: svgSize.h,
-        pointerEvents: "none",
-        overflow: "visible",
-      }}
-    >
-      <defs>
-        <marker id="uml-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
-          <polygon points="0 0, 7 3.5, 0 7" fill={INK} opacity="0.8" />
-        </marker>
-      </defs>
-
-      {paths.map((path, i) => {
-        const delay = path.connIdx * STEP_MS;
-        return (
-          <g key={i}>
-            <path
-              d={path.d}
-              fill="none"
-              stroke={INK}
-              strokeWidth="1.75"
-              opacity="0.7"
-              strokeDasharray={path.length}
-              strokeDashoffset={triggered ? 0 : path.length}
-              markerEnd={path.hasArrow ? "url(#uml-arrow)" : undefined}
-              style={{
-                transition: triggered
-                  ? `stroke-dashoffset 0.38s cubic-bezier(0.85,0,0.15,1) ${delay}ms`
-                  : "none",
-              }}
-            />
-            {path.trackLabel && (
-              <text
-                x={path.trackLabel.x}
-                y={path.trackLabel.y}
-                fontFamily="monospace"
-                fontSize="9"
-                textAnchor={path.trackLabel.anchor}
-                fill={ACCENT}
-                opacity={triggered ? 0.8 : 0}
-                letterSpacing="2"
-                style={{
-                  transition: triggered ? `opacity 0.3s ease ${delay + 200}ms` : "none",
-                  textTransform: "uppercase",
-                }}
-              >
-                {path.trackLabel.text}
-              </text>
-            )}
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   NODE RENDERER — maps DiagramEl to the right component
-   ═══════════════════════════════════════════════════════════════════════════ */
+// ── Render a diagram element by kind ────────────────────────────────────────
 
 function renderNode(
   el: DiagramEl,
   opts: {
     nodeRef: (e: HTMLElement | null) => void;
-    onHover: (num: string | null) => void;
+    onActivate: (num: string | null) => void;
     triggered: boolean;
-    seqIdx: number;
   }
 ): ReactNode {
-  const { nodeRef, onHover, triggered, seqIdx } = opts;
-  const STEP_MS = 130;
-  const delay = seqIdx * STEP_MS;
+  const { nodeRef, onActivate, triggered } = opts;
+  const delay = NODE_REVEAL_DELAYS[el.id] ?? 0;
 
   const fadeIn: React.CSSProperties = {
     opacity: triggered ? 1 : 0,
@@ -606,21 +596,13 @@ function renderNode(
 
   switch (el.kind) {
     case "start":
-      return (
-        <div style={fadeIn}>
-          <StartNode nodeRef={nodeRef} />
-        </div>
-      );
+      return <div style={fadeIn}><StartNode nodeRef={nodeRef} /></div>;
     case "end":
-      return (
-        <div style={fadeIn}>
-          <EndNode nodeRef={nodeRef} />
-        </div>
-      );
+      return <div style={fadeIn}><EndNode nodeRef={nodeRef} /></div>;
     case "phase":
       return (
         <div style={fadeIn}>
-          <PhaseNode step={STEPS[el.stepIndex!]} nodeRef={nodeRef} onHover={onHover} />
+          <PhaseNode step={STEPS[el.stepIndex!]} nodeRef={nodeRef} onActivate={onActivate} />
         </div>
       );
     case "decision":
@@ -630,34 +612,23 @@ function renderNode(
         </div>
       );
     case "fork":
-      return (
-        <div style={fadeIn}>
-          <ForkNode nodeRef={nodeRef} />
-        </div>
-      );
+      return <div style={fadeIn}><ForkBarNode nodeRef={nodeRef} /></div>;
     case "join":
-      return (
-        <div style={fadeIn}>
-          <JoinNode nodeRef={nodeRef} />
-        </div>
-      );
+      return <div style={fadeIn}><JoinBarNode nodeRef={nodeRef} /></div>;
     default:
       return null;
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   MAIN SECTION
-   ═══════════════════════════════════════════════════════════════════════════ */
+// ── Main section export ──────────────────────────────────────────────────────
 
 export function WorkProcessSection() {
   const [triggered, setTriggered] = useState(false);
-  const [hoveredPhase, setHoveredPhase] = useState<string | null>(null);
+  const [activePhase, setActivePhase] = useState<string | null>(null);
   const [paths, setPaths] = useState<PathData[]>([]);
   const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
 
   const containerRef = useRef<HTMLDivElement>(null);
-  // nodeRefs stores one HTMLElement per DIAGRAM element by id
   const nodeRefs = useRef<Map<string, HTMLElement>>(new Map());
 
   const setNodeRef = useCallback(
@@ -668,7 +639,6 @@ export function WorkProcessSection() {
     []
   );
 
-  /* ── Compute SVG paths after layout and on resize ─────────────────────── */
   const recomputePaths = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -677,12 +647,12 @@ export function WorkProcessSection() {
     setPaths(computePaths(container, nodeRefs.current));
   }, []);
 
-  /* Initial measurement after mount */
+  // Initial measurement after mount
   useEffect(() => {
     recomputePaths();
   }, [recomputePaths]);
 
-  /* Re-measure whenever the container resizes (node expand/collapse) */
+  // Re-measure on container resize (handles node expand/collapse)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -691,21 +661,18 @@ export function WorkProcessSection() {
     return () => ro.disconnect();
   }, [recomputePaths]);
 
-  /* ── IntersectionObserver scroll trigger ──────────────────────────────── */
+  // Scroll-triggered animation via IntersectionObserver
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) { setTriggered(true); return; }
-
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTriggered(true);
+      return;
+    }
     const obs = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting) {
-            setTriggered(true);
-            obs.disconnect();
-          }
+          if (e.isIntersecting) { setTriggered(true); obs.disconnect(); }
         }
       },
       { threshold: 0.06 }
@@ -715,12 +682,9 @@ export function WorkProcessSection() {
     return () => { obs.disconnect(); clearTimeout(fallback); };
   }, []);
 
-  const handleHover = useCallback((num: string | null) => setHoveredPhase(num), []);
+  const handleActivate = useCallback((num: string | null) => setActivePhase(num), []);
 
-  const currentPhase = hoveredPhase ? STEPS.find((s) => s.num === hoveredPhase) : null;
-
-  /* Sequencing: nodes get staggered reveal indices (connectors animate via connIdx in SVG) */
-  let nodeSeq = 0;
+  const currentPhase = activePhase ? STEPS.find((s) => s.num === activePhase) : null;
 
   return (
     <section
@@ -736,7 +700,6 @@ export function WorkProcessSection() {
       `}</style>
 
       <div className="mx-auto w-full max-w-[1400px]">
-        {/* Section header — untouched per spec */}
         <Reveal>
           <SectionHeader
             num="05"
@@ -748,41 +711,30 @@ export function WorkProcessSection() {
           />
         </Reveal>
 
-        {/* Mobile scroll hint */}
-        <p
-          className="mt-6 block text-center font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 md:hidden"
-        >
+        <p className="mt-6 block text-center font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 md:hidden">
           SCROLL →
         </p>
 
-        {/* ── Diagram container (position: relative for SVG overlay) ─────── */}
-        <div
-          className="mt-8"
-          style={{ overflowX: "auto", overflowY: "visible" }}
-        >
+        <div className="mt-8" style={{ overflowX: "auto", overflowY: "visible" }}>
           <div
             ref={containerRef}
             className="relative mx-auto flex flex-col"
             style={{ minWidth: 340, maxWidth: 560, gap: 40 }}
           >
-            {/* SVG overlay — draws all connector paths */}
             <ConnectorOverlay paths={paths} svgSize={svgSize} triggered={triggered} />
 
-            {/* Render each diagram element in order */}
             {DIAGRAM.map((el) => (
               <div key={el.id} style={{ position: "relative", zIndex: 1 }}>
                 {renderNode(el, {
                   nodeRef: setNodeRef(el.id),
-                  onHover: handleHover,
+                  onActivate: handleActivate,
                   triggered,
-                  seqIdx: nodeSeq++,
                 })}
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── Status bar ─────────────────────────────────────────────────── */}
         <div
           className="mt-10 grid grid-cols-3 gap-0 font-mono text-[11px] uppercase tracking-[0.2em]"
           style={{ border: `2px solid ${INK}` }}
