@@ -132,16 +132,16 @@ interface ConnDef {
 const CONNECTIONS: ConnDef[] = [
   { from: "start",   to: "phase-0", kind: "straight" },                           // 0
   { from: "phase-0", to: "dec-0",   kind: "straight" },                           // 1
-  { from: "dec-0",   to: "phase-1", kind: "straight" },                           // 2
+  { from: "dec-0",   to: "phase-1", kind: "straight", trackLabel: "[YES]" },       // 2
   { from: "phase-1", to: "phase-2", kind: "straight" },                           // 3
   { from: "phase-2", to: "dec-1",   kind: "straight" },                           // 4
-  { from: "dec-1",   to: "fork",    kind: "straight" },                           // 5
+  { from: "dec-1",   to: "fork",    kind: "straight", trackLabel: "[YES]" },       // 5
   { from: "fork",    to: "join",    kind: "fork-left",  trackLabel: "FRONTEND" }, // 6
   { from: "fork",    to: "join",    kind: "fork-right", trackLabel: "BACKEND"  }, // 7
   { from: "join",    to: "phase-3", kind: "straight" },                           // 8
   { from: "phase-3", to: "phase-4", kind: "straight" },                           // 9
   { from: "phase-4", to: "dec-2",   kind: "straight" },                           // 10
-  { from: "dec-2",   to: "phase-5", kind: "straight" },                           // 11
+  { from: "dec-2",   to: "phase-5", kind: "straight", trackLabel: "[YES]" },       // 11
   { from: "phase-5", to: "end",     kind: "straight" },                           // 12
   // [NO] loop-back paths — routed along right margin back to revision start
   { from: "dec-0",   to: "phase-0", kind: "loop-back", trackLabel: "[NO] REVISE" }, // 13
@@ -173,7 +173,7 @@ interface PathData {
   connIdx: number;
   hasArrow: boolean;
   loopBack?: boolean;
-  trackLabel?: { x: number; y: number; anchor: "start" | "end"; text: string };
+  trackLabel?: { x: number; y: number; anchor: "start" | "middle" | "end"; text: string };
 }
 
 function computePaths(
@@ -211,7 +211,10 @@ function computePaths(
     if (conn.kind === "straight") {
       const d = `M ${fx} ${fy} L ${tx} ${ty}`;
       const length = Math.hypot(tx - fx, ty - fy);
-      results.push({ d, length, connIdx, hasArrow: true });
+      const trackLabel = conn.trackLabel
+        ? { x: fx, y: fy + 16, anchor: "middle" as const, text: conn.trackLabel }
+        : undefined;
+      results.push({ d, length, connIdx, hasArrow: true, ...(trackLabel && { trackLabel }) });
       return;
     }
 
@@ -358,7 +361,7 @@ function ConnectorOverlay({
                 y={path.trackLabel.y}
                 fontFamily="monospace"
                 fontSize="9"
-                textAnchor={path.trackLabel.anchor}
+                textAnchor={path.trackLabel.anchor as "start" | "middle" | "end"}
                 fill={isLoop ? ACCENT : ACCENT}
                 opacity={triggered ? (isLoop ? 0.7 : 0.8) : 0}
                 letterSpacing="2"
@@ -506,20 +509,6 @@ function DecisionNode({
         </div>
       </div>
 
-      {/* [YES] ↓ — centred below the diamond, outside nodeRef */}
-      <div
-        className="font-mono uppercase"
-        style={{
-          fontSize: "8px",
-          letterSpacing: "0.16em",
-          color: INK,
-          opacity: 0.55,
-          marginTop: 3,
-          whiteSpace: "nowrap",
-        }}
-      >
-        [YES] ↓
-      </div>
     </div>
   );
 }
