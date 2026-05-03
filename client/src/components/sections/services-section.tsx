@@ -1,75 +1,64 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Code2, Palette, Smartphone, Rocket, Globe, Zap } from "lucide-react";
+import { useReveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
 
 const BG    = "#0A0A0A";
 const INK   = "#F2EFE6";
 const ACCENT = "#FF3D00";
 
+/* ── Per-card colour schemes ───────────────────────────────────────────── */
 const PALETTES = [
-  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.5)",  tag: "#0A0A0A", tagText: "#FF3D00" },
-  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)", tag: "#0A0A0A", tagText: "#F2EFE6" },
-  { bg: "#1E1E1E", text: "#F2EFE6", sub: "rgba(255,255,255,0.45)", tag: "#F2EFE6", tagText: "#1E1E1E" },
-  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.5)",  tag: "#0A0A0A", tagText: "#FF3D00" },
-  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)", tag: "#0A0A0A", tagText: "#F2EFE6" },
-  { bg: "#111111", text: "#F2EFE6", sub: "rgba(255,255,255,0.45)", tag: "#F2EFE6", tagText: "#111111" },
+  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)",  tag: "#0A0A0A", tagText: "#FF3D00" },
+  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.4)",   tag: "#0A0A0A", tagText: "#F2EFE6" },
+  { bg: "#1A1A1A", text: "#F2EFE6", sub: "rgba(255,255,255,0.4)", tag: "#F2EFE6", tagText: "#1A1A1A" },
+  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)",  tag: "#0A0A0A", tagText: "#FF3D00" },
+  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.4)",   tag: "#0A0A0A", tagText: "#F2EFE6" },
+  { bg: "#0F0F0F", text: "#F2EFE6", sub: "rgba(255,255,255,0.4)", tag: "#F2EFE6", tagText: "#0F0F0F" },
 ];
 
-/*
- * All strips lean the SAME direction (all positive skewY, left stays / right drops).
- * Same-direction skews tile seamlessly with ANY positive overlap — no gap is
- * physically possible. Varying angles create depth variety like the reference.
- *
- * transformOrigin: "left center" means the left edge doesn't move; the right
- * edge shears down by width × tan(angle).
- *
- * Overlap = 8vw. At the worst adjacent-angle pair (5° vs 2°):
- *   gap-risk = width × (tan5° − tan2°) ≈ 5.26vw → 8vw covers it with 2.74vw margin.
- */
-const ANGLES = [3, 4.5, 2, 5, 3.5, 4]; // degrees — all positive, all same lean
-
-function shuffleZ(n: number): number[] {
-  const a = Array.from({ length: n }, (_, i) => i + 2);
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+/* Skew direction alternates for the cascade feel */
+const SKEW = [-3.5, 3, -2.8, 3.2, -2.5, 3.5];
 
 const services = [
   {
-    code: "WD", icon: Code2,
+    code: "WD",
+    icon: Code2,
     title: "Web Development",
     description: "Custom web applications built with React, Next.js and Node.js. Responsive, fast-loading, scalable.",
     deliverables: ["SSR/SSG", "API Layer", "CI/CD", "Type-Safe DB"],
   },
   {
-    code: "UX", icon: Palette,
+    code: "UX",
+    icon: Palette,
     title: "UI/UX Design",
     description: "Pixel-perfect interfaces grounded in research, wireframes and prototypes that convert.",
     deliverables: ["Design System", "Prototype", "Tokens", "Hand-off"],
   },
   {
-    code: "MB", icon: Smartphone,
+    code: "MB",
+    icon: Smartphone,
     title: "Mobile Development",
     description: "Native iOS / Android and cross-platform builds (React Native, Flutter) with first-class UX.",
     deliverables: ["Native UI", "Push", "Offline", "App Store"],
   },
   {
-    code: "3D", icon: Globe,
+    code: "3D",
+    icon: Globe,
     title: "3D Web Experiences",
     description: "WebGL / Three.js product configurators, virtual showrooms and interactive marketing scenes.",
     deliverables: ["WebGL", "Three.js", "GLTF", "Animation"],
   },
   {
-    code: "PF", icon: Zap,
+    code: "PF",
+    icon: Zap,
     title: "Performance",
     description: "Audit, profile and optimise. Code-splitting, lazy loading, edge caching, real Lighthouse wins.",
     deliverables: ["Audit", "Bundle Cut", "Cache", "Core Web Vitals"],
   },
   {
-    code: "CS", icon: Rocket,
+    code: "CS",
+    icon: Rocket,
     title: "Consulting & Strategy",
     description: "Architecture reviews, scalability planning, technology roadmaps for digital transformation.",
     deliverables: ["Audit", "Roadmap", "Stack Pick", "Hiring"],
@@ -78,7 +67,6 @@ const services = [
 
 export function ServicesSection() {
   const [active, setActive] = useState<number | null>(null);
-  const zIndices = useRef(shuffleZ(services.length)).current;
 
   return (
     <section
@@ -86,8 +74,8 @@ export function ServicesSection() {
       className="snap-screen relative flex min-h-screen flex-col justify-center"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
-      {/* Header */}
-      <div className="px-4 pt-10 pb-6 sm:px-6 lg:px-10 lg:pt-14">
+      {/* Header — padded */}
+      <div className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
         <div className="mx-auto w-full max-w-[1400px]">
           <SectionHeader
             num="04"
@@ -100,7 +88,7 @@ export function ServicesSection() {
         </div>
       </div>
 
-      {/* Strip stack */}
+      {/* Slab stack — full bleed, no horizontal constraints */}
       <div
         className="relative w-full"
         style={{ overflow: "visible" }}
@@ -113,18 +101,22 @@ export function ServicesSection() {
             index={i}
             total={services.length}
             palette={PALETTES[i % PALETTES.length]}
-            angle={ANGLES[i % ANGLES.length]}
-            zIndex={zIndices[i]}
+            skew={SKEW[i % SKEW.length]}
             isActive={active === i}
+            isDimmed={active !== null && active !== i}
             onEnter={() => setActive(i)}
           />
         ))}
       </div>
 
-      {/* Footer */}
+      {/* Bottom strip — full bleed */}
       <div
         className="relative z-10 mt-8 flex flex-col items-start justify-between gap-4 px-6 py-5 font-mono text-[11px] uppercase tracking-[0.2em] md:flex-row md:items-center"
-        style={{ background: BG, borderTop: `2px solid ${INK}` }}
+        style={{
+          background: BG,
+          borderTop: `2px solid ${INK}`,
+          borderBottom: `2px solid ${INK}`,
+        }}
       >
         <div className="flex items-center gap-3">
           <span style={{ color: ACCENT }}>●</span>
@@ -141,79 +133,94 @@ export function ServicesSection() {
 }
 
 function Slab({
-  svc, index, total, palette, angle, zIndex, isActive, onEnter,
+  svc,
+  index,
+  total,
+  palette,
+  skew,
+  isActive,
+  isDimmed,
+  onEnter,
 }: {
   svc: (typeof services)[number];
   index: number;
   total: number;
   palette: (typeof PALETTES)[number];
-  angle: number;
-  zIndex: number;
+  skew: number;
   isActive: boolean;
+  isDimmed: boolean;
   onEnter: () => void;
 }) {
-  const num    = String(index + 1).padStart(2, "0");
+  const { ref, style: revealStyle } = useReveal({
+    delay: index * 80,
+    variant: "fade",
+    threshold: 0.03,
+  });
+
+  const num   = String(index + 1).padStart(2, "0");
   const total2 = String(total).padStart(2, "0");
 
-  /*
-   * Compact strip — most content is hidden under the next strip.
-   * On hover the strip straightens and the description expands.
-   * No dimming of sibling strips ("no blackish when hover").
-   *
-   * Overlap: -8vw  so adjacent same-direction strips never gap.
-   * Extra top/bottom padding: 8vw + 16px compensates so content stays
-   * centred inside the visible band.
-   */
-  const OVERLAP_VW = 8;
+  /* Each slab overlaps the one above by 28px so border edges are hidden */
+  const OVERLAP = 28;
+  /* First slab has no top overlap */
+  const marginTop = index === 0 ? 0 : -OVERLAP;
 
   return (
     <div
+      ref={ref}
       onMouseEnter={onEnter}
       style={{
         position: "relative",
-        zIndex: isActive ? 30 : zIndex,
-        marginTop: index === 0 ? 0 : `calc(-${OVERLAP_VW}vw)`,
-        /* Straighten on hover; keep lean otherwise */
+        zIndex: isActive ? 20 : index + 1,
+        marginTop,
+        /* Skew the slab; on active, straighten it */
         transform: isActive
-          ? "skewY(0deg)"
-          : `skewY(${angle}deg)`,
+          ? "skewY(0deg) scaleY(1.04)"
+          : `skewY(${skew}deg)`,
         transformOrigin: "left center",
-        transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
+        transition:
+          "transform 0.45s cubic-bezier(0.16,1,0.3,1), " +
+          "opacity 0.3s ease",
+        opacity: isDimmed ? 0.35 : 1,
         cursor: "default",
+        ...revealStyle,
       }}
     >
+      {/* ── Solid colour fill — NO borders ───────────────────────────────── */}
       <div
         style={{
           background: palette.bg,
-          paddingTop:    `calc(${OVERLAP_VW}vw + 16px)`,
-          paddingBottom: `calc(${OVERLAP_VW}vw + 16px)`,
-          paddingLeft: "32px",
-          paddingRight: "40px",
+          /* Extra top/bottom padding compensates for the skew so content
+             doesn't clip — the excess is hidden behind adjacent slabs */
+          padding: `${OVERLAP + 20}px 32px ${OVERLAP + 20}px 28px`,
           display: "flex",
           alignItems: "center",
-          gap: "24px",
+          gap: "28px",
           position: "relative",
           overflow: "hidden",
         }}
       >
-        {/* Ghost watermark */}
+        {/* Ghost watermark number */}
         <span
           aria-hidden
           style={{
             position: "absolute",
-            right: "-8px",
+            right: "-12px",
             top: "50%",
-            transform: "translateY(-50%)",
+            transform: `translateY(-50%) rotate(${skew * -2}deg)`,
             fontFamily: "Inter, sans-serif",
             fontWeight: 900,
-            fontSize: "clamp(80px, 12vw, 180px)",
+            fontSize: "clamp(100px, 14vw, 200px)",
             lineHeight: 1,
             letterSpacing: "-0.07em",
-            color: palette.bg === "#1E1E1E" || palette.bg === "#111111"
-              ? "rgba(255,255,255,0.04)"
-              : "rgba(0,0,0,0.07)",
+            color: isActive
+              ? "rgba(0,0,0,0.07)"
+              : palette.bg === "#1A1A1A" || palette.bg === "#0F0F0F"
+                ? "rgba(255,255,255,0.04)"
+                : "rgba(0,0,0,0.06)",
             pointerEvents: "none",
             userSelect: "none",
+            transition: "color 0.4s ease",
           }}
         >
           {num}
@@ -224,18 +231,19 @@ function Slab({
           style={{
             fontFamily: "Inter, sans-serif",
             fontWeight: 900,
-            fontSize: "clamp(32px, 4.5vw, 68px)",
+            fontSize: "clamp(40px, 5.5vw, 80px)",
             lineHeight: 1,
             letterSpacing: "-0.06em",
             color: palette.text,
             flexShrink: 0,
             minWidth: "2ch",
+            opacity: 0.95,
           }}
         >
           {num}
         </span>
 
-        {/* SVC code — vertical */}
+        {/* Vertical SVC code */}
         <div
           className="hidden sm:block"
           style={{
@@ -247,19 +255,20 @@ function Slab({
             writingMode: "vertical-rl",
             transform: "rotate(180deg)",
             flexShrink: 0,
+            lineHeight: 1,
           }}
         >
           SVC_{svc.code}
         </div>
 
-        {/* Title + description */}
+        {/* Title + revealed description */}
         <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
           <h3
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 900,
-              fontSize: "clamp(20px, 3.5vw, 56px)",
-              lineHeight: 0.92,
+              fontSize: "clamp(24px, 4.2vw, 64px)",
+              lineHeight: 0.9,
               letterSpacing: "-0.045em",
               textTransform: "uppercase",
               color: palette.text,
@@ -271,9 +280,10 @@ function Slab({
             {svc.title}
           </h3>
 
+          {/* Revealed description */}
           <div
             style={{
-              maxHeight: isActive ? "140px" : "0px",
+              maxHeight: isActive ? "120px" : "0px",
               overflow: "hidden",
               transition: "max-height 0.42s cubic-bezier(0.16,1,0.3,1)",
             }}
@@ -286,7 +296,7 @@ function Slab({
                 color: palette.text,
                 opacity: isActive ? 0.75 : 0,
                 transform: isActive ? "translateY(0)" : "translateY(8px)",
-                transition: "opacity 0.28s ease 0.15s, transform 0.28s ease 0.15s",
+                transition: "opacity 0.3s ease 0.15s, transform 0.3s ease 0.15s",
                 marginTop: "10px",
                 maxWidth: "52ch",
               }}
@@ -296,7 +306,7 @@ function Slab({
           </div>
         </div>
 
-        {/* Deliverable tags */}
+        {/* Deliverable tags — fade in on hover */}
         <div
           className="hidden lg:flex"
           style={{
@@ -306,7 +316,7 @@ function Slab({
             flexShrink: 0,
             opacity: isActive ? 1 : 0,
             transform: isActive ? "translateX(0)" : "translateX(16px)",
-            transition: "opacity 0.28s ease 0.12s, transform 0.28s ease 0.12s",
+            transition: "opacity 0.3s ease 0.12s, transform 0.3s ease 0.12s",
             pointerEvents: isActive ? "auto" : "none",
           }}
         >
@@ -333,9 +343,22 @@ function Slab({
         {/* Counter + arrow */}
         <div
           className="hidden md:flex"
-          style={{ flexDirection: "column", alignItems: "flex-end", gap: "6px", flexShrink: 0 }}
+          style={{
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: "6px",
+            flexShrink: 0,
+          }}
         >
-          <span style={{ fontFamily: "monospace", fontSize: "9px", letterSpacing: "0.22em", textTransform: "uppercase", color: palette.sub }}>
+          <span
+            style={{
+              fontFamily: "monospace",
+              fontSize: "9px",
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: palette.sub,
+            }}
+          >
             {num} / {total2}
           </span>
           <span
@@ -344,9 +367,11 @@ function Slab({
               fontSize: "22px",
               color: palette.text,
               display: "block",
-              transform: isActive ? "translate(4px,-3px) rotate(-42deg)" : "translate(0,0) rotate(0deg)",
+              transform: isActive
+                ? "translate(4px, -3px) rotate(-42deg)"
+                : "translate(0,0) rotate(0deg)",
               transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease",
-              opacity: isActive ? 1 : 0.4,
+              opacity: isActive ? 1 : 0.35,
             }}
           >
             →
