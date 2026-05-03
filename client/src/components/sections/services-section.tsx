@@ -1,79 +1,76 @@
 import { useState, useRef } from "react";
 import { Code2, Palette, Smartphone, Rocket, Globe, Zap } from "lucide-react";
-import { useReveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
 
-const BG    = "#0A0A0A";
-const INK   = "#F2EFE6";
+const BG     = "#0A0A0A";
+const INK    = "#F2EFE6";
 const ACCENT = "#FF3D00";
 
-/* ── Per-card colour schemes ───────────────────────────────────────────── */
 const PALETTES = [
-  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)",  tag: "#0A0A0A", tagText: "#FF3D00" },
-  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.4)",   tag: "#0A0A0A", tagText: "#F2EFE6" },
-  { bg: "#1A1A1A", text: "#F2EFE6", sub: "rgba(255,255,255,0.4)", tag: "#F2EFE6", tagText: "#1A1A1A" },
-  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)",  tag: "#0A0A0A", tagText: "#FF3D00" },
-  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.4)",   tag: "#0A0A0A", tagText: "#F2EFE6" },
-  { bg: "#0F0F0F", text: "#F2EFE6", sub: "rgba(255,255,255,0.4)", tag: "#F2EFE6", tagText: "#0F0F0F" },
+  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)",       tag: "#0A0A0A", tagText: "#FF3D00" },
+  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.4)",        tag: "#0A0A0A", tagText: "#F2EFE6" },
+  { bg: "#1A1A1A", text: "#F2EFE6", sub: "rgba(255,255,255,0.4)",   tag: "#F2EFE6", tagText: "#1A1A1A" },
+  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)",       tag: "#0A0A0A", tagText: "#FF3D00" },
+  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.4)",        tag: "#0A0A0A", tagText: "#F2EFE6" },
+  { bg: "#0F0F0F", text: "#F2EFE6", sub: "rgba(255,255,255,0.4)",   tag: "#F2EFE6", tagText: "#0F0F0F" },
 ];
 
 /*
- * LEAN — the CSS vw value for how far each strip's edge angles.
- * The inner colored div bleeds LEAN above AND below its layout box,
- * so adjacent strips (regardless of z-order) always cover each other's edge.
- * clip-path alternates / and \ to give opposing lean directions.
+ * LEAN — how far each strip's edge angles (in CSS vw).
+ *
+ * Each strip's coloured inner div bleeds LEAN above AND below its layout box
+ * via negative margins.  The clip-path polygon is drawn inside that extended
+ * area, so adjacent strips always overlap — eliminating any gap regardless of
+ * z-order.  A 2 px extension on every polygon edge kills sub-pixel antialiasing
+ * gaps where two strips meet at exactly the same y coordinate.
+ *
+ *   /  strip  → polygon(0 LEAN, W 0,    W 100%-LEAN, 0 100%)   (left low, right high)
+ *   \  strip  → polygon(0 0,    W LEAN, W 100%,      0 100%-LEAN) (left high, right low)
  */
-const LEAN = "4vw";
+const LEAN = "5vw";
 
-/* Shuffled z-indices so strips randomly layer over each other */
-function shuffleZIndices(n: number): number[] {
-  const arr = Array.from({ length: n }, (_, i) => i + 1);
-  for (let i = arr.length - 1; i > 0; i--) {
+function shuffleZ(n: number): number[] {
+  const a = Array.from({ length: n }, (_, i) => i + 2); // 2…n+1
+  for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  return arr;
+  return a;
 }
 
 const services = [
   {
-    code: "WD",
-    icon: Code2,
+    code: "WD", icon: Code2,
     title: "Web Development",
     description: "Custom web applications built with React, Next.js and Node.js. Responsive, fast-loading, scalable.",
     deliverables: ["SSR/SSG", "API Layer", "CI/CD", "Type-Safe DB"],
   },
   {
-    code: "UX",
-    icon: Palette,
+    code: "UX", icon: Palette,
     title: "UI/UX Design",
     description: "Pixel-perfect interfaces grounded in research, wireframes and prototypes that convert.",
     deliverables: ["Design System", "Prototype", "Tokens", "Hand-off"],
   },
   {
-    code: "MB",
-    icon: Smartphone,
+    code: "MB", icon: Smartphone,
     title: "Mobile Development",
     description: "Native iOS / Android and cross-platform builds (React Native, Flutter) with first-class UX.",
     deliverables: ["Native UI", "Push", "Offline", "App Store"],
   },
   {
-    code: "3D",
-    icon: Globe,
+    code: "3D", icon: Globe,
     title: "3D Web Experiences",
     description: "WebGL / Three.js product configurators, virtual showrooms and interactive marketing scenes.",
     deliverables: ["WebGL", "Three.js", "GLTF", "Animation"],
   },
   {
-    code: "PF",
-    icon: Zap,
+    code: "PF", icon: Zap,
     title: "Performance",
     description: "Audit, profile and optimise. Code-splitting, lazy loading, edge caching, real Lighthouse wins.",
     deliverables: ["Audit", "Bundle Cut", "Cache", "Core Web Vitals"],
   },
   {
-    code: "CS",
-    icon: Rocket,
+    code: "CS", icon: Rocket,
     title: "Consulting & Strategy",
     description: "Architecture reviews, scalability planning, technology roadmaps for digital transformation.",
     deliverables: ["Audit", "Roadmap", "Stack Pick", "Hiring"],
@@ -82,8 +79,7 @@ const services = [
 
 export function ServicesSection() {
   const [active, setActive] = useState<number | null>(null);
-  /* Stable random z-order — computed once per mount */
-  const zIndices = useRef(shuffleZIndices(services.length)).current;
+  const zIndices = useRef(shuffleZ(services.length)).current;
 
   return (
     <section
@@ -91,8 +87,8 @@ export function ServicesSection() {
       className="snap-screen relative flex min-h-screen flex-col justify-center"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
-      {/* Header — padded */}
-      <div className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="px-4 py-10 sm:px-6 lg:px-10 lg:py-14">
         <div className="mx-auto w-full max-w-[1400px]">
           <SectionHeader
             num="04"
@@ -105,7 +101,12 @@ export function ServicesSection() {
         </div>
       </div>
 
-      {/* Slab stack — full bleed, overflow hidden clips top/bottom bleed */}
+      {/*
+       * ── Slab stack ──────────────────────────────────────────────────────
+       * overflow:hidden clips the top bleed of strip[0] and bottom bleed of
+       * strip[5] against the section edge.  Between strips the bleeds are
+       * INSIDE this container so they are never clipped.
+       */}
       <div
         className="relative w-full"
         style={{ overflow: "hidden" }}
@@ -126,14 +127,10 @@ export function ServicesSection() {
         ))}
       </div>
 
-      {/* Bottom strip — full bleed */}
+      {/* ── Footer strip ────────────────────────────────────────────────── */}
       <div
         className="relative z-10 flex flex-col items-start justify-between gap-4 px-6 py-5 font-mono text-[11px] uppercase tracking-[0.2em] md:flex-row md:items-center"
-        style={{
-          background: BG,
-          borderTop: `2px solid ${INK}`,
-          borderBottom: `2px solid ${INK}`,
-        }}
+        style={{ background: BG, borderTop: `2px solid ${INK}` }}
       >
         <div className="flex items-center gap-3">
           <span style={{ color: ACCENT }}>●</span>
@@ -149,15 +146,11 @@ export function ServicesSection() {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Slab — single service strip
+   ═══════════════════════════════════════════════════════════════════════════ */
 function Slab({
-  svc,
-  index,
-  total,
-  palette,
-  zIndex,
-  isActive,
-  isDimmed,
-  onEnter,
+  svc, index, total, palette, zIndex, isActive, isDimmed, onEnter,
 }: {
   svc: (typeof services)[number];
   index: number;
@@ -168,32 +161,36 @@ function Slab({
   isDimmed: boolean;
   onEnter: () => void;
 }) {
-  const { ref, style: revealStyle } = useReveal({
-    delay: index * 80,
-    variant: "fade",
-    threshold: 0.03,
-  });
-
   const num    = String(index + 1).padStart(2, "0");
   const total2 = String(total).padStart(2, "0");
+  const isOdd  = index % 2 === 1;
 
   /*
-   * clip-path alternates / and \ on each strip.
-   * The inner div bleeds LEAN above and below (negative margins) so the
-   * colored areas of adjacent strips always overlap — no dark gap ever shows
-   * regardless of which strip's z-index is higher.
+   * clip-path maths
+   * ─────────────────
+   * Inner div: marginTop/Bottom = -LEAN  →  bleeds LEAN above & below outer div.
+   * The polygon is in the inner div's coordinate space (border-box = full height
+   * including the bleed zones).
    *
-   * / strip: polygon(0 LEAN, 100% 0,    100% calc(100% - LEAN), 0 100%)
-   * \ strip: polygon(0 0,    100% LEAN, 100% 100%, 0 calc(100% - LEAN))
+   * /  strip (even): top-right corner at y=0 (bleed up), bottom-left at y=100% (bleed down)
+   * \  strip  (odd): top-left corner at y=0 (bleed up), bottom-right at y=100% (bleed down)
+   *
+   * The ±2px extensions prevent 1-pixel antialiasing seams where two strips
+   * share an exact y coordinate at x = viewport-right.
    */
-  const isOdd   = index % 2 === 1;
-  const clipPath = isOdd
-    ? `polygon(0 0, 100% ${LEAN}, 100% 100%, 0 calc(100% - ${LEAN}))`
-    : `polygon(0 ${LEAN}, 100% 0, 100% calc(100% - ${LEAN}), 0 100%)`;
+  const clipSlant = isOdd
+    ? `polygon(0 -2px, 100% calc(${LEAN} - 2px), 100% calc(100% + 2px), 0 calc(100% - ${LEAN} + 2px))`
+    : `polygon(0 calc(${LEAN} - 2px), 100% -2px, 100% calc(100% - ${LEAN} + 2px), 0 calc(100% + 2px))`;
+
+  /* On hover → clean straight rectangle scoped to the content zone */
+  const clipRect = `polygon(0 0, 100% 0, 100% 100%, 0 100%)`;
 
   return (
+    /*
+     * Outer div: layout only — no transform so bleed positions are exact.
+     * z-index stacking creates the "random layering" look.
+     */
     <div
-      ref={ref}
       onMouseEnter={onEnter}
       style={{
         position: "relative",
@@ -201,64 +198,59 @@ function Slab({
         opacity: isDimmed ? 0.35 : 1,
         transition: "opacity 0.3s ease",
         cursor: "default",
-        ...revealStyle,
       }}
     >
       {/*
-       * Inner div: bleeds LEAN beyond the layout box top and bottom.
-       * clip-path shapes it into the parallelogram — the bleed zones are
-       * inside the clip polygon so they ARE visible and cover adjacent gaps.
+       * Inner div: the coloured parallelogram.
+       * Negative margins make it bleed LEAN beyond the outer div edges.
+       * clip-path shapes it; transition animates it to a rectangle on hover.
        */}
       <div
         style={{
           background: palette.bg,
-          marginTop: `calc(-${LEAN})`,
+          marginTop:    `calc(-${LEAN})`,
           marginBottom: `calc(-${LEAN})`,
-          paddingTop: `calc(${LEAN} + 44px)`,
-          paddingBottom: `calc(${LEAN} + 44px)`,
-          paddingLeft: "32px",
+          paddingTop:    `calc(${LEAN} + 18px)`,
+          paddingBottom: `calc(${LEAN} + 18px)`,
+          paddingLeft:  "32px",
           paddingRight: "40px",
-          clipPath,
+          clipPath: isActive ? clipRect : clipSlant,
           display: "flex",
           alignItems: "center",
-          gap: "28px",
+          gap: "24px",
           position: "relative",
-          overflow: "hidden",
-          transition: "clip-path 0.45s cubic-bezier(0.16,1,0.3,1)",
+          transition: "clip-path 0.42s cubic-bezier(0.16,1,0.3,1)",
         }}
       >
-        {/* Ghost watermark number */}
+        {/* Ghost watermark */}
         <span
           aria-hidden
           style={{
             position: "absolute",
             right: "-12px",
             top: "50%",
-            transform: `translateY(-50%)`,
+            transform: "translateY(-50%)",
             fontFamily: "Inter, sans-serif",
             fontWeight: 900,
-            fontSize: "clamp(100px, 14vw, 200px)",
+            fontSize: "clamp(80px, 12vw, 180px)",
             lineHeight: 1,
             letterSpacing: "-0.07em",
-            color: isActive
-              ? "rgba(0,0,0,0.07)"
-              : palette.bg === "#1A1A1A" || palette.bg === "#0F0F0F"
-                ? "rgba(255,255,255,0.04)"
-                : "rgba(0,0,0,0.06)",
+            color: palette.bg === "#1A1A1A" || palette.bg === "#0F0F0F"
+              ? "rgba(255,255,255,0.04)"
+              : "rgba(0,0,0,0.06)",
             pointerEvents: "none",
             userSelect: "none",
-            transition: "color 0.4s ease",
           }}
         >
           {num}
         </span>
 
-        {/* Index number */}
+        {/* Large index number */}
         <span
           style={{
             fontFamily: "Inter, sans-serif",
             fontWeight: 900,
-            fontSize: "clamp(40px, 5.5vw, 80px)",
+            fontSize: "clamp(36px, 5vw, 72px)",
             lineHeight: 1,
             letterSpacing: "-0.06em",
             color: palette.text,
@@ -270,7 +262,7 @@ function Slab({
           {num}
         </span>
 
-        {/* Vertical SVC code */}
+        {/* SVC code — vertical */}
         <div
           className="hidden sm:block"
           style={{
@@ -288,14 +280,14 @@ function Slab({
           SVC_{svc.code}
         </div>
 
-        {/* Title + revealed description */}
+        {/* Title + description */}
         <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
           <h3
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 900,
-              fontSize: "clamp(24px, 4.2vw, 64px)",
-              lineHeight: 0.9,
+              fontSize: "clamp(22px, 3.8vw, 58px)",
+              lineHeight: 0.92,
               letterSpacing: "-0.045em",
               textTransform: "uppercase",
               color: palette.text,
@@ -307,10 +299,9 @@ function Slab({
             {svc.title}
           </h3>
 
-          {/* Revealed description */}
           <div
             style={{
-              maxHeight: isActive ? "120px" : "0px",
+              maxHeight: isActive ? "140px" : "0px",
               overflow: "hidden",
               transition: "max-height 0.42s cubic-bezier(0.16,1,0.3,1)",
             }}
@@ -323,7 +314,7 @@ function Slab({
                 color: palette.text,
                 opacity: isActive ? 0.75 : 0,
                 transform: isActive ? "translateY(0)" : "translateY(8px)",
-                transition: "opacity 0.3s ease 0.15s, transform 0.3s ease 0.15s",
+                transition: "opacity 0.28s ease 0.14s, transform 0.28s ease 0.14s",
                 marginTop: "10px",
                 maxWidth: "52ch",
               }}
@@ -333,7 +324,7 @@ function Slab({
           </div>
         </div>
 
-        {/* Deliverable tags — fade in on hover */}
+        {/* Deliverable tags */}
         <div
           className="hidden lg:flex"
           style={{
@@ -343,7 +334,7 @@ function Slab({
             flexShrink: 0,
             opacity: isActive ? 1 : 0,
             transform: isActive ? "translateX(0)" : "translateX(16px)",
-            transition: "opacity 0.3s ease 0.12s, transform 0.3s ease 0.12s",
+            transition: "opacity 0.28s ease 0.12s, transform 0.28s ease 0.12s",
             pointerEvents: isActive ? "auto" : "none",
           }}
         >
@@ -370,12 +361,7 @@ function Slab({
         {/* Counter + arrow */}
         <div
           className="hidden md:flex"
-          style={{
-            flexDirection: "column",
-            alignItems: "flex-end",
-            gap: "6px",
-            flexShrink: 0,
-          }}
+          style={{ flexDirection: "column", alignItems: "flex-end", gap: "6px", flexShrink: 0 }}
         >
           <span
             style={{
@@ -394,9 +380,7 @@ function Slab({
               fontSize: "22px",
               color: palette.text,
               display: "block",
-              transform: isActive
-                ? "translate(4px, -3px) rotate(-42deg)"
-                : "translate(0,0) rotate(0deg)",
+              transform: isActive ? "translate(4px,-3px) rotate(-42deg)" : "translate(0,0) rotate(0deg)",
               transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease",
               opacity: isActive ? 1 : 0.35,
             }}
