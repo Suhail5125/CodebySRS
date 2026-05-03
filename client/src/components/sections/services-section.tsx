@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Code2, Palette, Smartphone, Rocket, Globe, Zap } from "lucide-react";
 import { useReveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
@@ -17,8 +17,23 @@ const PALETTES = [
   { bg: "#0F0F0F", text: "#F2EFE6", sub: "rgba(255,255,255,0.4)", tag: "#F2EFE6", tagText: "#0F0F0F" },
 ];
 
-/* All strips lean same direction — mathematically eliminates inter-strip gaps */
-const SKEW = [-3, -3.5, -2.5, -3.2, -2.8, -3];
+/*
+ * LEAN — the CSS vw value for how far each strip's edge angles.
+ * The inner colored div bleeds LEAN above AND below its layout box,
+ * so adjacent strips (regardless of z-order) always cover each other's edge.
+ * clip-path alternates / and \ to give opposing lean directions.
+ */
+const LEAN = "4vw";
+
+/* Shuffled z-indices so strips randomly layer over each other */
+function shuffleZIndices(n: number): number[] {
+  const arr = Array.from({ length: n }, (_, i) => i + 1);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 const services = [
   {
@@ -67,6 +82,8 @@ const services = [
 
 export function ServicesSection() {
   const [active, setActive] = useState<number | null>(null);
+  /* Stable random z-order — computed once per mount */
+  const zIndices = useRef(shuffleZIndices(services.length)).current;
 
   return (
     <section
@@ -88,10 +105,10 @@ export function ServicesSection() {
         </div>
       </div>
 
-      {/* Slab stack — full bleed, no horizontal constraints */}
+      {/* Slab stack — full bleed, overflow hidden clips top/bottom bleed */}
       <div
         className="relative w-full"
-        style={{ overflow: "visible" }}
+        style={{ overflow: "hidden" }}
         onMouseLeave={() => setActive(null)}
       >
         {services.map((svc, i) => (
@@ -101,7 +118,7 @@ export function ServicesSection() {
             index={i}
             total={services.length}
             palette={PALETTES[i % PALETTES.length]}
-            skew={SKEW[i % SKEW.length]}
+            zIndex={zIndices[i]}
             isActive={active === i}
             isDimmed={active !== null && active !== i}
             onEnter={() => setActive(i)}
@@ -111,7 +128,7 @@ export function ServicesSection() {
 
       {/* Bottom strip — full bleed */}
       <div
-        className="relative z-10 mt-8 flex flex-col items-start justify-between gap-4 px-6 py-5 font-mono text-[11px] uppercase tracking-[0.2em] md:flex-row md:items-center"
+        className="relative z-10 flex flex-col items-start justify-between gap-4 px-6 py-5 font-mono text-[11px] uppercase tracking-[0.2em] md:flex-row md:items-center"
         style={{
           background: BG,
           borderTop: `2px solid ${INK}`,
@@ -137,7 +154,7 @@ function Slab({
   index,
   total,
   palette,
-  skew,
+  zIndex,
   isActive,
   isDimmed,
   onEnter,
@@ -146,7 +163,7 @@ function Slab({
   index: number;
   total: number;
   palette: (typeof PALETTES)[number];
-  skew: number;
+  zIndex: number;
   isActive: boolean;
   isDimmed: boolean;
   onEnter: () => void;
@@ -157,11 +174,22 @@ function Slab({
     threshold: 0.03,
   });
 
-  const num   = String(index + 1).padStart(2, "0");
+  const num    = String(index + 1).padStart(2, "0");
   const total2 = String(total).padStart(2, "0");
 
-  /* vw-based overlap — same-direction skews tile perfectly with any overlap */
-  const marginTop = index === 0 ? 0 : "calc(-6.5vw)";
+  /*
+   * clip-path alternates / and \ on each strip.
+   * The inner div bleeds LEAN above and below (negative margins) so the
+   * colored areas of adjacent strips always overlap — no dark gap ever shows
+   * regardless of which strip's z-index is higher.
+   *
+   * / strip: polygon(0 LEAN, 100% 0,    100% calc(100% - LEAN), 0 100%)
+   * \ strip: polygon(0 0,    100% LEAN, 100% 100%, 0 calc(100% - LEAN))
+   */
+  const isOdd   = index % 2 === 1;
+  const clipPath = isOdd
+    ? `polygon(0 0, 100% ${LEAN}, 100% 100%, 0 calc(100% - ${LEAN}))`
+    : `polygon(0 ${LEAN}, 100% 0, 100% calc(100% - ${LEAN}), 0 100%)`;
 
   return (
     <div
@@ -169,36 +197,34 @@ function Slab({
       onMouseEnter={onEnter}
       style={{
         position: "relative",
-        zIndex: isActive ? 20 : index + 1,
-        marginTop,
-        /* Skew the slab; on active, straighten it */
-        transform: isActive
-          ? "skewY(0deg) scaleY(1.04)"
-          : `skewY(${skew}deg)`,
-        transformOrigin: "left center",
-        transition:
-          "transform 0.45s cubic-bezier(0.16,1,0.3,1), " +
-          "opacity 0.3s ease",
+        zIndex: isActive ? 30 : zIndex,
         opacity: isDimmed ? 0.35 : 1,
+        transition: "opacity 0.3s ease",
         cursor: "default",
         ...revealStyle,
       }}
     >
-      {/* ── Solid colour fill — NO borders ───────────────────────────────── */}
+      {/*
+       * Inner div: bleeds LEAN beyond the layout box top and bottom.
+       * clip-path shapes it into the parallelogram — the bleed zones are
+       * inside the clip polygon so they ARE visible and cover adjacent gaps.
+       */}
       <div
         style={{
           background: palette.bg,
-          /* Extra top/bottom padding compensates for the skew so content
-             doesn't clip — the excess is hidden behind adjacent slabs */
-          paddingTop: "clamp(60px, 6vw, 100px)",
-          paddingBottom: "clamp(60px, 6vw, 100px)",
+          marginTop: `calc(-${LEAN})`,
+          marginBottom: `calc(-${LEAN})`,
+          paddingTop: `calc(${LEAN} + 44px)`,
+          paddingBottom: `calc(${LEAN} + 44px)`,
           paddingLeft: "32px",
           paddingRight: "40px",
+          clipPath,
           display: "flex",
           alignItems: "center",
           gap: "28px",
           position: "relative",
           overflow: "hidden",
+          transition: "clip-path 0.45s cubic-bezier(0.16,1,0.3,1)",
         }}
       >
         {/* Ghost watermark number */}
@@ -208,7 +234,7 @@ function Slab({
             position: "absolute",
             right: "-12px",
             top: "50%",
-            transform: `translateY(-50%) rotate(${skew * -2}deg)`,
+            transform: `translateY(-50%)`,
             fontFamily: "Inter, sans-serif",
             fontWeight: 900,
             fontSize: "clamp(100px, 14vw, 200px)",
