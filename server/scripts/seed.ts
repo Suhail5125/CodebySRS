@@ -36,7 +36,7 @@
 import "dotenv/config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { users, projects, skills, aboutInfo } from "@shared";
+import { users, projects, skills, aboutInfo, experience } from "@shared";
 import bcrypt from "bcryptjs";
 
 const { Pool } = pg;
@@ -149,6 +149,54 @@ async function seed() {
       await db.insert(skills).values(skill);
     }
     console.log(`✅ ${sampleSkills.length} sample skills created`);
+
+    // Add sample experience entries
+    const sampleExperience = [
+      {
+        role: "Senior Full Stack Engineer",
+        company: "Tech Corp",
+        type: "JOB" as const,
+        startYear: 2021,
+        endYear: 2024,
+        description: "Led frontend architecture and built scalable React applications. Mentored junior developers and implemented performance optimizations.",
+        order: 1,
+      },
+      {
+        role: "Freelance Web Developer",
+        company: "Self",
+        type: "FREELANCE" as const,
+        startYear: 2020,
+        endYear: 2021,
+        description: "Built custom websites and applications for startup clients. Delivered full-stack solutions using modern web technologies.",
+        order: 2,
+      },
+      {
+        role: "Frontend Developer",
+        company: "Web Agency",
+        type: "JOB" as const,
+        startYear: 2019,
+        endYear: 2020,
+        description: "Developed responsive web interfaces using React and Vue. Collaborated with designers to implement pixel-perfect UX.",
+        order: 3,
+      },
+      {
+        role: "Junior Developer",
+        company: "StartUp XYZ",
+        type: "JOB" as const,
+        startYear: 2018,
+        endYear: 2019,
+        description: "Full stack development with JavaScript and Node.js. Built RESTful APIs and interactive web applications.",
+        order: 4,
+      },
+    ];
+
+    for (const exp of sampleExperience) {
+      await db.insert(experience).values({
+        ...exp,
+        createdAt: new Date(),
+      });
+    }
+    console.log(`✅ ${sampleExperience.length} sample experience entries created`);
 
     console.log("🎉 Database seeded successfully!");
     console.log("\n📝 Admin credentials:");
