@@ -1,18 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { LegalLayout } from "@/components/layout/legal-layout";
 
 export default function TermsOfService() {
   const { data: termsOfService, isLoading } = useQuery<{ content: string }>({
     queryKey: ["/api/legal/terms_of_service"],
   });
 
+  const lastUpdated = new Date().toLocaleDateString("en-US", { 
+    year: "numeric", 
+    month: "long", 
+    day: "numeric" 
+  });
+
+  if (isLoading) {
+    return (
+      <LegalLayout title="TERMS OF SERVICE" subtitle="LOADING...">
+        <p>Synchronizing data layers...</p>
+      </LegalLayout>
+    );
+  }
+
   const content = termsOfService?.content || `
 <div class="space-y-8">
-  <section>
-    <h1 class="text-4xl md:text-5xl font-bold gradient-text-cyan-magenta mb-4">Terms of Service</h1>
-    <p class="text-muted-foreground text-lg">Last Updated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
-  </section>
-
   <section>
     <h2 class="text-2xl font-bold mb-4">1. Agreement to Terms</h2>
     <p class="text-muted-foreground leading-relaxed mb-4">
@@ -161,39 +170,12 @@ export default function TermsOfService() {
       If you have any questions, comments, or concerns regarding these Terms of Service or the Services, please contact us at the information provided on our website. We will respond to your inquiry within a reasonable timeframe.
     </p>
   </section>
-
-  <section class="pt-8 border-t border-border/50">
-    <p class="text-xs text-muted-foreground">
-      © ${new Date().getFullYear()}. All rights reserved. These Terms of Service are effective as of ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}.
-    </p>
-  </section>
 </div>
   `.trim();
 
   return (
-    <div className="min-h-screen bg-background py-12 md:py-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {isLoading ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex items-center justify-center min-h-96"
-          >
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-chart-2 mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading terms of service...</p>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="prose prose-invert max-w-none [&_h1]:text-4xl [&_h1]:md:text-5xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mb-4 [&_h2]:mt-8 [&_h3]:text-lg [&_h3]:font-semibold [&_p]:text-muted-foreground [&_p]:leading-relaxed [&_ul]:space-y-2 [&_li]:text-muted-foreground [&_section]:mb-8"
-            dangerouslySetInnerHTML={{ __html: content }}
-          />
-        )}
-      </div>
-    </div>
+    <LegalLayout title="TERMS OF SERVICE" subtitle={`LAST UPDATED: ${lastUpdated}`}>
+      <div dangerouslySetInnerHTML={{ __html: content }} />
+    </LegalLayout>
   );
 }

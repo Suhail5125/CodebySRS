@@ -75,8 +75,8 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/projects/:id" component={ProjectDetail} />
-        <Route path="/privacy-policy" component={PrivacyPolicy} />
-        <Route path="/terms-of-service" component={TermsOfService} />
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/terms" component={TermsOfService} />
         <Route path="/admin/login" component={AdminLogin} />
         <Route path="/admin/dashboard" component={ProtectedAdminDashboard} />
         <Route path="/admin/projects" component={ProtectedAdminProjects} />

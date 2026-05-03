@@ -216,9 +216,11 @@ export function Footer({ aboutInfo }: FooterProps) {
         {/* Bottom line */}
         <div className="flex flex-col items-start justify-between gap-2 py-5 font-mono text-[10px] uppercase tracking-[0.22em] md:flex-row md:items-center">
           <div className="flex items-center gap-3 opacity-70">
-            <span>© {year} · CodeBySRS</span>
-            <span>·</span>
-            <span>BUILT WITH REACT + VITE + EXPRESS</span>
+            <span>© {year} · CodeBySRS · All rights reserved</span>
+            <span>•</span>
+            <a href="/privacy" className="hover:text-[#FF3D00] transition-colors">Privacy Policy</a>
+            <span>•</span>
+            <a href="/terms" className="hover:text-[#FF3D00] transition-colors">Terms of Service</a>
           </div>
           <div className="flex items-center gap-3 opacity-70">
             <span style={{ color: ACCENT }}>v2.1.0</span>
