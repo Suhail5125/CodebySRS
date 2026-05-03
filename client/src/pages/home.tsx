@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Navigation } from "@/components/layout/navigation";
+import { SideNav } from "@/components/layout/side-nav";
 import { HeroSection } from "@/components/sections/hero-section";
 import { ProjectsSection } from "@/components/sections/projects-section";
 import { SkillsSection } from "@/components/sections/skills-section";
@@ -87,6 +88,7 @@ export default function Home() {
       <SEO />
       <ScrollIndicator />
       <BootPreloader />
+      <SideNav />
 
       <main>
         <Navigation />
