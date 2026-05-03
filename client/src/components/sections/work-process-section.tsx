@@ -474,9 +474,10 @@ function DecisionNode({
   return (
     <div
       ref={nodeRef as (el: HTMLDivElement | null) => void}
-      className="flex justify-center"
-      style={{ minHeight: 120 }}
+      className="flex flex-col items-center"
+      style={{ minHeight: 140 }}
     >
+      {/* Diamond container */}
       <div className="relative flex items-center justify-center" style={{ width: 240, height: 120 }}>
         {/* Diamond shape */}
         <div
@@ -498,26 +499,9 @@ function DecisionNode({
         >
           {label}
         </div>
-
-        {/* NO guard label — right side, outside diamond */}
-        <div
-          className="absolute font-mono uppercase"
-          style={{
-            fontSize: "8px",
-            letterSpacing: "0.14em",
-            color: ACCENT,
-            opacity: 0.6,
-            right: -52,
-            top: "50%",
-            transform: "translateY(-50%)",
-            whiteSpace: "nowrap",
-          }}
-        >
-          [NO] →
-        </div>
       </div>
 
-      {/* YES guard — below the diamond container, never overlapping */}
+      {/* [YES] guard — rendered below the diamond, properly centred */}
       <div
         className="font-mono uppercase"
         style={{
@@ -525,8 +509,7 @@ function DecisionNode({
           letterSpacing: "0.16em",
           color: INK,
           opacity: 0.55,
-          marginTop: 4,
-          textAlign: "center",
+          marginTop: 2,
           whiteSpace: "nowrap",
         }}
       >
