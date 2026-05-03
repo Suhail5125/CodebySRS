@@ -577,6 +577,34 @@ body::-webkit-scrollbar {
     animation: brut-blink 1.4s steps(1, end) infinite;
   }
 
+  /* Footer ticker — scroll left continuously (duplicate content for seamless loop). */
+  @keyframes footer-ticker {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  .footer-ticker {
+    animation: footer-ticker 28s linear infinite;
+    will-change: transform;
+  }
+
+  /* EOF cursor blink — hard step, no fade. */
+  @keyframes eof-cursor {
+    0%, 49%   { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+  .eof-cursor {
+    animation: eof-cursor 1.1s steps(1, end) infinite;
+  }
+
+  /* Pulsing availability dot — same style as brut-blink but distinct name. */
+  @keyframes status-pulse {
+    0%, 49%   { opacity: 1; }
+    50%, 100% { opacity: 0.2; }
+  }
+  .status-pulse {
+    animation: status-pulse 1.6s steps(1, end) infinite;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .brut-rise,
     .brut-fade,
@@ -588,7 +616,10 @@ body::-webkit-scrollbar {
     .brut-marquee-rev,
     .brut-scan,
     .brut-blink,
-    .brut-magnet {
+    .brut-magnet,
+    .footer-ticker,
+    .eof-cursor,
+    .status-pulse {
       animation: none !important;
       opacity: 1 !important;
       transform: none !important;
