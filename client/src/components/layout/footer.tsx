@@ -201,6 +201,8 @@ export function Footer({ aboutInfo }: FooterProps) {
                 </SignalRow>
               )}
 
+              <SignalRow label="HOURS">09 AM – 06 PM EST</SignalRow>
+
               {/* Availability with pulse dot */}
               <div className="flex items-center gap-2 font-mono text-[11px] pt-1">
                 <dt className="uppercase tracking-[0.2em]" style={{ color: INK, opacity: 0.45, flexShrink: 0 }}>
@@ -225,27 +227,6 @@ export function Footer({ aboutInfo }: FooterProps) {
               {aboutInfo?.responseTime && (
                 <SignalRow label="RESPONSE">
                   {aboutInfo.responseTime}
-                </SignalRow>
-              )}
-
-              {aboutInfo?.githubUrl && (
-                <SignalRow label="GITHUB" href={aboutInfo.githubUrl}>
-                  {aboutInfo.githubUrl.replace("https://github.com/", "@")}
-                </SignalRow>
-              )}
-              {aboutInfo?.linkedinUrl && (
-                <SignalRow label="LINKEDIN" href={aboutInfo.linkedinUrl}>
-                  PROFILE ↗
-                </SignalRow>
-              )}
-              {aboutInfo?.twitterUrl && (
-                <SignalRow label="TWITTER" href={aboutInfo.twitterUrl}>
-                  {aboutInfo.twitterUrl.replace("https://twitter.com/", "@").replace("https://x.com/", "@")}
-                </SignalRow>
-              )}
-              {aboutInfo?.instagramUrl && (
-                <SignalRow label="INSTAGRAM" href={aboutInfo.instagramUrl}>
-                  {aboutInfo.instagramUrl.replace("https://instagram.com/", "@").replace("https://www.instagram.com/", "@")}
                 </SignalRow>
               )}
 
@@ -280,6 +261,38 @@ export function Footer({ aboutInfo }: FooterProps) {
               )}
             </dl>
           </div>
+        </div>
+
+        {/* ── SITEMAP ────────────────────────────────────────────────────────── */}
+        <div
+          className="py-6"
+          style={{ borderBottom: `2px solid ${INK}` }}
+        >
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] mb-4">
+            <span style={{ color: ACCENT }}>[NAV]</span>
+            <span style={{ opacity: 0.5 }}>/ SITEMAP</span>
+          </div>
+          <nav aria-label="Sitemap" className="flex flex-wrap gap-x-6 gap-y-2">
+            {[
+              { label: "HOME",     href: "#hero"     },
+              { label: "ABOUT",    href: "#about"    },
+              { label: "PROJECTS", href: "#projects" },
+              { label: "SKILLS",   href: "#skills"   },
+              { label: "CONTACT",  href: "#contact"  },
+            ].map(({ label, href }) => (
+              <a
+                key={label}
+                href={href}
+                className="font-mono text-[11px] uppercase tracking-[0.2em] inline-flex items-center gap-1.5"
+                style={{ color: INK, transition: "none" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = ACCENT)}
+                onMouseLeave={(e) => (e.currentTarget.style.color = INK)}
+              >
+                <span style={{ color: ACCENT, opacity: 0.6 }}>▸</span>
+                {label}
+              </a>
+            ))}
+          </nav>
         </div>
 
         {/* ── BOTTOM STATUS BAR ──────────────────────────────────────────────── */}
