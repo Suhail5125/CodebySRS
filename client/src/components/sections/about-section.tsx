@@ -360,7 +360,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
                 <CareerEntry
                   key={entry.id}
                   entry={entry}
-                  index={i}
+                  index={experienceEntries.length - 1 - i}
                   isLast={i === experienceEntries.length - 1}
                 />
               ))}
@@ -490,7 +490,7 @@ function CareerEntry({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        borderBottom: isLast ? "none" : `1px solid ${INK}18`,
+        borderBottom: isLast ? "none" : `2px solid ${INK}`,
         paddingTop: 40,
         paddingBottom: 40,
         cursor: "default",
@@ -510,7 +510,7 @@ function CareerEntry({
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 900,
-              fontSize: "clamp(18px, 2vw, 28px)",
+              fontSize: "clamp(18px, 2vw, 36px)",
               lineHeight: 1,
               letterSpacing: "-0.04em",
               color: hover ? ACCENT : INK,
@@ -535,7 +535,7 @@ function CareerEntry({
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 900,
-              fontSize: "clamp(14px, 1.5vw, 22px)",
+              fontSize: "clamp(14px, 1.5vw, 28px)",
               lineHeight: 1,
               letterSpacing: "-0.04em",
               opacity: hover ? 0.7 : 0.35,
@@ -561,7 +561,7 @@ function CareerEntry({
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 900,
-              fontSize: "clamp(18px, 2.5vw, 36px)",
+              fontSize: "clamp(18px, 2.5vw, 48px)",
               lineHeight: 0.92,
               letterSpacing: "-0.035em",
               textTransform: "uppercase",
