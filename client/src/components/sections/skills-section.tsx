@@ -237,28 +237,27 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
   return (
     <section
       id="skills"
+      className="relative flex min-h-screen flex-col justify-center overflow-hidden px-6 py-20 lg:px-10"
       style={{
-        minHeight: "100vh",
         background: BG,
         color: INK,
-        display: "flex",
-        flexDirection: "column",
-        padding: "80px 16px 80px",
         borderTop: `2px solid ${INK}`,
         position: "relative",
       }}
     >
       {/* ── Section header ── */}
-      <Reveal>
-        <SectionHeader
-          num="03"
-          name="SKILLS"
-          kicker="// CAPABILITY MATRIX"
-          headline="STACK INVENTORY"
-          right={`${source.length} TECHNOLOGIES`}
-          variant="right"
-        />
-      </Reveal>
+      <div className="mx-auto w-full max-w-[1400px]">
+        <Reveal>
+          <SectionHeader
+            num="03"
+            name="SKILLS"
+            kicker="// CAPABILITY MATRIX"
+            headline="STACK INVENTORY"
+            right={`${source.length} TECHNOLOGIES`}
+            variant="right"
+          />
+        </Reveal>
+      </div>
 
       {/* ── Full-remaining-height canvas ── */}
       <div style={{ position: "relative", flex: 1, marginTop: 12 }}>
