@@ -173,7 +173,7 @@ interface PathData {
   connIdx: number;
   hasArrow: boolean;
   loopBack?: boolean;
-  trackLabel?: { x: number; y: number; anchor: "start" | "middle" | "end"; text: string };
+  trackLabel?: { x: number; y: number; anchor: "start" | "middle" | "end"; text: string; color: string; opacity: number };
 }
 
 function computePaths(
@@ -211,8 +211,10 @@ function computePaths(
     if (conn.kind === "straight") {
       const d = `M ${fx} ${fy} L ${tx} ${ty}`;
       const length = Math.hypot(tx - fx, ty - fy);
+      // Use cx (container centre) for [YES] labels so position is guaranteed
+      // regardless of measurement timing — diamond is always at cx by layout.
       const trackLabel = conn.trackLabel
-        ? { x: fx, y: fy + 16, anchor: "middle" as const, text: conn.trackLabel }
+        ? { x: cx, y: fy + 16, anchor: "middle" as const, text: conn.trackLabel, color: INK, opacity: 0.5 }
         : undefined;
       results.push({ d, length, connIdx, hasArrow: true, ...(trackLabel && { trackLabel }) });
       return;
@@ -247,7 +249,7 @@ function computePaths(
         hasArrow: true,
         loopBack: true,
         ...(conn.trackLabel && {
-          trackLabel: { x: railX + 4, y: labelY, anchor: "start", text: conn.trackLabel },
+          trackLabel: { x: railX + 4, y: labelY, anchor: "start" as const, text: conn.trackLabel, color: ACCENT, opacity: 0.7 },
         }),
       });
       return;
@@ -282,7 +284,7 @@ function computePaths(
       connIdx: effectiveConnIdx,
       hasArrow: true,
       ...(conn.trackLabel && {
-        trackLabel: { x: labelX, y: labelY, anchor: labelAnchor, text: conn.trackLabel },
+        trackLabel: { x: labelX, y: labelY, anchor: labelAnchor, text: conn.trackLabel, color: ACCENT, opacity: 0.8 },
       }),
     });
   });
@@ -362,8 +364,8 @@ function ConnectorOverlay({
                 fontFamily="monospace"
                 fontSize="9"
                 textAnchor={path.trackLabel.anchor as "start" | "middle" | "end"}
-                fill={isLoop ? ACCENT : ACCENT}
-                opacity={triggered ? (isLoop ? 0.7 : 0.8) : 0}
+                fill={path.trackLabel.color}
+                opacity={triggered ? path.trackLabel.opacity : 0}
                 letterSpacing="2"
                 style={{
                   transition: triggered
@@ -432,18 +434,18 @@ function ForkBarNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void })
       className="w-full"
       style={{ maxWidth: 520, margin: "0 auto" }}
     >
-      <div className="flex items-center justify-between mb-1.5 px-0.5">
+      <div style={{ height: 4, background: INK }} />
+      <div className="flex items-center justify-between mt-1.5 px-0.5">
         <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.16em", color: INK, opacity: 0.45 }}>
-          ← FRONTEND
+          FRONTEND →
         </span>
         <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.18em", color: ACCENT, opacity: 0.7 }}>
           «fork»
         </span>
         <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.16em", color: INK, opacity: 0.45 }}>
-          BACKEND →
+          ← BACKEND
         </span>
       </div>
-      <div style={{ height: 4, background: INK }} />
     </div>
   );
 }
