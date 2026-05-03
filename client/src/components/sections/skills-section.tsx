@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import type { Skill } from "@shared";
 import {
   SiReact, SiTypescript, SiJavascript, SiThreedotjs,
@@ -10,6 +10,8 @@ import {
   SiCss3, SiHtml5, SiGithub,
   SiVuedotjs, SiAngular, SiFlutter, SiDart,
   SiKubernetes, SiTerraform, SiNginx, SiWebpack,
+  SiFirebase, SiSupabase, SiAmazonwebservices, SiVercel,
+  SiSass, SiRedux, SiJest, SiSwift, SiCplusplus, SiPhp,
 } from "react-icons/si";
 import { Reveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
@@ -48,108 +50,62 @@ function useScramble(target: string, durationMs: number, runKey: number | string
 /* ── brand icon + color map ──────────────────────────────────────────────── */
 type IconEntry = { Icon: React.ComponentType<{ size?: number; color?: string }>; color: string };
 const ICON_MAP: Record<string, IconEntry> = {
-  "React":         { Icon: SiReact,        color: "#61DAFB" },
-  "TypeScript":    { Icon: SiTypescript,   color: "#3178C6" },
-  "JavaScript":    { Icon: SiJavascript,   color: "#F7DF1E" },
-  "Three.js":      { Icon: SiThreedotjs,  color: "#C8C8C8" },
-  "Node.js":       { Icon: SiNodedotjs,   color: "#339933" },
-  "Next.js":       { Icon: SiNextdotjs,   color: "#C8C8C8" },
-  "PostgreSQL":    { Icon: SiPostgresql,   color: "#4169E1" },
-  "GraphQL":       { Icon: SiGraphql,      color: "#E10098" },
-  "Tailwind":      { Icon: SiTailwindcss,  color: "#06B6D4" },
-  "TailwindCSS":   { Icon: SiTailwindcss,  color: "#06B6D4" },
-  "Framer":        { Icon: SiFramer,       color: "#6B8EFA" },
-  "Framer Motion": { Icon: SiFramer,       color: "#6B8EFA" },
-  "Express":       { Icon: SiExpress,      color: "#C8C8C8" },
-  "Express.js":    { Icon: SiExpress,      color: "#C8C8C8" },
-  "Redis":         { Icon: SiRedis,        color: "#DC382D" },
-  "Docker":        { Icon: SiDocker,       color: "#2496ED" },
-  "MongoDB":       { Icon: SiMongodb,      color: "#47A248" },
-  "MySQL":         { Icon: SiMysql,        color: "#4479A1" },
-  "Figma":         { Icon: SiFigma,        color: "#F24E1E" },
-  "Blender":       { Icon: SiBlender,      color: "#F5792A" },
-  "Git":           { Icon: SiGit,          color: "#F05032" },
-  "GitHub":        { Icon: SiGithub,       color: "#C8C8C8" },
-  "Vite":          { Icon: SiVite,         color: "#646CFF" },
-  "Prisma":        { Icon: SiPrisma,       color: "#A78BFA" },
-  "GSAP":          { Icon: SiGreensock,    color: "#88CE02" },
-  "Svelte":        { Icon: SiSvelte,       color: "#FF3E00" },
-  "Astro":         { Icon: SiAstro,        color: "#FF5D01" },
-  "Linux":         { Icon: SiLinux,        color: "#FCC624" },
-  "Python":        { Icon: SiPython,       color: "#3776AB" },
-  "Rust":          { Icon: SiRust,         color: "#CE412B" },
-  "Go":            { Icon: SiGo,           color: "#00ADD8" },
-  "Golang":        { Icon: SiGo,           color: "#00ADD8" },
-  "CSS":           { Icon: SiCss3,         color: "#1572B6" },
-  "CSS3":          { Icon: SiCss3,         color: "#1572B6" },
-  "HTML":          { Icon: SiHtml5,        color: "#E34F26" },
-  "HTML5":         { Icon: SiHtml5,        color: "#E34F26" },
-  "Vue.js":        { Icon: SiVuedotjs,    color: "#4FC08D" },
-  "Vue":           { Icon: SiVuedotjs,    color: "#4FC08D" },
-  "Angular":       { Icon: SiAngular,      color: "#DD0031" },
-  "Flutter":       { Icon: SiFlutter,      color: "#02569B" },
-  "Dart":          { Icon: SiDart,         color: "#0175C2" },
-  "Kubernetes":    { Icon: SiKubernetes,   color: "#326CE5" },
-  "Terraform":     { Icon: SiTerraform,    color: "#7B42BC" },
-  "Nginx":         { Icon: SiNginx,        color: "#009639" },
-  "Webpack":       { Icon: SiWebpack,      color: "#8DD6F9" },
+  "React":         { Icon: SiReact,               color: "#61DAFB" },
+  "TypeScript":    { Icon: SiTypescript,           color: "#3178C6" },
+  "JavaScript":    { Icon: SiJavascript,           color: "#F7DF1E" },
+  "Three.js":      { Icon: SiThreedotjs,           color: "#C8C8C8" },
+  "Node.js":       { Icon: SiNodedotjs,            color: "#339933" },
+  "Next.js":       { Icon: SiNextdotjs,            color: "#C8C8C8" },
+  "PostgreSQL":    { Icon: SiPostgresql,           color: "#4169E1" },
+  "GraphQL":       { Icon: SiGraphql,              color: "#E10098" },
+  "Tailwind":      { Icon: SiTailwindcss,          color: "#06B6D4" },
+  "TailwindCSS":   { Icon: SiTailwindcss,          color: "#06B6D4" },
+  "Framer":        { Icon: SiFramer,               color: "#6B8EFA" },
+  "Framer Motion": { Icon: SiFramer,               color: "#6B8EFA" },
+  "Express":       { Icon: SiExpress,              color: "#C8C8C8" },
+  "Express.js":    { Icon: SiExpress,              color: "#C8C8C8" },
+  "Redis":         { Icon: SiRedis,                color: "#DC382D" },
+  "Docker":        { Icon: SiDocker,               color: "#2496ED" },
+  "MongoDB":       { Icon: SiMongodb,              color: "#47A248" },
+  "MySQL":         { Icon: SiMysql,                color: "#4479A1" },
+  "Figma":         { Icon: SiFigma,                color: "#F24E1E" },
+  "Blender":       { Icon: SiBlender,              color: "#F5792A" },
+  "Git":           { Icon: SiGit,                  color: "#F05032" },
+  "GitHub":        { Icon: SiGithub,               color: "#C8C8C8" },
+  "Vite":          { Icon: SiVite,                 color: "#646CFF" },
+  "Prisma":        { Icon: SiPrisma,               color: "#A78BFA" },
+  "GSAP":          { Icon: SiGreensock,            color: "#88CE02" },
+  "Svelte":        { Icon: SiSvelte,               color: "#FF3E00" },
+  "Astro":         { Icon: SiAstro,                color: "#FF5D01" },
+  "Linux":         { Icon: SiLinux,                color: "#FCC624" },
+  "Python":        { Icon: SiPython,               color: "#3776AB" },
+  "Rust":          { Icon: SiRust,                 color: "#CE412B" },
+  "Go":            { Icon: SiGo,                   color: "#00ADD8" },
+  "Golang":        { Icon: SiGo,                   color: "#00ADD8" },
+  "CSS":           { Icon: SiCss3,                 color: "#1572B6" },
+  "CSS3":          { Icon: SiCss3,                 color: "#1572B6" },
+  "HTML":          { Icon: SiHtml5,                color: "#E34F26" },
+  "HTML5":         { Icon: SiHtml5,                color: "#E34F26" },
+  "Vue.js":        { Icon: SiVuedotjs,             color: "#4FC08D" },
+  "Vue":           { Icon: SiVuedotjs,             color: "#4FC08D" },
+  "Angular":       { Icon: SiAngular,              color: "#DD0031" },
+  "Flutter":       { Icon: SiFlutter,              color: "#02569B" },
+  "Dart":          { Icon: SiDart,                 color: "#0175C2" },
+  "Kubernetes":    { Icon: SiKubernetes,           color: "#326CE5" },
+  "Terraform":     { Icon: SiTerraform,            color: "#7B42BC" },
+  "Nginx":         { Icon: SiNginx,                color: "#009639" },
+  "Webpack":       { Icon: SiWebpack,              color: "#8DD6F9" },
+  "Firebase":      { Icon: SiFirebase,             color: "#FFCA28" },
+  "Supabase":      { Icon: SiSupabase,             color: "#3ECF8E" },
+  "AWS":           { Icon: SiAmazonwebservices,    color: "#FF9900" },
+  "Vercel":        { Icon: SiVercel,               color: "#C8C8C8" },
+  "Sass":          { Icon: SiSass,                 color: "#CC6699" },
+  "Redux":         { Icon: SiRedux,                color: "#764ABC" },
+  "Jest":          { Icon: SiJest,                 color: "#C21325" },
+  "Swift":         { Icon: SiSwift,                color: "#F05138" },
+  "C++":           { Icon: SiCplusplus,            color: "#00599C" },
+  "PHP":           { Icon: SiPhp,                  color: "#777BB4" },
 };
-
-/* ── 27 canvas positions: 4 organic rows across the full area ────────────── */
-const POSITIONS: { left: number; top: number }[] = [
-  /* row 1 — top ~7% */
-  { left:  5, top:  7 }, // 0
-  { left: 18, top:  7 }, // 1
-  { left: 32, top:  7 }, // 2
-  { left: 46, top:  7 }, // 3
-  { left: 60, top:  7 }, // 4
-  { left: 73, top:  7 }, // 5
-  { left: 87, top:  7 }, // 6
-  /* row 2 — top ~32% */
-  { left: 11, top: 32 }, // 7
-  { left: 24, top: 32 }, // 8
-  { left: 38, top: 32 }, // 9
-  { left: 52, top: 32 }, // 10
-  { left: 65, top: 32 }, // 11
-  { left: 78, top: 32 }, // 12
-  { left: 91, top: 32 }, // 13
-  /* row 3 — top ~57% */
-  { left:  5, top: 57 }, // 14
-  { left: 18, top: 57 }, // 15
-  { left: 32, top: 57 }, // 16
-  { left: 46, top: 57 }, // 17
-  { left: 60, top: 57 }, // 18
-  { left: 73, top: 57 }, // 19
-  { left: 87, top: 57 }, // 20
-  /* row 4 — top ~80% */
-  { left: 11, top: 80 }, // 21
-  { left: 25, top: 80 }, // 22
-  { left: 39, top: 80 }, // 23
-  { left: 53, top: 80 }, // 24
-  { left: 67, top: 80 }, // 25
-  { left: 81, top: 80 }, // 26
-];
-
-/*
- * POSITION_SHUFFLE — maps each skill-array index to a POSITIONS slot.
- * Manually designed so same-category items in the interleaved FALLBACK
- * end up spread across all four rows and different columns.
- *
- * Skill interleaving: FE, BE, FE, 3D, Tools, FE, BE, 3D, Tools, FE,
- *   BE, 3D, Tools, FE, BE, FE, BE, Tools, BE, BE, FE
- *
- * FE  (0,2,5,9,13,15,20) → pos [0,20,25,8,21,16,9]
- *   → rows: 1,3,4,2,4,3,2 — ✓ spread across all rows
- * BE  (1,6,10,14,16,18,19) → pos [10,3,23,6,26,14,22]
- *   → rows: 2,1,4,1,4,3,4 — ✓ spread
- * 3D  (3,7,11) → pos [5,13,1]  — rows 1,2,1 (3 items, adequate)
- * Tools (4,8,12,17) → pos [15,18,11,4] — rows 3,3,2,1 — ✓
- */
-const POSITION_SHUFFLE = [
-   0, 10, 20,  5, 15, 25,  3,
-  13, 18,  8, 23,  1, 11, 21,
-   6, 16, 26,  4, 14, 22,  9,
-];
 
 /* ── deterministic fallback color ────────────────────────────────────────── */
 function techColor(name: string): string {
@@ -163,35 +119,63 @@ function abbr(name: string): string {
   return w.length >= 2 ? (w[0][0] + w[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
 }
 
-/* ── fallback interleaved by category so scatter looks natural ───────────── */
+/* ── fallback skills list (28 total — 4 rows × 7) ───────────────────────── */
 const FALLBACK: Skill[] = [
-  { id:"f1", name:"React",      category:"Frontend",     proficiency:95, icon:null, order:0  },
-  { id:"b1", name:"Node.js",    category:"Backend",      proficiency:88, icon:null, order:1  },
-  { id:"f2", name:"TypeScript", category:"Frontend",     proficiency:92, icon:null, order:2  },
-  { id:"g1", name:"Three.js",   category:"3D/Graphics",  proficiency:85, icon:null, order:3  },
-  { id:"t1", name:"Git",        category:"Tools",        proficiency:95, icon:null, order:4  },
-  { id:"f3", name:"Tailwind",   category:"Frontend",     proficiency:90, icon:null, order:5  },
-  { id:"b2", name:"PostgreSQL", category:"Backend",      proficiency:82, icon:null, order:6  },
-  { id:"g2", name:"Blender",    category:"3D/Graphics",  proficiency:70, icon:null, order:7  },
-  { id:"t2", name:"Figma",      category:"Tools",        proficiency:88, icon:null, order:8  },
-  { id:"f4", name:"Next.js",    category:"Frontend",     proficiency:88, icon:null, order:9  },
-  { id:"b3", name:"Redis",      category:"Backend",      proficiency:75, icon:null, order:10 },
-  { id:"g3", name:"GSAP",       category:"3D/Graphics",  proficiency:83, icon:null, order:11 },
-  { id:"t3", name:"Linux",      category:"Tools",        proficiency:82, icon:null, order:12 },
-  { id:"f5", name:"Framer",     category:"Frontend",     proficiency:80, icon:null, order:13 },
-  { id:"b4", name:"Express",    category:"Backend",      proficiency:90, icon:null, order:14 },
-  { id:"f6", name:"Vite",       category:"Frontend",     proficiency:87, icon:null, order:15 },
-  { id:"b5", name:"GraphQL",    category:"Backend",      proficiency:78, icon:null, order:16 },
-  { id:"t4", name:"VS Code",    category:"Tools",        proficiency:98, icon:null, order:17 },
-  { id:"b6", name:"Docker",     category:"Backend",      proficiency:72, icon:null, order:18 },
-  { id:"b7", name:"Prisma",     category:"Backend",      proficiency:83, icon:null, order:19 },
-  { id:"f7", name:"CSS",        category:"Frontend",     proficiency:93, icon:null, order:20 },
+  { id:"f1",  name:"React",      category:"Frontend",     proficiency:95, icon:null, order:0  },
+  { id:"f2",  name:"TypeScript", category:"Frontend",     proficiency:92, icon:null, order:1  },
+  { id:"f3",  name:"Tailwind",   category:"Frontend",     proficiency:90, icon:null, order:2  },
+  { id:"f4",  name:"Next.js",    category:"Frontend",     proficiency:88, icon:null, order:3  },
+  { id:"f5",  name:"Framer",     category:"Frontend",     proficiency:80, icon:null, order:4  },
+  { id:"f6",  name:"Vite",       category:"Frontend",     proficiency:87, icon:null, order:5  },
+  { id:"f7",  name:"CSS",        category:"Frontend",     proficiency:93, icon:null, order:6  },
+  { id:"b1",  name:"Node.js",    category:"Backend",      proficiency:88, icon:null, order:7  },
+  { id:"b2",  name:"PostgreSQL", category:"Backend",      proficiency:82, icon:null, order:8  },
+  { id:"b3",  name:"Redis",      category:"Backend",      proficiency:75, icon:null, order:9  },
+  { id:"b4",  name:"Express",    category:"Backend",      proficiency:90, icon:null, order:10 },
+  { id:"b5",  name:"GraphQL",    category:"Backend",      proficiency:78, icon:null, order:11 },
+  { id:"b6",  name:"Docker",     category:"Backend",      proficiency:72, icon:null, order:12 },
+  { id:"b7",  name:"Prisma",     category:"Backend",      proficiency:83, icon:null, order:13 },
+  { id:"g1",  name:"Three.js",   category:"3D/Graphics",  proficiency:85, icon:null, order:14 },
+  { id:"g2",  name:"Blender",    category:"3D/Graphics",  proficiency:70, icon:null, order:15 },
+  { id:"g3",  name:"GSAP",       category:"3D/Graphics",  proficiency:83, icon:null, order:16 },
+  { id:"t1",  name:"Git",        category:"Tools",        proficiency:95, icon:null, order:17 },
+  { id:"t2",  name:"Figma",      category:"Tools",        proficiency:88, icon:null, order:18 },
+  { id:"t3",  name:"Linux",      category:"Tools",        proficiency:82, icon:null, order:19 },
+  { id:"t4",  name:"VS Code",    category:"Tools",        proficiency:98, icon:null, order:20 },
+  { id:"b8",  name:"Firebase",   category:"Backend",      proficiency:80, icon:null, order:21 },
+  { id:"b9",  name:"Supabase",   category:"Backend",      proficiency:76, icon:null, order:22 },
+  { id:"t5",  name:"AWS",        category:"Tools",        proficiency:70, icon:null, order:23 },
+  { id:"t6",  name:"Vercel",     category:"Tools",        proficiency:90, icon:null, order:24 },
+  { id:"f8",  name:"Sass",       category:"Frontend",     proficiency:85, icon:null, order:25 },
+  { id:"f9",  name:"Redux",      category:"Frontend",     proficiency:78, icon:null, order:26 },
+  { id:"t7",  name:"Jest",       category:"Tools",        proficiency:75, icon:null, order:27 },
 ];
+
+/* ── pick N random unique items from an array ────────────────────────────── */
+function pickRandom<T>(arr: T[], n: number): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+}
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoading: boolean }) {
-  const source = isLoading ? [] : (skills.length > 0 ? skills : FALLBACK);
+  const rawSource = isLoading ? [] : (skills.length > 0 ? skills : FALLBACK);
+
+  /* shuffle once per source so categories are mixed randomly across the grid */
+  const source = useMemo(() => {
+    const arr = [...rawSource];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawSource.length]);
 
   const grouped = source.reduce((acc, s) => {
     if (!acc[s.category]) acc[s.category] = [];
@@ -211,6 +195,34 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
 
   const scrambled = useScramble(activeCat.toUpperCase(), 650, catIdx);
 
+  /* ── sequential one-by-one glow: icons light up and stay lit ── */
+  const CYCLE_MS   = 4200; // must match auto-advance interval below
+  const RING_MS    = 650;  // must match scramble duration
+  const [glowCount, setGlowCount] = useState(0);
+
+  useEffect(() => {
+    const n = activeSkills.length;
+    if (n === 0) return;
+    setGlowCount(0);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    // spread n icons evenly so the last one finishes its ring exactly at CYCLE_MS
+    // last icon starts at: CYCLE_MS - RING_MS
+    // step between icons: (CYCLE_MS - RING_MS) / n
+    const step = (CYCLE_MS - RING_MS) / n;
+    for (let i = 0; i < n; i++) {
+      timers.push(setTimeout(() => setGlowCount(i + 1), Math.round(step * i)));
+    }
+    return () => timers.forEach(clearTimeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catIdx, source.length]);
+
+  // first `glowCount` skills of the active category are glowing (and stay glowing)
+  const glowingIds = useMemo(
+    () => new Set(activeSkills.slice(0, glowCount).map(s => s.id)),
+    [glowCount, catIdx], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  /* ── auto-advance categories ── */
   useEffect(() => {
     if (cats.length <= 1) return;
     const id = setInterval(() => {
@@ -236,7 +248,7 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
         color: INK,
         display: "flex",
         flexDirection: "column",
-        padding: "20px 28px 16px",
+        padding: "20px 16px 16px",
         position: "relative",
       }}
     >
@@ -255,13 +267,13 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
       {/* ── Full-remaining-height canvas ── */}
       <div style={{ position: "relative", flex: 1, marginTop: 12 }}>
 
-        {/* Ghost watermark — category name huge in background */}
+        {/* Ghost watermark */}
         <div
           aria-hidden
           style={{
             position: "absolute",
             bottom: 0,
-            left: 0,
+            right: 0,
             zIndex: 0,
             fontFamily: "Inter, sans-serif",
             fontWeight: 800,
@@ -279,32 +291,47 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
           {scrambled || "\u00A0"}
         </div>
 
-        {/* ── Scattered skill nodes ── */}
-        {source.map((skill, i) => {
-          const posIdx = POSITION_SHUFFLE[i % POSITION_SHUFFLE.length];
-          const pos    = POSITIONS[posIdx % POSITIONS.length];
-          return (
-            <SkillNode
-              key={skill.id}
-              skill={skill}
-              active={skill.category === activeCat}
-              transitioning={transitioning}
-              left={pos.left}
-              top={pos.top}
-            />
-          );
-        })}
+        {/* ── 7-column full-width grid ── */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 5,
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            gap: "12px 0",
+            alignContent: "center",
+            paddingBottom: 60,
+          }}
+        >
+          {source.map((skill) => {
+            const glowing = glowingIds.has(skill.id);
+            const inActiveCat = skill.category === activeCat;
+            // ring key: changes each time this icon newly lights up in the sequence
+            const seqIndex = glowing ? activeSkills.findIndex(s => s.id === skill.id) : -1;
+            return (
+              <SkillNode
+                key={skill.id}
+                skill={skill}
+                glowing={glowing && !transitioning}
+                inActiveCat={inActiveCat}
+                transitioning={transitioning}
+                ringKey={`${catIdx}-${seqIndex}`}
+              />
+            );
+          })}
+        </div>
 
-        {/* ── Category UI — bottom-right ── */}
+        {/* ── Category UI — bottom-left ── */}
         <div
           style={{
             position: "absolute",
             bottom: 0,
-            right: 0,
+            left: 0,
             zIndex: 20,
             display: "flex",
             flexDirection: "column",
-            alignItems: "flex-end",
+            alignItems: "flex-start",
             gap: 8,
           }}
         >
@@ -360,58 +387,67 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
 /* ─── SkillNode ──────────────────────────────────────────────────────────── */
 
 function SkillNode({
-  skill, active, transitioning, left, top,
+  skill, glowing, inActiveCat, transitioning, ringKey,
 }: {
-  skill: Skill; active: boolean; transitioning: boolean; left: number; top: number;
+  skill: Skill;
+  glowing: boolean;
+  inActiveCat: boolean;
+  transitioning: boolean;
+  ringKey: string;
 }) {
   const entry   = ICON_MAP[skill.name];
   const brand   = entry?.color ?? techColor(skill.name);
   const IconCmp = entry?.Icon;
 
-  const sz      = 72;
-  const strokeW = 2;
+  const sz      = 90;
+  const strokeW = 2.5;
   const r       = (sz - strokeW * 2) / 2;
   const circ    = 2 * Math.PI * r;
   const dash    = (Math.min(100, Math.max(0, skill.proficiency)) / 100) * circ;
   const cx      = sz / 2;
 
+  /* dim: not in active category and not glowing */
+  const dimmed = !inActiveCat && !glowing;
+
   return (
     <div
       title={`${skill.name} · ${skill.proficiency}%`}
       style={{
-        position: "absolute",
-        left: `${left}%`,
-        top: `${top}%`,
-        transform: "translate(-50%, -50%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 4,
-        zIndex: active ? 10 : 3,
+        justifyContent: "center",
+        gap: 5,
         cursor: "default",
-        /* opacity: inactive raised to 0.38 so icons are clearly visible */
-        opacity: transitioning ? 0.08 : active ? 1 : 0.38,
-        /* grayscale: 80% when inactive — still shows a hint of color */
+        opacity: transitioning ? 0.06 : glowing ? 1 : dimmed ? 0.22 : 0.45,
         filter: transitioning
           ? "grayscale(100%)"
-          : active
-          ? `grayscale(0%) drop-shadow(0 0 10px ${brand}cc) drop-shadow(0 0 24px ${brand}66)`
-          : "grayscale(80%)",
-        transition: "opacity 0.48s cubic-bezier(0.4,0,0.2,1), filter 0.48s",
+          : glowing
+          ? `grayscale(0%) drop-shadow(0 0 10px ${brand}cc) drop-shadow(0 0 26px ${brand}55)`
+          : "grayscale(70%)",
+        transition: "opacity 0.55s cubic-bezier(0.4,0,0.2,1), filter 0.55s",
       }}
     >
       {/* Ring + icon */}
       <div style={{ position: "relative", width: sz, height: sz }}>
         <svg width={sz} height={sz} style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
           <circle cx={cx} cy={cx} r={r} fill="none" stroke={`${INK}12`} strokeWidth={strokeW} />
+          {/* Animated progress arc — key resets the animation each time icon lights up */}
           <circle
+            key={`ring-${skill.id}-${ringKey}`}
             cx={cx} cy={cx} r={r}
             fill="none"
-            stroke={active ? brand : `${INK}22`}
+            stroke={glowing ? brand : `${INK}20`}
             strokeWidth={strokeW}
-            strokeDasharray={`${dash} ${circ - dash}`}
             strokeLinecap="round"
-            style={{ transition: "stroke 0.48s" }}
+            strokeDasharray={circ}
+            style={{
+              "--ring-circ": circ,
+              "--ring-end": circ - dash,
+              strokeDashoffset: glowing ? undefined : circ - dash,
+              transition: "stroke 0.48s",
+              animation: glowing ? `ringLoad 0.65s cubic-bezier(0.4,0,0.2,1) forwards` : "none",
+            } as React.CSSProperties}
           />
         </svg>
         <div
@@ -419,8 +455,8 @@ function SkillNode({
             position: "absolute",
             inset: 8,
             borderRadius: "50%",
-            border: `1.5px solid ${active ? brand + "70" : INK + "20"}`,
-            background: active ? brand + "16" : `${INK}06`,
+            border: `1.5px solid ${glowing ? brand + "70" : INK + "18"}`,
+            background: glowing ? brand + "18" : `${INK}05`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -428,12 +464,12 @@ function SkillNode({
           }}
         >
           {IconCmp ? (
-            <IconCmp size={active ? 26 : 20} color={active ? brand : INK} />
+            <IconCmp size={glowing ? 34 : 26} color={glowing ? brand : INK} />
           ) : (
             <span style={{
               fontFamily: "Inter, sans-serif", fontWeight: 800,
-              fontSize: active ? 13 : 10,
-              color: active ? brand : INK,
+              fontSize: glowing ? 16 : 12,
+              color: glowing ? brand : INK,
               transition: "color 0.48s",
             }}>
               {abbr(skill.name)}
@@ -445,10 +481,10 @@ function SkillNode({
       {/* Label */}
       <div style={{
         fontFamily: "'JetBrains Mono', monospace",
-        fontSize: 7.5,
+        fontSize: 8.5,
         textTransform: "uppercase",
         letterSpacing: "0.08em",
-        color: active ? brand : INK,
+        color: glowing ? brand : INK,
         whiteSpace: "nowrap",
         transition: "color 0.48s",
       }}>

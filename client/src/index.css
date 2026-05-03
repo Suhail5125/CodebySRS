@@ -596,3 +596,9 @@ body::-webkit-scrollbar {
     }
   }
 }
+
+/* ── Skills section: ring draw-on animation ─────────────────────────────── */
+@keyframes ringLoad {
+  from { stroke-dashoffset: var(--ring-circ, 220); }
+  to   { stroke-dashoffset: var(--ring-end, 0); }
+}
