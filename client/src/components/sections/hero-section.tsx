@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import {
   Github,
@@ -60,17 +60,6 @@ const FALLBACK_SOCIAL = {
   email: "hello@codebysrs.dev",
 };
 
-const TECH = [
-  "REACT",
-  "TYPESCRIPT",
-  "THREE.JS",
-  "NODE",
-  "POSTGRES",
-  "TAILWIND",
-  "WEBGL",
-  "FRAMER",
-];
-
 const STATEMENTS = [
   "DESIGN SYSTEMS",
   "MOTION FIRST",
@@ -102,16 +91,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
     "I design and build modern web experiences — interfaces, interactions, and the systems that hold them together.";
   const location = (aboutInfo?.location ?? "EARTH / GLOBAL").toUpperCase();
   const available = aboutInfo?.availableForWork ?? true;
-
-  const stats = useMemo(
-    () => [
-      { value: aboutInfo?.yearsExperience ?? 0, label: "YEARS" },
-      { value: aboutInfo?.completedProjects ?? 0, label: "PROJECTS" },
-      { value: aboutInfo?.totalClients ?? 0, label: "CLIENTS" },
-      { value: aboutInfo?.technologiesCount ?? 0, label: "STACK" },
-    ],
-    [aboutInfo],
-  );
 
   // Role cycling — fixed-width slot prevents the layout from shifting.
   const [roleIndex, setRoleIndex] = useState(0);
@@ -490,35 +469,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* ==========  DUAL-LANE MARQUEE — opposite directions, brutalist tape-deck feel ========== */}
-        <div className="relative mt-8 border-y-2 border-[#F2EFE6] lg:mt-10">
-          <div className="py-3">
-            <Marquee items={TECH} reducedMotion={reducedMotion} />
-          </div>
-          <div className="h-px w-full bg-[#F2EFE6]/30" />
-          <div className="py-3 opacity-80">
-            <Marquee
-              items={STATEMENTS}
-              reducedMotion={reducedMotion}
-              reverse
-              accentColor={INK}
-            />
-          </div>
-        </div>
-
-        {/* ==========  STATS ROW (with normalized progress bars) ========== */}
-        <div className="mt-6 grid grid-cols-2 gap-px border border-[#F2EFE6]/20 bg-[#F2EFE6]/20 sm:grid-cols-4">
-          {stats.map((s) => (
-            <Stat
-              key={s.label}
-              value={s.value}
-              label={s.label}
-              maxValue={Math.max(1, ...stats.map((x) => x.value))}
-              reducedMotion={reducedMotion}
-            />
-          ))}
-        </div>
-
         {/* ==========  BOTTOM STRIP ========== */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4 font-mono text-[11px] uppercase tracking-[0.22em]">
           <div className="flex items-center gap-3">
@@ -601,113 +551,6 @@ function BrutButton({
   );
 }
 
-interface StatProps {
-  value: number;
-  label: string;
-  /** Max value across the row — used to normalize the progress bar width. */
-  maxValue?: number;
-  reducedMotion?: boolean;
-}
-/** Big number + label cell with count-up + a normalized progress bar
- * that fills from 0 → (value / maxValue) over the same duration. */
-function Stat({ value, label, maxValue = 100, reducedMotion }: StatProps) {
-  const display = useCountUp(value, 1200, reducedMotion);
-  // Fixed slot: always 3 digits — prevents layout shift during count-up.
-  const padded = String(display).padStart(3, "0");
-  const pct = Math.min(100, (display / Math.max(1, maxValue)) * 100);
-  return (
-    <div
-      data-testid={`hero-stat-${label.toLowerCase()}`}
-      className="flex flex-col gap-3 bg-[#0A0A0A] p-5 lg:p-6"
-    >
-      <div
-        className="tabular-nums leading-none"
-        style={{
-          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-          fontSize: "clamp(2.25rem, 5vw, 3.75rem)",
-          fontWeight: 800,
-          color: INK,
-        }}
-      >
-        {padded}
-        <span style={{ color: ACCENT }}>+</span>
-      </div>
-      {/* normalized progress bar */}
-      <div
-        className="relative h-[3px] w-full overflow-hidden bg-[#F2EFE6]/15"
-        aria-hidden
-      >
-        <div
-          className="absolute inset-y-0 left-0"
-          style={{
-            width: `${pct}%`,
-            background: ACCENT,
-            transition: reducedMotion
-              ? "none"
-              : "width 1.2s cubic-bezier(0.2, 0.8, 0.2, 1)",
-          }}
-        />
-      </div>
-      <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.28em] opacity-60">
-        <span>{label}</span>
-        <span className="tabular-nums opacity-60">
-          {String(Math.round(pct)).padStart(2, "0")}%
-        </span>
-      </div>
-    </div>
-  );
-}
-
-interface MarqueeProps {
-  items: string[];
-  reducedMotion?: boolean;
-  reverse?: boolean;
-  /** Color for the bullet/divider between items. Defaults to ACCENT. */
-  accentColor?: string;
-}
-/** Continuous horizontal ticker. Duplicates content for seamless loop.
- *  When `reverse`, scrolls right→left's mirror (left→right) using a
- *  separate keyframe so the two stacked lanes move in opposite directions. */
-function Marquee({ items, reducedMotion, reverse, accentColor }: MarqueeProps) {
-  const dot = accentColor ?? ACCENT;
-  const content = (
-    <div
-      className="flex shrink-0 items-center gap-10 pr-10 text-2xl uppercase sm:text-3xl lg:text-5xl"
-      style={{
-        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-        fontWeight: reverse ? 600 : 800,
-        letterSpacing: "-0.02em",
-      }}
-    >
-      {items.map((item, i) => (
-        <span key={`${item}-${i}`} className="inline-flex items-center gap-10">
-          <span>{item}</span>
-          <span style={{ color: dot }} aria-hidden>
-            {reverse ? "◆" : "●"}
-          </span>
-        </span>
-      ))}
-    </div>
-  );
-
-  if (reducedMotion) {
-    return (
-      <div className="flex w-full overflow-hidden whitespace-nowrap">
-        {content}
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex w-full overflow-hidden whitespace-nowrap">
-      <div className={`flex ${reverse ? "brut-marquee-rev" : "brut-marquee"}`}>
-        {content}
-        <div aria-hidden>{content}</div>
-      </div>
-    </div>
-  );
-}
-
 /** Subtle SVG noise — gives the bg the brutalist grain feel. */
 function NoiseOverlay() {
   return (
@@ -755,31 +598,6 @@ function Scanline() {
 }
 
 /* ==================== Hooks ==================== */
-
-/** Animates 0 → target with easeOutCubic. Honors reduced-motion. */
-function useCountUp(target: number, duration = 1200, reducedMotion = false) {
-  const [v, setV] = useState(reducedMotion ? target : 0);
-  const startedFor = useRef<number | null>(null);
-  useEffect(() => {
-    if (reducedMotion) {
-      setV(target);
-      return;
-    }
-    if (startedFor.current === target) return;
-    startedFor.current = target;
-    const start = performance.now();
-    let raf = 0;
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setV(Math.round(target * eased));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, duration, reducedMotion]);
-  return v;
-}
 
 /** HH:MM:SS string ticking once per second — shared across remounts cheaply. */
 function useNowEverySecond() {
