@@ -17,8 +17,8 @@ const PALETTES = [
   { bg: "#0F0F0F", text: "#F2EFE6", sub: "rgba(255,255,255,0.4)", tag: "#F2EFE6", tagText: "#0F0F0F" },
 ];
 
-/* Skew direction alternates for the cascade feel */
-const SKEW = [-3.5, 3, -2.8, 3.2, -2.5, 3.5];
+/* All strips lean same direction — mathematically eliminates inter-strip gaps */
+const SKEW = [-3, -3.5, -2.5, -3.2, -2.8, -3];
 
 const services = [
   {
@@ -160,10 +160,8 @@ function Slab({
   const num   = String(index + 1).padStart(2, "0");
   const total2 = String(total).padStart(2, "0");
 
-  /* Each slab overlaps the one above by 28px so border edges are hidden */
-  const OVERLAP = 28;
-  /* First slab has no top overlap */
-  const marginTop = index === 0 ? 0 : -OVERLAP;
+  /* vw-based overlap — same-direction skews tile perfectly with any overlap */
+  const marginTop = index === 0 ? 0 : "calc(-6.5vw)";
 
   return (
     <div
@@ -192,7 +190,10 @@ function Slab({
           background: palette.bg,
           /* Extra top/bottom padding compensates for the skew so content
              doesn't clip — the excess is hidden behind adjacent slabs */
-          padding: `${OVERLAP + 20}px 32px ${OVERLAP + 20}px 28px`,
+          paddingTop: "clamp(60px, 6vw, 100px)",
+          paddingBottom: "clamp(60px, 6vw, 100px)",
+          paddingLeft: "32px",
+          paddingRight: "40px",
           display: "flex",
           alignItems: "center",
           gap: "28px",
