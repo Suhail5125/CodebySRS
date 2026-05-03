@@ -175,12 +175,13 @@ function ServiceBand({
 
         {/* SVC code */}
         <span
-          className="hidden font-mono text-[11px] uppercase tracking-[0.22em] sm:block"
+          className="font-mono uppercase tracking-[0.18em]"
           style={{
+            fontSize: "clamp(9px, 1.2vw, 11px)",
             color: expanded ? BG : ACCENT,
             opacity: expanded ? 0.75 : 1,
             flexShrink: 0,
-            minWidth: "6ch",
+            minWidth: "5ch",
             transition: "color 0.3s ease-out, opacity 0.3s ease-out",
           }}
         >
@@ -225,7 +226,7 @@ function ServiceBand({
       <div
         style={{
           overflow: "hidden",
-          maxHeight: expanded ? "300px" : "0px",
+          maxHeight: expanded ? "500px" : "0px",
           transition: "max-height 0.32s ease-out",
         }}
       >
@@ -233,9 +234,11 @@ function ServiceBand({
           className="flex flex-col gap-4 px-5 pb-6 md:flex-row md:items-start md:gap-10 md:px-8"
           style={{
             paddingLeft: "calc(2ch + 1rem + 1.5rem)",
+            opacity: expanded ? 1 : 0,
+            transform: expanded ? "translateY(0)" : "translateY(10px)",
+            transition: "opacity 0.28s ease-out 0.06s, transform 0.28s ease-out 0.06s",
           }}
         >
-          {/* Mobile: start from left edge with same indent as title */}
           <div className="flex-1">
             <p
               className="text-[13px] leading-snug md:text-[14px]"
