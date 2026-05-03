@@ -196,7 +196,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
                   style={{
                     fontFamily: "Inter, sans-serif",
                     fontWeight: 900,
-                    fontSize: "clamp(64px, 8vw, 140px)",
+                    fontSize: "clamp(36px, 5vw, 80px)",
                     lineHeight: 1,
                     letterSpacing: "-0.04em",
                     userSelect: "none",
@@ -249,7 +249,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
                 style={{
                   fontFamily: "Inter, sans-serif",
                   fontWeight: 900,
-                  fontSize: "clamp(28px, 4vw, 58px)",
+                  fontSize: "clamp(20px, 2.5vw, 36px)",
                   lineHeight: 0.92,
                   letterSpacing: "-0.04em",
                   textTransform: "uppercase",
@@ -444,7 +444,7 @@ function StatNumber({
           style={{
             fontFamily: "Inter, sans-serif",
             fontWeight: 900,
-            fontSize: "clamp(44px, 5.5vw, 80px)",
+            fontSize: "clamp(28px, 3.5vw, 52px)",
             lineHeight: 0.9,
             letterSpacing: "-0.045em",
             color: hover ? BG : INK,
