@@ -154,7 +154,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
 
   return (
     <section
-      id="hero"
       ref={sectionRef}
       className="relative min-h-screen w-full overflow-hidden"
       style={{ background: BG, color: INK, fontFamily: "var(--font-sans)" }}
