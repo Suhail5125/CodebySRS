@@ -2,35 +2,34 @@ import { useState, useRef } from "react";
 import { Code2, Palette, Smartphone, Rocket, Globe, Zap } from "lucide-react";
 import { SectionHeader } from "@/components/section-header";
 
-const BG     = "#0A0A0A";
-const INK    = "#F2EFE6";
+const BG    = "#0A0A0A";
+const INK   = "#F2EFE6";
 const ACCENT = "#FF3D00";
 
 const PALETTES = [
-  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)",       tag: "#0A0A0A", tagText: "#FF3D00" },
-  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.4)",        tag: "#0A0A0A", tagText: "#F2EFE6" },
-  { bg: "#1A1A1A", text: "#F2EFE6", sub: "rgba(255,255,255,0.4)",   tag: "#F2EFE6", tagText: "#1A1A1A" },
-  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)",       tag: "#0A0A0A", tagText: "#FF3D00" },
-  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.4)",        tag: "#0A0A0A", tagText: "#F2EFE6" },
-  { bg: "#0F0F0F", text: "#F2EFE6", sub: "rgba(255,255,255,0.4)",   tag: "#F2EFE6", tagText: "#0F0F0F" },
+  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.5)",  tag: "#0A0A0A", tagText: "#FF3D00" },
+  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)", tag: "#0A0A0A", tagText: "#F2EFE6" },
+  { bg: "#1E1E1E", text: "#F2EFE6", sub: "rgba(255,255,255,0.45)", tag: "#F2EFE6", tagText: "#1E1E1E" },
+  { bg: "#FF3D00", text: "#0A0A0A", sub: "rgba(0,0,0,0.5)",  tag: "#0A0A0A", tagText: "#FF3D00" },
+  { bg: "#F2EFE6", text: "#0A0A0A", sub: "rgba(0,0,0,0.45)", tag: "#0A0A0A", tagText: "#F2EFE6" },
+  { bg: "#111111", text: "#F2EFE6", sub: "rgba(255,255,255,0.45)", tag: "#F2EFE6", tagText: "#111111" },
 ];
 
 /*
- * LEAN — how far each strip's edge angles (in CSS vw).
+ * All strips lean the SAME direction (all positive skewY, left stays / right drops).
+ * Same-direction skews tile seamlessly with ANY positive overlap — no gap is
+ * physically possible. Varying angles create depth variety like the reference.
  *
- * Each strip's coloured inner div bleeds LEAN above AND below its layout box
- * via negative margins.  The clip-path polygon is drawn inside that extended
- * area, so adjacent strips always overlap — eliminating any gap regardless of
- * z-order.  A 2 px extension on every polygon edge kills sub-pixel antialiasing
- * gaps where two strips meet at exactly the same y coordinate.
+ * transformOrigin: "left center" means the left edge doesn't move; the right
+ * edge shears down by width × tan(angle).
  *
- *   /  strip  → polygon(0 LEAN, W 0,    W 100%-LEAN, 0 100%)   (left low, right high)
- *   \  strip  → polygon(0 0,    W LEAN, W 100%,      0 100%-LEAN) (left high, right low)
+ * Overlap = 8vw. At the worst adjacent-angle pair (5° vs 2°):
+ *   gap-risk = width × (tan5° − tan2°) ≈ 5.26vw → 8vw covers it with 2.74vw margin.
  */
-const LEAN = "5vw";
+const ANGLES = [3, 4.5, 2, 5, 3.5, 4]; // degrees — all positive, all same lean
 
 function shuffleZ(n: number): number[] {
-  const a = Array.from({ length: n }, (_, i) => i + 2); // 2…n+1
+  const a = Array.from({ length: n }, (_, i) => i + 2);
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
@@ -87,8 +86,8 @@ export function ServicesSection() {
       className="snap-screen relative flex min-h-screen flex-col justify-center"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="px-4 py-10 sm:px-6 lg:px-10 lg:py-14">
+      {/* Header */}
+      <div className="px-4 pt-10 pb-6 sm:px-6 lg:px-10 lg:pt-14">
         <div className="mx-auto w-full max-w-[1400px]">
           <SectionHeader
             num="04"
@@ -101,15 +100,10 @@ export function ServicesSection() {
         </div>
       </div>
 
-      {/*
-       * ── Slab stack ──────────────────────────────────────────────────────
-       * overflow:hidden clips the top bleed of strip[0] and bottom bleed of
-       * strip[5] against the section edge.  Between strips the bleeds are
-       * INSIDE this container so they are never clipped.
-       */}
+      {/* Strip stack */}
       <div
         className="relative w-full"
-        style={{ overflow: "hidden" }}
+        style={{ overflow: "visible" }}
         onMouseLeave={() => setActive(null)}
       >
         {services.map((svc, i) => (
@@ -119,17 +113,17 @@ export function ServicesSection() {
             index={i}
             total={services.length}
             palette={PALETTES[i % PALETTES.length]}
+            angle={ANGLES[i % ANGLES.length]}
             zIndex={zIndices[i]}
             isActive={active === i}
-            isDimmed={active !== null && active !== i}
             onEnter={() => setActive(i)}
           />
         ))}
       </div>
 
-      {/* ── Footer strip ────────────────────────────────────────────────── */}
+      {/* Footer */}
       <div
-        className="relative z-10 flex flex-col items-start justify-between gap-4 px-6 py-5 font-mono text-[11px] uppercase tracking-[0.2em] md:flex-row md:items-center"
+        className="relative z-10 mt-8 flex flex-col items-start justify-between gap-4 px-6 py-5 font-mono text-[11px] uppercase tracking-[0.2em] md:flex-row md:items-center"
         style={{ background: BG, borderTop: `2px solid ${INK}` }}
       >
         <div className="flex items-center gap-3">
@@ -146,80 +140,60 @@ export function ServicesSection() {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Slab — single service strip
-   ═══════════════════════════════════════════════════════════════════════════ */
 function Slab({
-  svc, index, total, palette, zIndex, isActive, isDimmed, onEnter,
+  svc, index, total, palette, angle, zIndex, isActive, onEnter,
 }: {
   svc: (typeof services)[number];
   index: number;
   total: number;
   palette: (typeof PALETTES)[number];
+  angle: number;
   zIndex: number;
   isActive: boolean;
-  isDimmed: boolean;
   onEnter: () => void;
 }) {
   const num    = String(index + 1).padStart(2, "0");
   const total2 = String(total).padStart(2, "0");
-  const isOdd  = index % 2 === 1;
 
   /*
-   * clip-path maths
-   * ─────────────────
-   * Inner div: marginTop/Bottom = -LEAN  →  bleeds LEAN above & below outer div.
-   * The polygon is in the inner div's coordinate space (border-box = full height
-   * including the bleed zones).
+   * Compact strip — most content is hidden under the next strip.
+   * On hover the strip straightens and the description expands.
+   * No dimming of sibling strips ("no blackish when hover").
    *
-   * /  strip (even): top-right corner at y=0 (bleed up), bottom-left at y=100% (bleed down)
-   * \  strip  (odd): top-left corner at y=0 (bleed up), bottom-right at y=100% (bleed down)
-   *
-   * The ±2px extensions prevent 1-pixel antialiasing seams where two strips
-   * share an exact y coordinate at x = viewport-right.
+   * Overlap: -8vw  so adjacent same-direction strips never gap.
+   * Extra top/bottom padding: 8vw + 16px compensates so content stays
+   * centred inside the visible band.
    */
-  const clipSlant = isOdd
-    ? `polygon(0 -2px, 100% calc(${LEAN} - 2px), 100% calc(100% + 2px), 0 calc(100% - ${LEAN} + 2px))`
-    : `polygon(0 calc(${LEAN} - 2px), 100% -2px, 100% calc(100% - ${LEAN} + 2px), 0 calc(100% + 2px))`;
-
-  /* On hover → clean straight rectangle scoped to the content zone */
-  const clipRect = `polygon(0 0, 100% 0, 100% 100%, 0 100%)`;
+  const OVERLAP_VW = 8;
 
   return (
-    /*
-     * Outer div: layout only — no transform so bleed positions are exact.
-     * z-index stacking creates the "random layering" look.
-     */
     <div
       onMouseEnter={onEnter}
       style={{
         position: "relative",
         zIndex: isActive ? 30 : zIndex,
-        opacity: isDimmed ? 0.35 : 1,
-        transition: "opacity 0.3s ease",
+        marginTop: index === 0 ? 0 : `calc(-${OVERLAP_VW}vw)`,
+        /* Straighten on hover; keep lean otherwise */
+        transform: isActive
+          ? "skewY(0deg)"
+          : `skewY(${angle}deg)`,
+        transformOrigin: "left center",
+        transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
         cursor: "default",
       }}
     >
-      {/*
-       * Inner div: the coloured parallelogram.
-       * Negative margins make it bleed LEAN beyond the outer div edges.
-       * clip-path shapes it; transition animates it to a rectangle on hover.
-       */}
       <div
         style={{
           background: palette.bg,
-          marginTop:    `calc(-${LEAN})`,
-          marginBottom: `calc(-${LEAN})`,
-          paddingTop:    `calc(${LEAN} + 18px)`,
-          paddingBottom: `calc(${LEAN} + 18px)`,
-          paddingLeft:  "32px",
+          paddingTop:    `calc(${OVERLAP_VW}vw + 16px)`,
+          paddingBottom: `calc(${OVERLAP_VW}vw + 16px)`,
+          paddingLeft: "32px",
           paddingRight: "40px",
-          clipPath: isActive ? clipRect : clipSlant,
           display: "flex",
           alignItems: "center",
           gap: "24px",
           position: "relative",
-          transition: "clip-path 0.42s cubic-bezier(0.16,1,0.3,1)",
+          overflow: "hidden",
         }}
       >
         {/* Ghost watermark */}
@@ -227,7 +201,7 @@ function Slab({
           aria-hidden
           style={{
             position: "absolute",
-            right: "-12px",
+            right: "-8px",
             top: "50%",
             transform: "translateY(-50%)",
             fontFamily: "Inter, sans-serif",
@@ -235,9 +209,9 @@ function Slab({
             fontSize: "clamp(80px, 12vw, 180px)",
             lineHeight: 1,
             letterSpacing: "-0.07em",
-            color: palette.bg === "#1A1A1A" || palette.bg === "#0F0F0F"
+            color: palette.bg === "#1E1E1E" || palette.bg === "#111111"
               ? "rgba(255,255,255,0.04)"
-              : "rgba(0,0,0,0.06)",
+              : "rgba(0,0,0,0.07)",
             pointerEvents: "none",
             userSelect: "none",
           }}
@@ -245,18 +219,17 @@ function Slab({
           {num}
         </span>
 
-        {/* Large index number */}
+        {/* Index number */}
         <span
           style={{
             fontFamily: "Inter, sans-serif",
             fontWeight: 900,
-            fontSize: "clamp(36px, 5vw, 72px)",
+            fontSize: "clamp(32px, 4.5vw, 68px)",
             lineHeight: 1,
             letterSpacing: "-0.06em",
             color: palette.text,
             flexShrink: 0,
             minWidth: "2ch",
-            opacity: 0.95,
           }}
         >
           {num}
@@ -274,7 +247,6 @@ function Slab({
             writingMode: "vertical-rl",
             transform: "rotate(180deg)",
             flexShrink: 0,
-            lineHeight: 1,
           }}
         >
           SVC_{svc.code}
@@ -286,7 +258,7 @@ function Slab({
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 900,
-              fontSize: "clamp(22px, 3.8vw, 58px)",
+              fontSize: "clamp(20px, 3.5vw, 56px)",
               lineHeight: 0.92,
               letterSpacing: "-0.045em",
               textTransform: "uppercase",
@@ -314,7 +286,7 @@ function Slab({
                 color: palette.text,
                 opacity: isActive ? 0.75 : 0,
                 transform: isActive ? "translateY(0)" : "translateY(8px)",
-                transition: "opacity 0.28s ease 0.14s, transform 0.28s ease 0.14s",
+                transition: "opacity 0.28s ease 0.15s, transform 0.28s ease 0.15s",
                 marginTop: "10px",
                 maxWidth: "52ch",
               }}
@@ -363,15 +335,7 @@ function Slab({
           className="hidden md:flex"
           style={{ flexDirection: "column", alignItems: "flex-end", gap: "6px", flexShrink: 0 }}
         >
-          <span
-            style={{
-              fontFamily: "monospace",
-              fontSize: "9px",
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: palette.sub,
-            }}
-          >
+          <span style={{ fontFamily: "monospace", fontSize: "9px", letterSpacing: "0.22em", textTransform: "uppercase", color: palette.sub }}>
             {num} / {total2}
           </span>
           <span
@@ -382,7 +346,7 @@ function Slab({
               display: "block",
               transform: isActive ? "translate(4px,-3px) rotate(-42deg)" : "translate(0,0) rotate(0deg)",
               transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease",
-              opacity: isActive ? 1 : 0.35,
+              opacity: isActive ? 1 : 0.4,
             }}
           >
             →
