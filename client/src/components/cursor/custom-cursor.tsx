@@ -33,18 +33,24 @@ export function CustomCursor() {
         };
     }, []);
 
-    const cursorClass = `custom-cursor ${isHovering ? 'cursor-hover' : ''} ${isClicking ? 'cursor-click' : ''}`;
+    const cursorClass = [
+        'custom-cursor',
+        isHovering ? 'cursor-hover' : '',
+        isClicking ? 'cursor-click' : '',
+    ].join(' ');
 
     return (
         <div
             className={cursorClass}
-            style={{
-                left: `${position.x}px`,
-                top: `${position.y}px`,
-            }}
+            style={{ left: `${position.x}px`, top: `${position.y}px` }}
         >
-            <div className="cursor-dot" />
-            <div className="cursor-ring" />
+            <div className="cursor-center" />
+            <div className="cursor-brackets">
+                <span className="brkt brkt-tl" />
+                <span className="brkt brkt-tr" />
+                <span className="brkt brkt-bl" />
+                <span className="brkt brkt-br" />
+            </div>
         </div>
     );
 }

@@ -1,111 +1,101 @@
-/* Custom Futuristic Cursor Styles */
-body {
-  cursor: none;
+/* Brutalist / Dev-OS Cursor */
+*, *::before, *::after {
+  cursor: none !important;
 }
 
 .custom-cursor {
   position: fixed;
   pointer-events: none;
   z-index: 9999;
-  mix-blend-mode: difference;
 }
 
-.cursor-dot {
-  width: 8px;
-  height: 8px;
-  background: hsl(var(--glow-cyan));
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.2s ease, height 0.2s ease, background-color 0.2s ease;
-  box-shadow: 
-    0 0 10px hsl(var(--glow-cyan) / 0.8),
-    0 0 20px hsl(var(--glow-cyan) / 0.5),
-    0 0 30px hsl(var(--glow-cyan) / 0.3);
-}
-
-.cursor-ring {
-  width: 32px;
-  height: 32px;
-  border: 2px solid hsl(var(--glow-cyan) / 0.5);
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.3s ease, height 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
-  box-shadow: 
-    0 0 15px hsl(var(--glow-cyan) / 0.3),
-    inset 0 0 15px hsl(var(--glow-cyan) / 0.2);
-}
-
-/* Cursor hover state */
-.cursor-hover .cursor-dot {
-  width: 12px;
-  height: 12px;
-  background: hsl(var(--glow-magenta));
-  box-shadow: 
-    0 0 15px hsl(var(--glow-magenta) / 0.9),
-    0 0 30px hsl(var(--glow-magenta) / 0.6),
-    0 0 45px hsl(var(--glow-magenta) / 0.4);
-}
-
-.cursor-hover .cursor-ring {
-  width: 48px;
-  height: 48px;
-  border-color: hsl(var(--glow-magenta) / 0.6);
-  box-shadow: 
-    0 0 20px hsl(var(--glow-magenta) / 0.4),
-    inset 0 0 20px hsl(var(--glow-magenta) / 0.3);
-}
-
-/* Cursor click state */
-.cursor-click .cursor-dot {
-  width: 6px;
-  height: 6px;
-  background: hsl(var(--glow-purple));
-  box-shadow: 
-    0 0 20px hsl(var(--glow-purple) / 1),
-    0 0 40px hsl(var(--glow-purple) / 0.7),
-    0 0 60px hsl(var(--glow-purple) / 0.5);
-}
-
-.cursor-click .cursor-ring {
-  width: 40px;
-  height: 40px;
-  border-color: hsl(var(--glow-purple) / 0.7);
-  border-width: 3px;
-  box-shadow: 
-    0 0 25px hsl(var(--glow-purple) / 0.5),
-    inset 0 0 25px hsl(var(--glow-purple) / 0.4);
-}
-
-/* Hide cursor on interactive elements to show custom cursor */
-a, button, input, textarea, select, [role="button"], [onclick] {
-  cursor: none;
-}
-
-/* Cursor trail effect */
-.cursor-trail {
-  position: fixed;
-  pointer-events: none;
-  z-index: 9998;
+/* ── Center crosshair dot ── */
+.cursor-center {
   width: 4px;
   height: 4px;
-  background: hsl(var(--glow-cyan) / 0.3);
-  border-radius: 50%;
-  animation: cursorTrailFade 0.5s ease-out forwards;
+  background: #F2EFE6;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: background 0.1s step-start, width 0.1s step-start, height 0.1s step-start;
 }
 
-@keyframes cursorTrailFade {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.5);
-  }
+/* ── 4 corner brackets container ── */
+.cursor-brackets {
+  width: 28px;
+  height: 28px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.15s ease, height 0.15s ease;
+}
+
+/* Each bracket: 8×8 region showing 2 sides */
+.cursor-brackets .brkt {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: #F2EFE6;
+  border-style: solid;
+  border-width: 0;
+  transition: border-color 0.1s step-start, width 0.15s ease, height 0.15s ease;
+}
+
+.cursor-brackets .brkt-tl {
+  top: 0; left: 0;
+  border-top-width: 2px;
+  border-left-width: 2px;
+}
+.cursor-brackets .brkt-tr {
+  top: 0; right: 0;
+  border-top-width: 2px;
+  border-right-width: 2px;
+}
+.cursor-brackets .brkt-bl {
+  bottom: 0; left: 0;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+}
+.cursor-brackets .brkt-br {
+  bottom: 0; right: 0;
+  border-bottom-width: 2px;
+  border-right-width: 2px;
+}
+
+/* ── HOVER: orange accent, larger bracket ── */
+.cursor-hover .cursor-center {
+  width: 6px;
+  height: 6px;
+  background: #FF3D00;
+}
+
+.cursor-hover .cursor-brackets {
+  width: 40px;
+  height: 40px;
+}
+
+.cursor-hover .cursor-brackets .brkt {
+  width: 10px;
+  height: 10px;
+  border-color: #FF3D00;
+}
+
+/* ── CLICK: fill collapses, brackets snap tight ── */
+.cursor-click .cursor-center {
+  width: 12px;
+  height: 12px;
+  background: #FF3D00;
+}
+
+.cursor-click .cursor-brackets {
+  width: 18px;
+  height: 18px;
+}
+
+.cursor-click .cursor-brackets .brkt {
+  width: 6px;
+  height: 6px;
+  border-color: #FF3D00;
 }
