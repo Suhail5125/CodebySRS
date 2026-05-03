@@ -195,32 +195,28 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
 
   const scrambled = useScramble(activeCat.toUpperCase(), 650, catIdx);
 
-  /* ── sequential one-by-one glow: icons light up and stay lit ── */
-  const CYCLE_MS   = 4200; // must match auto-advance interval below
-  const RING_MS    = 650;  // must match scramble duration
-  const [glowCount, setGlowCount] = useState(0);
+  /* ── sequential scattered glow: icons light up in random order, stay lit ── */
+  const CYCLE_MS = 4200;
+  const RING_MS  = 650;
+  const [glowingIds, setGlowingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const n = activeSkills.length;
     if (n === 0) return;
-    setGlowCount(0);
+    setGlowingIds(new Set());
+    // shuffle the active skills so glow order is random across the grid
+    const shuffled = [...activeSkills].sort(() => Math.random() - 0.5);
+    const step = (CYCLE_MS - RING_MS) / Math.max(n, 1);
     const timers: ReturnType<typeof setTimeout>[] = [];
-    // spread n icons evenly so the last one finishes its ring exactly at CYCLE_MS
-    // last icon starts at: CYCLE_MS - RING_MS
-    // step between icons: (CYCLE_MS - RING_MS) / n
-    const step = (CYCLE_MS - RING_MS) / n;
     for (let i = 0; i < n; i++) {
-      timers.push(setTimeout(() => setGlowCount(i + 1), Math.round(step * i)));
+      const id = shuffled[i].id;
+      timers.push(setTimeout(() => {
+        setGlowingIds(prev => new Set([...prev, id]));
+      }, Math.round(step * i)));
     }
     return () => timers.forEach(clearTimeout);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [catIdx, source.length]);
-
-  // first `glowCount` skills of the active category are glowing (and stay glowing)
-  const glowingIds = useMemo(
-    () => new Set(activeSkills.slice(0, glowCount).map(s => s.id)),
-    [glowCount, catIdx], // eslint-disable-line react-hooks/exhaustive-deps
-  );
 
   /* ── auto-advance categories ── */
   useEffect(() => {
@@ -307,8 +303,6 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
           {source.map((skill) => {
             const glowing = glowingIds.has(skill.id);
             const inActiveCat = skill.category === activeCat;
-            // ring key: changes each time this icon newly lights up in the sequence
-            const seqIndex = glowing ? activeSkills.findIndex(s => s.id === skill.id) : -1;
             return (
               <SkillNode
                 key={skill.id}
@@ -316,7 +310,7 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
                 glowing={glowing && !transitioning}
                 inActiveCat={inActiveCat}
                 transitioning={transitioning}
-                ringKey={`${catIdx}-${seqIndex}`}
+                ringKey={`${catIdx}-${skill.id}`}
               />
             );
           })}
@@ -399,8 +393,8 @@ function SkillNode({
   const brand   = entry?.color ?? techColor(skill.name);
   const IconCmp = entry?.Icon;
 
-  const sz      = 90;
-  const strokeW = 2.5;
+  const sz      = 74;
+  const strokeW = 2;
   const r       = (sz - strokeW * 2) / 2;
   const circ    = 2 * Math.PI * r;
   const dash    = (Math.min(100, Math.max(0, skill.proficiency)) / 100) * circ;
@@ -419,12 +413,12 @@ function SkillNode({
         justifyContent: "center",
         gap: 5,
         cursor: "default",
-        opacity: transitioning ? 0.06 : glowing ? 1 : dimmed ? 0.22 : 0.45,
+        opacity: transitioning ? 0.06 : glowing ? 1 : dimmed ? 0.38 : 0.55,
         filter: transitioning
           ? "grayscale(100%)"
           : glowing
           ? `grayscale(0%) drop-shadow(0 0 10px ${brand}cc) drop-shadow(0 0 26px ${brand}55)`
-          : "grayscale(70%)",
+          : "grayscale(60%)",
         transition: "opacity 0.55s cubic-bezier(0.4,0,0.2,1), filter 0.55s",
       }}
     >
@@ -464,11 +458,11 @@ function SkillNode({
           }}
         >
           {IconCmp ? (
-            <IconCmp size={glowing ? 34 : 26} color={glowing ? brand : INK} />
+            <IconCmp size={glowing ? 26 : 20} color={glowing ? brand : INK} />
           ) : (
             <span style={{
               fontFamily: "Inter, sans-serif", fontWeight: 800,
-              fontSize: glowing ? 16 : 12,
+              fontSize: glowing ? 13 : 10,
               color: glowing ? brand : INK,
               transition: "color 0.48s",
             }}>
