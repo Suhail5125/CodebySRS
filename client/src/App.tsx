@@ -18,6 +18,7 @@ import AdminSkills from "@/pages/admin/skills";
 import AdminTestimonials from "@/pages/admin/testimonials";
 import AdminMessages from "@/pages/admin/messages";
 import AdminAbout from "@/pages/admin/about";
+import AdminExperience from "@/pages/admin/experience";
 import { CustomCursor } from "@/components/cursor";
 
 function withAuth(Component: ComponentType<any>): ComponentType<any> {
@@ -58,6 +59,7 @@ const ProtectedAdminSkills = withAuth(AdminSkills);
 const ProtectedAdminTestimonials = withAuth(AdminTestimonials);
 const ProtectedAdminMessages = withAuth(AdminMessages);
 const ProtectedAdminAbout = withAuth(AdminAbout);
+const ProtectedAdminExperience = withAuth(AdminExperience);
 const ProtectedAdminPrivacyPolicy = withAuth(AdminPrivacyPolicy);
 const ProtectedAdminTermsOfService = withAuth(AdminTermsOfService);
 
@@ -82,6 +84,7 @@ function Router() {
         <Route path="/admin/testimonials" component={ProtectedAdminTestimonials} />
         <Route path="/admin/messages" component={ProtectedAdminMessages} />
         <Route path="/admin/about" component={ProtectedAdminAbout} />
+        <Route path="/admin/experience" component={ProtectedAdminExperience} />
         <Route path="/admin/privacy-policy" component={ProtectedAdminPrivacyPolicy} />
         <Route path="/admin/terms-of-service" component={ProtectedAdminTermsOfService} />
         <Route component={NotFound} />

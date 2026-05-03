@@ -6,6 +6,7 @@ import { registerTestimonialRoutes } from "./testimonials";
 import { registerContactRoutes } from "./contact";
 import { registerAboutRoutes } from "./about";
 import { registerHealthRoutes } from "./health";
+import { registerExperienceRoutes } from "./experience";
 import setupRouter from "./setup";
 
 export function registerAllRoutes(app: Express) {
@@ -22,4 +23,5 @@ export function registerAllRoutes(app: Express) {
   registerTestimonialRoutes(app);
   registerContactRoutes(app);
   registerAboutRoutes(app);
+  registerExperienceRoutes(app);
 }

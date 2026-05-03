@@ -11,7 +11,8 @@ import {
   MessageSquare,
   Shield,
   FileText,
-  Quote
+  Quote,
+  Briefcase
 } from "lucide-react";
 import { AdminHeader } from "@/components/admin/header";
 import { useQuery } from "@tanstack/react-query";
@@ -233,6 +234,31 @@ export default function AdminDashboard() {
               <Link href="/admin/about">
                 <Button variant="outline" className="w-full">
                   Edit About
+                </Button>
+              </Link>
+            </Card>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.9 }}>
+            <Card className="p-6 glass border-border/50 h-full">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <Briefcase className="h-6 w-6 text-chart-2" />
+                  <h2 className="font-display text-xl font-bold">Experience</h2>
+                </div>
+                <Link href="/admin/experience">
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </Link>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Manage your job and freelance timeline entries shown in the About section.
+              </p>
+              <Link href="/admin/experience">
+                <Button variant="outline" className="w-full">
+                  Manage Experience
                 </Button>
               </Link>
             </Card>

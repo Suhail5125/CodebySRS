@@ -11,14 +11,17 @@ import {
   type InsertAboutInfo,
   type Testimonial,
   type InsertTestimonial,
+  type Experience,
+  type InsertExperience,
   users,
   projects,
   skills,
   contactMessages,
   aboutInfo,
   testimonials,
+  experience,
 } from "@shared";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import { config } from "./config";
@@ -91,6 +94,14 @@ export interface IStorage {
   // About info methods
   getAboutInfo(): Promise<AboutInfo | undefined>;
   updateAboutInfo(info: InsertAboutInfo): Promise<AboutInfo>;
+
+  // Experience methods
+  getExperiences(): Promise<Experience[]>;
+  getExperience(id: string): Promise<Experience | undefined>;
+  createExperience(exp: InsertExperience): Promise<Experience>;
+  updateExperience(id: string, exp: Partial<InsertExperience>): Promise<Experience | undefined>;
+  deleteExperience(id: string): Promise<boolean>;
+  reorderExperiences(updates: { id: string; order: number }[]): Promise<void>;
 }
 
 export class DbStorage implements IStorage {
@@ -278,6 +289,44 @@ export class DbStorage implements IStorage {
         .returning();
       return result[0];
     }
+  }
+
+  // Experience methods
+  async getExperiences(): Promise<Experience[]> {
+    return await db.select().from(experience).orderBy(experience.order);
+  }
+
+  async getExperience(id: string): Promise<Experience | undefined> {
+    const result = await db.select().from(experience).where(eq(experience.id, id));
+    return result[0];
+  }
+
+  async createExperience(exp: InsertExperience): Promise<Experience> {
+    const result = await db.insert(experience).values(exp).returning();
+    return result[0];
+  }
+
+  async updateExperience(id: string, exp: Partial<InsertExperience>): Promise<Experience | undefined> {
+    const payload = sanitizeValues(exp) as Partial<typeof experience.$inferInsert>;
+    const result = await db
+      .update(experience)
+      .set(payload)
+      .where(eq(experience.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteExperience(id: string): Promise<boolean> {
+    const result = await db.delete(experience).where(eq(experience.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async reorderExperiences(updates: { id: string; order: number }[]): Promise<void> {
+    await Promise.all(
+      updates.map(({ id, order }) =>
+        db.update(experience).set({ order }).where(eq(experience.id, id))
+      )
+    );
   }
 }
 

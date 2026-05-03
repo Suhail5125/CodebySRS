@@ -70,6 +70,18 @@ export const insertAboutInfoSchema = z.object({
   technologiesCount: z.number().int().nullable().optional(),
 });
 
+// ─── Experience Schema ─────────────────────────────────────────
+// Matches: experience table (omitting id, createdAt which are auto-generated)
+export const insertExperienceSchema = z.object({
+  role: z.string().min(1, "Role is required"),
+  company: z.string().min(1, "Company is required"),
+  type: z.enum(["JOB", "FREELANCE"]),
+  startYear: z.number().int().min(1900).max(2100),
+  endYear: z.number().int().min(1900).max(2100).nullable().optional(),
+  description: z.string().min(1, "Description is required"),
+  order: z.number().int().default(0),
+});
+
 // ─── User Schema ───────────────────────────────────────────────
 // Matches: users table (only username and password for login/registration)
 export const insertUserSchema = z.object({
@@ -83,4 +95,5 @@ export type InsertSkill = z.infer<typeof insertSkillSchema>;
 export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
 export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
 export type InsertAboutInfo = z.infer<typeof insertAboutInfoSchema>;
+export type InsertExperience = z.infer<typeof insertExperienceSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;

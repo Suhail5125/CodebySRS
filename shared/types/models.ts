@@ -1,4 +1,4 @@
-import { pgTable, text, integer, boolean, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, boolean, timestamp, uuid, pgEnum } from "drizzle-orm/pg-core";
 
 // Projects table for portfolio showcases
 export const projects = pgTable("projects", {
@@ -85,6 +85,21 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").default(true).notNull(),
 });
 
+export const experienceTypeEnum = pgEnum("experience_type", ["JOB", "FREELANCE"]);
+
+// Experience entries for the timeline
+export const experience = pgTable("experience", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  role: text("role").notNull(),
+  company: text("company").notNull(),
+  type: experienceTypeEnum("type").notNull(),
+  startYear: integer("start_year").notNull(),
+  endYear: integer("end_year"), // nullable = ongoing
+  description: text("description").notNull(),
+  order: integer("order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // TypeScript types
 export type Project = typeof projects.$inferSelect;
 export type Skill = typeof skills.$inferSelect;
@@ -92,3 +107,4 @@ export type Testimonial = typeof testimonials.$inferSelect;
 export type ContactMessage = typeof contactMessages.$inferSelect;
 export type AboutInfo = typeof aboutInfo.$inferSelect;
 export type User = typeof users.$inferSelect;
+export type Experience = typeof experience.$inferSelect;

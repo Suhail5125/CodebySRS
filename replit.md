@@ -44,6 +44,22 @@ Configured for autoscale deployment:
 - Build: `npm run build`
 - Run: `node dist/index.js`
 
+## Experience Timeline (About Section)
+
+The bottom of the About section now features a two-zone layout:
+
+1. **Stat row** — bolder brutalist treatment with `3px` borders and heavier font weight (`900`/`72px` max), consistent with the identity card above it.
+2. **Experience timeline** — a full-width alternating zigzag layout below the stats, driven by `/api/experience`. Entries sort newest-first (by `endYear` desc, then `startYear` desc). Odd entries anchor left, even entries anchor right, connected by a central semi-transparent vertical spine with accent dots on hover. Each entry shows: year range badge, `JOB`/`FREELANCE` type tag, role/title, company, and description.
+
+Data infrastructure:
+- `experience` table in `shared/types/models.ts` with `id`, `role`, `company`, `type`, `startYear`, `endYear` (nullable), `description`, `order`, `createdAt`.
+- Zod schema `insertExperienceSchema` in `shared/schemas/validation.ts`.
+- CRUD + reorder methods in `server/storage.ts` (`IStorage` interface + `DbStorage` implementation).
+- REST routes at `server/routes/experience.ts`: public `GET /api/experience`, protected `POST`, `PUT /:id`, `DELETE /:id`, `POST /reorder`.
+- Admin page at `/admin/experience` (`client/src/pages/admin/experience.tsx`) with add/edit via dialog, delete confirmation, drag-to-reorder (HTML5 drag API).
+- Dashboard card added for Experience (`client/src/pages/admin/dashboard.tsx`).
+- Client router updated in `client/src/App.tsx`.
+
 ## Hero Section (Brutalist)
 
 The homepage hero is a single-file brutalist composition in **`client/src/components/sections/hero-section.tsx`** (preserves the `(aboutInfo, isLoading)` contract and all `data-testid` hooks: `hero-name`, `hero-bio`, `button-lets-work-together`, `button-view-work`, `link-{label}`, `hero-stat-{label}`).
