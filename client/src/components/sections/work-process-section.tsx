@@ -321,14 +321,17 @@ function ConnectorOverlay({
 
 function StartNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
   return (
-    <div ref={nodeRef as (el: HTMLDivElement | null) => void} className="flex justify-center py-1">
-      <div className="flex flex-col items-center gap-1">
-        <div style={{ width: 20, height: 20, borderRadius: "50%", background: INK }} />
-        <span
-          className="font-mono uppercase"
-          style={{ fontSize: "8px", letterSpacing: "0.2em", opacity: 0.5, color: INK }}
-        >
-          START
+    <div ref={nodeRef as (el: HTMLDivElement | null) => void} className="flex justify-center py-2">
+      <div className="flex flex-col items-center gap-1.5">
+        <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.18em", opacity: 0.5, color: ACCENT }}>
+          «init»
+        </span>
+        <div style={{
+          width: 32, height: 32, borderRadius: "50%", background: INK,
+          boxShadow: `0 0 0 5px ${INK}1A`,
+        }} />
+        <span className="font-mono uppercase" style={{ fontSize: "9px", letterSpacing: "0.2em", opacity: 0.55, color: INK }}>
+          BEGIN PROCESS
         </span>
       </div>
     </div>
@@ -337,26 +340,21 @@ function StartNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
 
 function EndNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void }) {
   return (
-    <div ref={nodeRef as (el: HTMLDivElement | null) => void} className="flex justify-center py-1">
-      <div className="flex flex-col items-center gap-1">
-        <div
-          style={{
-            width: 24,
-            height: 24,
-            borderRadius: "50%",
-            border: `3px solid ${INK}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: INK }} />
+    <div ref={nodeRef as (el: HTMLDivElement | null) => void} className="flex justify-center py-2">
+      <div className="flex flex-col items-center gap-1.5">
+        <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.18em", opacity: 0.5, color: ACCENT }}>
+          «final»
+        </span>
+        <div style={{
+          width: 36, height: 36, borderRadius: "50%",
+          border: `3px solid ${INK}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: `0 0 0 5px ${INK}1A`,
+        }}>
+          <div style={{ width: 18, height: 18, borderRadius: "50%", background: INK }} />
         </div>
-        <span
-          className="font-mono uppercase"
-          style={{ fontSize: "8px", letterSpacing: "0.2em", opacity: 0.5, color: INK }}
-        >
-          END
+        <span className="font-mono uppercase" style={{ fontSize: "9px", letterSpacing: "0.2em", opacity: 0.55, color: ACCENT }}>
+          SHIPPED ✓
         </span>
       </div>
     </div>
@@ -370,7 +368,18 @@ function ForkBarNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void })
       className="w-full"
       style={{ maxWidth: 520, margin: "0 auto" }}
     >
-      <div style={{ height: 4, background: INK, opacity: 0.85 }} />
+      <div className="flex items-center justify-between mb-1.5 px-0.5">
+        <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.16em", color: INK, opacity: 0.45 }}>
+          ← FRONTEND
+        </span>
+        <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.18em", color: ACCENT, opacity: 0.7 }}>
+          «fork»
+        </span>
+        <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.16em", color: INK, opacity: 0.45 }}>
+          BACKEND →
+        </span>
+      </div>
+      <div style={{ height: 4, background: INK }} />
     </div>
   );
 }
@@ -382,7 +391,12 @@ function JoinBarNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void })
       className="w-full"
       style={{ maxWidth: 520, margin: "0 auto" }}
     >
-      <div style={{ height: 4, background: INK, opacity: 0.85 }} />
+      <div style={{ height: 4, background: INK }} />
+      <div className="flex items-center justify-center mt-1.5">
+        <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.18em", color: ACCENT, opacity: 0.7 }}>
+          «join» — SYNCHRONIZE TRACKS
+        </span>
+      </div>
     </div>
   );
 }
@@ -400,59 +414,66 @@ function DecisionNode({
     <div
       ref={nodeRef as (el: HTMLDivElement | null) => void}
       className="flex justify-center"
-      style={{ minHeight: 80 }}
+      style={{ minHeight: 120 }}
     >
-      <div className="relative flex items-center justify-center" style={{ width: 180, height: 80 }}>
+      <div className="relative flex items-center justify-center" style={{ width: 240, height: 120 }}>
+        {/* Diamond shape */}
         <div
           className="absolute"
           style={{
-            width: 80,
-            height: 80,
+            width: 104,
+            height: 104,
             transform: "rotate(45deg)",
             border: `2px solid ${ACCENT}`,
             background: BG,
             animation: pulsing ? "diamond-pulse 2.5s ease-in-out infinite" : "none",
           }}
         />
+
+        {/* Label inside diamond */}
         <div
           className="relative z-10 text-center font-mono uppercase"
-          style={{ fontSize: "9px", letterSpacing: "0.14em", color: ACCENT, maxWidth: 90 }}
+          style={{ fontSize: "9px", letterSpacing: "0.12em", color: ACCENT, maxWidth: 88, lineHeight: 1.4 }}
         >
           {label}
         </div>
+
+        {/* YES guard — below */}
         <div
           className="absolute font-mono uppercase"
           style={{
             fontSize: "8px",
             letterSpacing: "0.16em",
             color: INK,
-            opacity: 0.45,
-            bottom: -10,
+            opacity: 0.55,
+            bottom: 0,
             left: "50%",
             transform: "translateX(-50%)",
             whiteSpace: "nowrap",
           }}
         >
-          YES ↓
+          [YES] ↓
         </div>
+
+        {/* NO guard — right, with dashed loop-back line */}
         <svg
           className="absolute"
-          style={{ right: -56, top: "50%", transform: "translateY(-50%)" }}
-          width="56"
-          height="60"
+          style={{ right: -72, top: "50%", transform: "translateY(-50%)" }}
+          width="74"
+          height="80"
           overflow="visible"
         >
+          {/* Horizontal line right + arc up (loop back) */}
           <path
-            d="M 0 30 L 24 30 L 24 -4 L -6 -4"
+            d="M 0 40 L 32 40 L 32 -14 L -4 -14"
             fill="none"
-            stroke={INK}
+            stroke={ACCENT}
             strokeWidth="1.5"
             strokeDasharray="4 3"
-            opacity="0.3"
+            opacity="0.45"
           />
-          <text x="26" y="33" fontFamily="monospace" fontSize="8" fill={INK} opacity="0.35" letterSpacing="2">
-            NO
-          </text>
+          <text x="34" y="44" fontFamily="monospace" fontSize="8" fill={INK} opacity="0.55" letterSpacing="1.5">[NO]</text>
+          <text x="34" y="56" fontFamily="monospace" fontSize="8" fill={ACCENT} opacity="0.5" letterSpacing="1">↑ REVISE</text>
         </svg>
       </div>
     </div>
