@@ -737,14 +737,6 @@ export function WorkProcessSection() {
           </div>
         </div>
 
-        <div
-          className="mt-10 grid grid-cols-3 gap-0 font-mono text-[11px] uppercase tracking-[0.2em]"
-          style={{ border: `2px solid ${INK}` }}
-        >
-          <StatusCell k="PHASE" v={currentPhase ? `${currentPhase.num} / 06` : "START"} />
-          <StatusCell k="MODE" v="ASYNC + SPRINTS" border />
-          <StatusCell k="STATUS" v={currentPhase ? currentPhase.title.split(" ")[0] : "READY"} />
-        </div>
       </div>
     </section>
   );
