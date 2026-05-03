@@ -510,7 +510,7 @@ function CareerEntry({
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 900,
-              fontSize: "clamp(28px, 3.5vw, 52px)",
+              fontSize: "clamp(18px, 2vw, 28px)",
               lineHeight: 1,
               letterSpacing: "-0.04em",
               color: hover ? ACCENT : INK,
@@ -535,7 +535,7 @@ function CareerEntry({
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 900,
-              fontSize: "clamp(22px, 2.5vw, 36px)",
+              fontSize: "clamp(14px, 1.5vw, 22px)",
               lineHeight: 1,
               letterSpacing: "-0.04em",
               opacity: hover ? 0.7 : 0.35,
@@ -561,7 +561,7 @@ function CareerEntry({
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 900,
-              fontSize: "clamp(24px, 4.5vw, 68px)",
+              fontSize: "clamp(18px, 2.5vw, 36px)",
               lineHeight: 0.92,
               letterSpacing: "-0.035em",
               textTransform: "uppercase",
