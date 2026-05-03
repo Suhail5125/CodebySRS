@@ -490,9 +490,9 @@ function CareerEntry({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        borderBottom: isLast ? "none" : `2px solid ${INK}`,
+        borderBottom: isLast ? "none" : `1px solid ${INK}18`,
         paddingTop: 24,
-        paddingBottom: 24,
+        paddingBottom: isLast ? 0 : 24,
         cursor: "default",
       }}
     >
