@@ -245,7 +245,6 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
         flexDirection: "column",
         padding: "80px 16px 80px",
         borderTop: `2px solid ${INK}`,
-        borderBottom: `2px solid ${INK}`,
         position: "relative",
       }}
     >

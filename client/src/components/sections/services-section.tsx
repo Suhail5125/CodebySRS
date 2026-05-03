@@ -72,7 +72,7 @@ export function ServicesSection() {
     <section
       id="services"
       className="snap-screen relative flex min-h-screen flex-col justify-center"
-      style={{ background: BG, color: INK, borderTop: `2px solid ${INK}`, borderBottom: `2px solid ${INK}`, paddingBottom: "80px" }}
+      style={{ background: BG, color: INK, borderTop: `2px solid ${INK}`, paddingBottom: "80px" }}
     >
       {/* Header — padded */}
       <div className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
