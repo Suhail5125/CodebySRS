@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import type { AboutInfo, Experience } from "@shared";
-import { Github, Linkedin, Twitter, Instagram, Download } from "lucide-react";
+import { Github, Linkedin, Twitter, Instagram, Download, ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/reveal";
+import { SectionHeader } from "@/components/section-header";
 import { useQuery } from "@tanstack/react-query";
 import { DUMMY_EXPERIENCE } from "@/lib/dummy-data";
 
@@ -125,7 +126,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
   return (
     <section
       id="about"
-      className="snap-screen relative min-h-screen overflow-hidden"
+      className="snap-screen relative min-h-screen overflow-hidden px-6 py-20 lg:px-10"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
       <NoiseOverlay />
@@ -155,73 +156,27 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
         ABOUT
       </div>
 
-      <div className="relative z-[3] mx-auto w-full max-w-[1400px] px-6 lg:px-10">
+      <div className="relative z-[3] mx-auto w-full max-w-[1400px]">
 
-        {/* ── Top label bar ── */}
+        {/* ── Section header — consistent with all other sections ── */}
         <Reveal>
-          <div
-            className="flex items-center justify-between py-5"
-            style={{ borderBottom: `2px solid ${INK}` }}
-          >
-            <div className="flex items-center gap-6 font-mono text-[11px] uppercase tracking-[0.22em]">
-              <span style={{ color: ACCENT }}>[ SECTION 06 ]</span>
-              <span style={{ opacity: 0.4 }}>/</span>
-              <span style={{ opacity: 0.7 }}>ABOUT</span>
-              <span style={{ opacity: 0.4 }}>/</span>
-              <span style={{ color: ACCENT }}>// OPERATOR_PROFILE</span>
-            </div>
-            {aboutInfo.location && (
-              <span
-                className="hidden font-mono text-[11px] uppercase tracking-[0.22em] lg:block"
-                style={{ opacity: 0.5 }}
-              >
-                {aboutInfo.location}
-              </span>
-            )}
-          </div>
+          <SectionHeader
+            num="06"
+            name="ABOUT"
+            kicker="// OPERATOR PROFILE"
+            headline="THE PERSON BEHIND THE COMMITS"
+          />
         </Reveal>
 
-        {/* ── Main headline ── */}
-        <Reveal delay={80}>
-          <div className="overflow-hidden py-6" style={{ borderBottom: `2px solid ${INK}` }}>
-            <div
-              className="font-mono text-[11px] uppercase tracking-[0.25em] mb-3"
-              style={{ color: ACCENT }}
-            >
-              // THE PERSON BEHIND THE COMMITS
-            </div>
-            <h2
-              data-testid="text-about-name"
-              style={{
-                fontFamily: "Inter, sans-serif",
-                fontWeight: 900,
-                fontSize: "clamp(52px, 10vw, 148px)",
-                lineHeight: 0.88,
-                letterSpacing: "-0.04em",
-                textTransform: "uppercase",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {aboutInfo.name}
-            </h2>
-            <div
-              className="mt-3 font-mono text-[11px] uppercase tracking-[0.25em]"
-              style={{ opacity: 0.45 }}
-            >
-              {aboutInfo.title}
-            </div>
-          </div>
-        </Reveal>
-
-        {/* ── Identity band — asymmetric ── */}
+        {/* ── Identity band ── */}
         <Reveal delay={160}>
           <div
-            className="flex flex-col lg:flex-row"
-            style={{ borderBottom: `2px solid ${INK}` }}
+            className="mt-10 flex flex-col lg:flex-row"
+            style={{ border: `2px solid ${INK}` }}
           >
-            {/* Avatar — tall accent block */}
+            {/* ── LEFT: Avatar accent block (~25%) ── */}
             <div
-              className="relative flex shrink-0 items-center justify-center lg:w-[28%]"
+              className="relative flex shrink-0 items-center justify-center lg:w-[25%]"
               style={{
                 minHeight: 340,
                 background: ACCENT,
@@ -241,7 +196,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
                   style={{
                     fontFamily: "Inter, sans-serif",
                     fontWeight: 900,
-                    fontSize: "clamp(72px, 10vw, 152px)",
+                    fontSize: "clamp(64px, 8vw, 140px)",
                     lineHeight: 1,
                     letterSpacing: "-0.04em",
                     userSelect: "none",
@@ -276,24 +231,56 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
               </div>
             </div>
 
-            {/* Bio + vitals */}
-            <div className="flex flex-1 flex-col justify-between gap-8 px-8 py-10">
+            {/* ── MIDDLE: Bio / name / socials ── */}
+            <div
+              className="flex flex-1 flex-col justify-between gap-6 px-8 py-10"
+            >
+              {/* Engineer label */}
+              <div
+                className="font-mono text-[11px] uppercase tracking-[0.25em]"
+                style={{ color: ACCENT }}
+              >
+                // FULL_STACK_ENGINEER
+              </div>
+
+              {/* Name */}
+              <h3
+                data-testid="text-about-name"
+                style={{
+                  fontFamily: "Inter, sans-serif",
+                  fontWeight: 900,
+                  fontSize: "clamp(28px, 4vw, 58px)",
+                  lineHeight: 0.92,
+                  letterSpacing: "-0.04em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {aboutInfo.name}
+              </h3>
+
+              {/* Title subtitle */}
+              <div
+                className="font-mono text-[11px] uppercase tracking-[0.22em]"
+                style={{ opacity: 0.5 }}
+              >
+                {aboutInfo.title}
+              </div>
 
               {/* Bio */}
               <p
                 data-testid="text-about-bio"
                 style={{
-                  fontSize: "clamp(15px, 1.6vw, 20px)",
+                  fontSize: "clamp(14px, 1.4vw, 18px)",
                   lineHeight: 1.65,
-                  opacity: 0.88,
-                  maxWidth: 680,
+                  opacity: 0.85,
+                  flexGrow: 1,
                 }}
               >
                 {aboutInfo.bio}
               </p>
 
               {/* CTA + socials row */}
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 pt-2">
                 {aboutInfo.resumeUrl && (
                   <a
                     href={aboutInfo.resumeUrl}
@@ -302,70 +289,45 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
                     download
                     data-testid="button-download-resume"
                     className="inline-flex items-center gap-2 px-5 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
-                    style={{ background: INK, color: BG, border: `2px solid ${INK}` }}
+                    style={{ background: INK, color: BG, border: `2px solid ${INK}`, transition: "none" }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = ACCENT;
-                      e.currentTarget.style.borderColor = ACCENT;
+                      e.currentTarget.style.color = INK;
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = INK;
-                      e.currentTarget.style.borderColor = INK;
+                      e.currentTarget.style.color = BG;
                     }}
                   >
                     <Download className="h-3.5 w-3.5" />
                     RESUME.PDF
                   </a>
                 )}
-                {socials.map(({ url, Icon, name, testId }) => (
-                  <a
+                {socials.map(({ url, Icon, name, testId }, i) => (
+                  <AboutSocialTile
                     key={name}
                     href={url ?? "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-testid={testId}
-                    aria-label={name}
-                    className="inline-flex h-11 w-11 items-center justify-center"
-                    style={{ border: `2px solid ${INK}`, color: INK }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = ACCENT;
-                      e.currentTarget.style.borderColor = ACCENT;
-                      e.currentTarget.style.color = BG;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.borderColor = INK;
-                      e.currentTarget.style.color = INK;
-                    }}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </a>
-                ))}
-              </div>
-
-              {/* Vitals — inline chips */}
-              <div className="flex flex-wrap gap-x-6 gap-y-2">
-                {[
-                  { k: "EMAIL",    v: aboutInfo.email        },
-                  { k: "PHONE",    v: aboutInfo.phone        },
-                  { k: "REPLY",    v: aboutInfo.responseTime },
-                  { k: "HOURS",    v: aboutInfo.workingHours },
-                ].filter(({ v }) => Boolean(v)).map(({ k, v }) => (
-                  <div key={k} className="font-mono text-[11px] uppercase tracking-[0.16em]">
-                    <span style={{ color: ACCENT }}>{k}</span>
-                    <span style={{ opacity: 0.35, margin: "0 6px" }}>·</span>
-                    <span style={{ opacity: 0.75 }}>{v}</span>
-                  </div>
+                    Icon={Icon}
+                    label={name}
+                    testId={testId}
+                    index={i}
+                  />
                 ))}
               </div>
             </div>
+
           </div>
         </Reveal>
 
-        {/* ── Stat strip — flowing numbers, no grid cells ── */}
+        {/* ── Stat strip — bordered left/right/bottom, dividers between cells ── */}
         <Reveal delay={220}>
           <div
             className="flex flex-wrap items-stretch"
-            style={{ borderBottom: `2px solid ${INK}` }}
+            style={{
+              borderLeft: `2px solid ${INK}`,
+              borderRight: `2px solid ${INK}`,
+              borderBottom: `2px solid ${INK}`,
+            }}
           >
             {stats.map((s, i) => (
               <StatNumber key={s.label} stat={s} index={i} total={stats.length} />
@@ -406,10 +368,43 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
           </Reveal>
         )}
 
-        {/* ── Bottom padding ── */}
-        <div className="pb-16" />
       </div>
     </section>
+  );
+}
+
+/* ─── AboutSocialTile — instant hard invert matching hero BrutButton ─────── */
+function AboutSocialTile({
+  href, Icon, label, testId,
+}: {
+  href: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  testId: string;
+  index: number;
+}) {
+  const [hover, setHover] = useState(false);
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-testid={testId}
+      aria-label={label}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+      className="inline-flex h-11 w-11 shrink-0 items-center justify-center outline-none"
+      style={{
+        background: hover ? ACCENT : "transparent",
+        color: hover ? INK : INK,
+        border: `2px solid ${INK}`,
+        transition: "none",
+      }}
+    >
+      <Icon className="h-4 w-4" />
+    </a>
   );
 }
 
