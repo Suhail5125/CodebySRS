@@ -9,7 +9,6 @@ export function registerAboutRoutes(app: Express) {
   app.get("/api/about", async (req, res) => {
     try {
       const info = await storage.getAboutInfo();
-      console.log('About Info:', info); // Debug log
       res.json(info ?? null);
     } catch (error: any) {
       console.error('Error fetching about info:', error); // Debug log
