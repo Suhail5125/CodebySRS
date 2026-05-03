@@ -124,7 +124,7 @@ export function loadConfig(): Config {
       checkPeriod: parseInt(process.env.SESSION_CHECK_PERIOD || "86400000", 10), // 24 hours default
     },
     security: {
-      corsOrigin: process.env.CORS_ORIGIN || (nodeEnv === "production" ? "" : "http://localhost:5173"),
+      corsOrigin: process.env.CORS_ORIGIN || "*",
       rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW || "900000", 10), // 15 minutes default
       rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || "100", 10), // 100 requests default
     },
