@@ -436,7 +436,7 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 800,
-              fontSize: "clamp(20px, 3vw, 46px)",
+              fontSize: "clamp(14px, 2vw, 28px)",
               lineHeight: 1,
               letterSpacing: "-0.025em",
               textTransform: "uppercase",
