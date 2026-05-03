@@ -109,25 +109,6 @@ export function ServicesSection() {
         ))}
       </div>
 
-      {/* Bottom strip — full bleed */}
-      <div
-        className="relative z-10 mt-8 flex flex-col items-start justify-between gap-4 px-6 py-5 font-mono text-[11px] uppercase tracking-[0.2em] md:flex-row md:items-center"
-        style={{
-          background: BG,
-          borderTop: `2px solid ${INK}`,
-          borderBottom: `2px solid ${INK}`,
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <span style={{ color: ACCENT }}>●</span>
-          <span>QUEUE OPEN — Q3 / Q4 2026</span>
-        </div>
-        <div className="flex items-center gap-3 opacity-60">
-          <span>RETAINER + PROJECT</span>
-          <span>·</span>
-          <span>EU / NA TIMEZONES</span>
-        </div>
-      </div>
     </section>
   );
 }
