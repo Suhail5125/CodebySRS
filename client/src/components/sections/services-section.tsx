@@ -8,29 +8,30 @@ const INK    = "#F2EFE6";
 const ACCENT = "#FF3D00";
 
 /*
- * BG_BLEED: the skewed background div extends this many px above and below
- * the outer wrapper. Must exceed: viewport_width × tan(|max_skew|) / 2.
- * At 3.2° and 1920px: 1920 × tan(3.2°) ≈ 107px → 130px is safe.
+ * LEAN — the diagonal offset in pixels.
+ * Each strip's top edge rises LEAN px from left→right (right side is higher).
+ * clip-path: polygon(0 LEAN, 100% 0, 100% calc(100%-LEAN), 0 100%)
+ * Each strip after the first gets marginTop: -LEAN so the top overlap
+ * of strip N+1 perfectly meets the bottom of strip N — zero gap.
  */
-const BG_BLEED = 130;
+const LEAN = 52;
 
-/* Padding inside each strip (excluding bleed):
- * COLLAPSED — only title row visible, compact.
- * EXPANDED  — title + description + tags, taller.
+/*
+ * Content padding inside the visible parallelogram area.
+ * Collapsed: compact — just index + title visible.
+ * Expanded:  taller — description + deliverables revealed.
  */
-const PY_COLLAPSED = 22;
-const PY_EXPANDED  = 52;
+const PY_COLLAPSED = 18;
+const PY_EXPANDED  = 50;
 
 const PALETTES = [
-  { bg: "#FF3D00", text: "#0A0A0A", muted: "rgba(0,0,0,0.45)", tagBg: "rgba(0,0,0,0.13)", tagText: "#0A0A0A" },
-  { bg: "#F2EFE6", text: "#0A0A0A", muted: "rgba(0,0,0,0.4)",  tagBg: "rgba(0,0,0,0.1)",  tagText: "#0A0A0A" },
-  { bg: "#1C1C1C", text: "#F2EFE6", muted: "rgba(242,239,230,0.45)", tagBg: "rgba(242,239,230,0.1)", tagText: "#F2EFE6" },
-  { bg: "#FF3D00", text: "#0A0A0A", muted: "rgba(0,0,0,0.45)", tagBg: "rgba(0,0,0,0.13)", tagText: "#0A0A0A" },
-  { bg: "#F2EFE6", text: "#0A0A0A", muted: "rgba(0,0,0,0.4)",  tagBg: "rgba(0,0,0,0.1)",  tagText: "#0A0A0A" },
-  { bg: "#111111", text: "#F2EFE6", muted: "rgba(242,239,230,0.45)", tagBg: "rgba(242,239,230,0.1)", tagText: "#F2EFE6" },
+  { bg: "#FF3D00", text: "#0A0A0A", muted: "rgba(0,0,0,0.42)", tagBg: "rgba(0,0,0,0.14)", tagText: "#0A0A0A" },
+  { bg: "#F2EFE6", text: "#0A0A0A", muted: "rgba(0,0,0,0.38)", tagBg: "rgba(0,0,0,0.1)",  tagText: "#0A0A0A" },
+  { bg: "#1E1E1E", text: "#F2EFE6", muted: "rgba(242,239,230,0.42)", tagBg: "rgba(242,239,230,0.1)", tagText: "#F2EFE6" },
+  { bg: "#FF3D00", text: "#0A0A0A", muted: "rgba(0,0,0,0.42)", tagBg: "rgba(0,0,0,0.14)", tagText: "#0A0A0A" },
+  { bg: "#F2EFE6", text: "#0A0A0A", muted: "rgba(0,0,0,0.38)", tagBg: "rgba(0,0,0,0.1)",  tagText: "#0A0A0A" },
+  { bg: "#121212", text: "#F2EFE6", muted: "rgba(242,239,230,0.42)", tagBg: "rgba(242,239,230,0.1)", tagText: "#F2EFE6" },
 ];
-
-const SKEWS = [-3.2, 3.2, -3.2, 3.2, -3.2, 3.2];
 
 const services = [
   {
@@ -38,7 +39,7 @@ const services = [
     icon: Code2,
     title: "Web Development",
     description:
-      "Custom web applications built with React, Next.js, and Node.js — fully type-safe from database to UI. SSR/SSG ready, CI/CD deployed, and engineered for sub-second load times at any scale. Every project ships with a robust API layer, automated testing, and a staging environment.",
+      "Custom web applications built with React, Next.js, and Node.js — fully type-safe from database to UI. SSR/SSG ready, CI/CD deployed, and engineered for sub-second load times at any scale. Every project ships with a robust API layer and automated staging pipeline.",
     deliverables: ["SSR/SSG", "API Layer", "CI/CD", "Type-Safe DB"],
   },
   {
@@ -54,7 +55,7 @@ const services = [
     icon: Smartphone,
     title: "Mobile Development",
     description:
-      "Native iOS & Android and cross-platform builds using React Native or Flutter. First-class UX, smooth 60fps animations, push notifications, offline-first data sync, and full App Store & Play Store submission handled end-to-end — including App Store Optimization.",
+      "Native iOS & Android and cross-platform builds using React Native or Flutter. First-class UX, smooth 60fps animations, push notifications, offline-first data sync, and full App Store & Play Store submission handled end-to-end including ASO.",
     deliverables: ["Native UI", "Push", "Offline", "App Store"],
   },
   {
@@ -62,7 +63,7 @@ const services = [
     icon: Globe,
     title: "3D Web Experiences",
     description:
-      "WebGL / Three.js product configurators, virtual showrooms, and interactive marketing scenes that run in the browser at 60fps. Custom GLTF asset pipelines, PBR shaders, real-time lighting, physics-based animations, and progressive loading for mobile-safe delivery.",
+      "WebGL / Three.js product configurators, virtual showrooms, and interactive marketing scenes running in the browser at 60fps. Custom GLTF asset pipelines, PBR shaders, real-time lighting, physics-based animation, and progressive mobile-safe delivery.",
     deliverables: ["WebGL", "Three.js", "GLTF", "Animation"],
   },
   {
@@ -70,7 +71,7 @@ const services = [
     icon: Zap,
     title: "Performance",
     description:
-      "Deep profiling and systematic optimisation — code-splitting, lazy loading, critical CSS, image compression, edge caching, and database query tuning. Real, measurable Core Web Vitals improvements that move Lighthouse scores into the 90s and directly improve conversion rates.",
+      "Deep profiling and systematic optimisation — code-splitting, lazy loading, critical CSS, image compression, edge caching, and database query tuning. Real Core Web Vitals improvements that push Lighthouse scores into the 90s and move conversion metrics.",
     deliverables: ["Audit", "Bundle Cut", "Cache", "Core Web Vitals"],
   },
   {
@@ -78,7 +79,7 @@ const services = [
     icon: Rocket,
     title: "Consulting & Strategy",
     description:
-      "Architecture reviews, scalability planning, and technology roadmaps for digital transformation — including stack selection, monolith-to-microservices migration planning, team structuring, hiring guidance, and embedded technical leadership on a retainer or project basis.",
+      "Architecture reviews, scalability planning, and technology roadmaps for digital transformation — including stack selection, monolith-to-microservices planning, team structuring, hiring guidance, and embedded technical leadership on retainer or project basis.",
     deliverables: ["Audit", "Roadmap", "Stack Pick", "Hiring"],
   },
 ];
@@ -87,15 +88,14 @@ export function ServicesSection() {
   const [active, setActive] = useState<number | null>(null);
 
   return (
-    /* No horizontal padding on the section — strips must be full-bleed */
     <section
       id="services"
       className="snap-screen relative min-h-screen"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
       onMouseLeave={() => setActive(null)}
     >
-      {/* ── Header — padded container ───────────────────────────────────── */}
-      <div className="mx-auto w-full max-w-[1400px] px-6 pb-8 pt-16 lg:px-10 lg:pt-20">
+      {/* Header — contained, padded */}
+      <div className="mx-auto w-full max-w-[1400px] px-6 pb-6 pt-16 lg:px-10 lg:pt-20">
         <SectionHeader
           num="04"
           name="SERVICES"
@@ -106,8 +106,13 @@ export function ServicesSection() {
         />
       </div>
 
-      {/* ── Full-bleed strips — no container, no side padding ──────────── */}
-      <div style={{ width: "100%" }}>
+      {/*
+       * Full-bleed strips — NO horizontal padding on this wrapper.
+       * Each strip is a clip-path parallelogram with diagonal top + bottom.
+       * marginTop: -LEAN on strips 2-6 creates the shingle overlap.
+       * z-index increases so each strip layers on top of the previous.
+       */}
+      <div style={{ width: "100%", position: "relative" }}>
         {services.map((svc, i) => (
           <Strip
             key={svc.code}
@@ -115,7 +120,6 @@ export function ServicesSection() {
             index={i}
             total={services.length}
             palette={PALETTES[i % PALETTES.length]}
-            skew={SKEWS[i % SKEWS.length]}
             isActive={active === i}
             isDimmed={active !== null && active !== i}
             onEnter={() => setActive(i)}
@@ -123,8 +127,8 @@ export function ServicesSection() {
         ))}
       </div>
 
-      {/* ── Bottom status strip — padded container ─────────────────────── */}
-      <div className="mx-auto w-full max-w-[1400px] px-6 pb-14 pt-6 lg:px-10">
+      {/* Bottom status strip — contained, padded */}
+      <div className="mx-auto w-full max-w-[1400px] px-6 pb-14 pt-4 lg:px-10">
         <div
           className="flex flex-col items-start justify-between gap-4 px-6 py-5 font-mono text-[11px] uppercase tracking-[0.2em] md:flex-row md:items-center"
           style={{ border: `2px solid ${INK}` }}
@@ -151,7 +155,6 @@ function Strip({
   index,
   total,
   palette,
-  skew,
   isActive,
   isDimmed,
   onEnter,
@@ -160,13 +163,12 @@ function Strip({
   index: number;
   total: number;
   palette: Palette;
-  skew: number;
   isActive: boolean;
   isDimmed: boolean;
   onEnter: () => void;
 }) {
   const { ref, style: revealStyle } = useReveal({
-    delay: index * 80,
+    delay: index * 70,
     variant: "fade",
     threshold: 0.03,
   });
@@ -175,86 +177,89 @@ function Strip({
   const total2 = String(total).padStart(2, "0");
   const PY     = isActive ? PY_EXPANDED : PY_COLLAPSED;
 
+  /*
+   * Parallelogram clip-path — right side is LEAN px higher than left side.
+   * Top  edge: from (0, LEAN) on the left  → (100%, 0)   on the right.
+   * Bottom edge: from (0, 100%) on the left → (100%, calc(100%-LEAN)) on the right.
+   * This creates a consistent / lean. All 6 strips lean the same way.
+   */
+  const clipPath = `polygon(0 ${LEAN}px, 100% 0, 100% calc(100% - ${LEAN}px), 0 100%)`;
+
   return (
     <div
       ref={ref}
       onMouseEnter={onEnter}
       style={{
         position: "relative",
-        /* overflow:hidden clips the BG_BLEED so nothing pokes outside */
-        overflow: "hidden",
-        /*
-         * Padding drives the visible strip height.
-         * BG_BLEED is added on top so the skewed bg fills corners.
-         * On hover, PY increases → strip grows → description space opens.
-         */
-        paddingTop:    `${BG_BLEED + PY}px`,
-        paddingBottom: `${BG_BLEED + PY}px`,
+        /* Each strip (after the first) overlaps the one above by exactly LEAN px,
+           so the top-left corner of this strip meets the bottom-left of the strip above —
+           zero visual gap between parallelograms. */
+        marginTop: index === 0 ? 0 : -LEAN,
+        /* Layer order: last strip sits on top — creates depth */
+        zIndex: index + 1,
+        /* Parallelogram clip — diagonal top and bottom edges */
+        clipPath,
+        /* Background colour fills the entire layout box (including LEAN bleed areas) */
+        background: palette.bg,
+        /* Padding drives the total strip height and the visible content area.
+           Top and bottom include LEAN so content sits inside the clipped region. */
+        paddingTop:    `${LEAN + PY}px`,
+        paddingBottom: `${LEAN + PY}px`,
         transition: [
-          "padding 0.48s cubic-bezier(0.16,1,0.3,1)",
+          "padding 0.46s cubic-bezier(0.16,1,0.3,1)",
           "opacity 0.3s ease",
         ].join(", "),
-        opacity:       isDimmed ? 0.3 : 1,
-        cursor:        "default",
-        zIndex:        isActive ? 10 : index + 1,
+        opacity: isDimmed ? 0.28 : 1,
+        cursor: "default",
         ...revealStyle,
       }}
     >
-      {/* ── Skewed background fill ─────────────────────────────────────
-          Extends BG_BLEED px beyond the wrapper top & bottom so that at
-          any skew angle the corners are always covered.
-          Transitions skewY → 0 on hover (strip straightens).         ── */}
-      <div
-        aria-hidden
-        style={{
-          position:   "absolute",
-          inset:      `${-BG_BLEED}px 0`,
-          background: palette.bg,
-          transform:  isActive ? "skewY(0deg)" : `skewY(${skew}deg)`,
-          transformOrigin: "center center",
-          transition: "transform 0.48s cubic-bezier(0.16,1,0.3,1)",
-          zIndex:     0,
-        }}
-      />
-
-      {/* ── Ghost watermark number ─────────────────────────────────── */}
+      {/* Ghost watermark — absolute, clipped by the parallelogram */}
       <div
         aria-hidden
         style={{
           position:     "absolute",
-          right:        "-16px",
+          right:        "-8px",
           top:          "50%",
-          transform:    `translateY(-50%) rotate(${isActive ? 0 : skew * -1.8}deg)`,
+          transform:    "translateY(-50%)",
           fontFamily:   "Inter, sans-serif",
           fontWeight:   900,
-          fontSize:     "clamp(130px, 20vw, 280px)",
+          fontSize:     "clamp(140px, 22vw, 300px)",
           lineHeight:   1,
           letterSpacing: "-0.07em",
           color:
-            palette.bg === "#1C1C1C" || palette.bg === "#111111"
-              ? "rgba(255,255,255,0.04)"
-              : "rgba(0,0,0,0.05)",
+            palette.bg === "#1E1E1E" || palette.bg === "#121212"
+              ? "rgba(255,255,255,0.038)"
+              : "rgba(0,0,0,0.055)",
           pointerEvents: "none",
           userSelect:    "none",
-          zIndex:        1,
-          transition:    "transform 0.48s cubic-bezier(0.16,1,0.3,1)",
+          zIndex:        0,
         }}
       >
         {num}
       </div>
 
-      {/* ── Strip content ─────────────────────────────────────────── */}
+      {/*
+       * Content row — skewY(-1.5deg) gives the text a subtle lean
+       * that echoes the parallelogram's diagonal, making it feel like
+       * the text physically sits inside the tilted strip.
+       * This stays skewed on hover (strip never straightens).
+       */}
       <div
         className="relative mx-auto flex w-full max-w-[1400px] items-center gap-5 px-6 lg:gap-8 lg:px-10"
-        style={{ zIndex: 2 }}
+        style={{
+          zIndex:    1,
+          transform: "skewY(-1.5deg)",
+          transformOrigin: "left center",
+        }}
       >
         {/* Index + SVC code */}
-        <div style={{ flexShrink: 0, minWidth: "3ch" }}>
+        <div style={{ flexShrink: 0 }}>
           <span
             style={{
               fontFamily:    "Inter, sans-serif",
               fontWeight:    900,
-              fontSize:      "clamp(36px, 5.5vw, 80px)",
+              fontSize:      "clamp(34px, 5vw, 72px)",
               lineHeight:    1,
               letterSpacing: "-0.06em",
               color:         palette.text,
@@ -278,17 +283,15 @@ function Strip({
           </span>
         </div>
 
-        {/* Slanted rule */}
+        {/* Divider rule */}
         <div
           className="hidden sm:block"
           style={{
             width:      "2px",
-            height:     "44px",
+            height:     "42px",
             background: palette.muted,
             flexShrink: 0,
-            transform:  `skewX(${skew * -0.4}deg)`,
             opacity:    0.35,
-            transition: "transform 0.48s cubic-bezier(0.16,1,0.3,1)",
           }}
         />
 
@@ -299,51 +302,49 @@ function Strip({
             style={{
               fontFamily:    "Inter, sans-serif",
               fontWeight:    900,
-              fontSize:      "clamp(22px, 4vw, 60px)",
+              fontSize:      "clamp(20px, 3.8vw, 58px)",
               lineHeight:    0.92,
               letterSpacing: "-0.04em",
               textTransform: "uppercase",
               color:         palette.text,
-              transition:    "font-size 0.3s ease",
             }}
           >
             {svc.title}
           </h3>
 
-          {/* Description + tags — revealed on hover */}
+          {/* Description + tags — only on hover, smooth height reveal */}
           <div
             style={{
-              maxHeight:  isActive ? "260px" : "0px",
+              maxHeight:  isActive ? "280px" : "0px",
               overflow:   "hidden",
-              transition: "max-height 0.48s cubic-bezier(0.16,1,0.3,1)",
+              transition: "max-height 0.46s cubic-bezier(0.16,1,0.3,1)",
             }}
           >
             <p
               style={{
                 fontFamily:  "monospace",
-                fontSize:    "clamp(12px, 1.1vw, 14px)",
+                fontSize:    "clamp(11px, 1vw, 13px)",
                 lineHeight:  1.7,
                 color:       palette.text,
-                opacity:     isActive ? 0.78 : 0,
-                transform:   isActive ? "translateY(0)" : "translateY(10px)",
-                transition:  "opacity 0.35s ease 0.18s, transform 0.35s ease 0.18s",
-                marginTop:   "14px",
-                maxWidth:    "62ch",
+                opacity:     isActive ? 0.76 : 0,
+                transform:   isActive ? "translateY(0)" : "translateY(8px)",
+                transition:  "opacity 0.34s ease 0.16s, transform 0.34s ease 0.16s",
+                marginTop:   "12px",
+                maxWidth:    "58ch",
               }}
             >
               {svc.description}
             </p>
 
-            {/* Deliverable tags */}
             <div
               style={{
                 display:    "flex",
                 flexWrap:   "wrap",
                 gap:        "6px",
-                marginTop:  "16px",
+                marginTop:  "14px",
                 opacity:    isActive ? 1 : 0,
                 transform:  isActive ? "translateY(0)" : "translateY(6px)",
-                transition: "opacity 0.3s ease 0.28s, transform 0.3s ease 0.28s",
+                transition: "opacity 0.3s ease 0.26s, transform 0.3s ease 0.26s",
               }}
             >
               {svc.deliverables.map((d) => (
@@ -392,13 +393,11 @@ function Strip({
           <ArrowUpRight
             style={{
               color:      palette.text,
-              width:      "28px",
-              height:     "28px",
-              opacity:    isActive ? 1 : 0.28,
-              transform:  isActive
-                ? "translate(3px, -3px) rotate(0deg)"
-                : "translate(0,0) rotate(0deg)",
-              transition: "opacity 0.35s ease, transform 0.38s cubic-bezier(0.16,1,0.3,1)",
+              width:      "26px",
+              height:     "26px",
+              opacity:    isActive ? 1 : 0.25,
+              transform:  isActive ? "translate(3px,-3px)" : "translate(0,0)",
+              transition: "opacity 0.3s ease, transform 0.38s cubic-bezier(0.16,1,0.3,1)",
             }}
             strokeWidth={2.2}
           />
