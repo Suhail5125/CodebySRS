@@ -206,7 +206,9 @@ function computePaths(
       return;
     }
 
-    // fork-left or fork-right — polyline that fans out then converges
+    // fork-left or fork-right — polyline that fans out then converges.
+    // Both fork branches use the same connIdx so they draw simultaneously.
+    const effectiveConnIdx = conn.kind === "fork-right" ? connIdx - 1 : connIdx;
     const offset = conn.kind === "fork-left" ? -FORK_OFFSET_PX : FORK_OFFSET_PX;
     const branchX = cx + offset;
     const spread = 20;
@@ -230,7 +232,7 @@ function computePaths(
     results.push({
       d,
       length,
-      connIdx,
+      connIdx: effectiveConnIdx,
       hasArrow: true,
       ...(conn.trackLabel && {
         trackLabel: { x: labelX, y: labelY, anchor: labelAnchor, text: conn.trackLabel },
@@ -719,7 +721,7 @@ export function WorkProcessSection() {
           <div
             ref={containerRef}
             className="relative mx-auto flex flex-col"
-            style={{ minWidth: 340, maxWidth: 560, gap: 40 }}
+            style={{ minWidth: 420, maxWidth: 560, gap: 40 }}
           >
             <ConnectorOverlay paths={paths} svgSize={svgSize} triggered={triggered} />
 
