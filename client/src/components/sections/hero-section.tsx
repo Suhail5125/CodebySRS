@@ -145,8 +145,8 @@ function SpotlightPortraits({
     inset: 0,
     width: "100%",
     height: "100%",
-    objectFit: "cover",
-    objectPosition: "center",
+    objectFit: "contain",
+    objectPosition: "right bottom",
     userSelect: "none",
     pointerEvents: "none",
   };
@@ -180,12 +180,20 @@ function SpotlightPortraits({
         </div>
       )}
 
-      {/* Contrast overlay so foreground text stays legible */}
+      {/* Contrast overlay — stronger on the left where copy lives,
+          softer on the right where the portrait should breathe. */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.35) 45%, rgba(10,10,10,0.7) 100%)",
+            "linear-gradient(90deg, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.55) 45%, rgba(10,10,10,0.15) 100%)",
+        }}
+      />
+      <div
+        className="absolute inset-x-0 bottom-0 h-32"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,0.85) 100%)",
         }}
       />
     </div>
@@ -563,7 +571,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
 
       {/* BOTTOM-LEFT: social links */}
       <motion.div
-        className="absolute bottom-5 left-5 z-[5] flex flex-wrap items-center gap-3"
+        className="absolute bottom-6 left-5 z-[8] flex flex-wrap items-center gap-3"
         initial={reducedMotion ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 2.0, duration: 0.6, ease: EXPO }}
