@@ -146,7 +146,7 @@ function SpotlightPortraits({
     width: "100%",
     height: "100%",
     objectFit: "cover",
-    objectPosition: "center bottom",
+    objectPosition: "center center",
     userSelect: "none",
     pointerEvents: "none",
   };
@@ -158,8 +158,14 @@ function SpotlightPortraits({
   }%, rgba(0,0,0,0) 100%)`;
 
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] h-full w-full overflow-hidden">
-      {/* Base layer: MYIMG2 fills the section edge-to-edge */}
+    <div
+      aria-hidden
+      className="pointer-events-none absolute right-0 top-0 z-[1] h-full w-full overflow-hidden lg:aspect-[3/2] lg:w-auto lg:max-w-full"
+    >
+      {/* Base layer: MYIMG2 fills the right-side image panel edge-to-edge.
+          On lg+ the panel locks to the source 3:2 aspect so the full
+          subject is visible with zero crop; on smaller screens it spans
+          the full width and cover-crops as needed. */}
       <img src="/hero/myimg2.png" alt="" style={imgStyle} draggable={false} />
 
       {/* Top layer: MYIMG1 revealed only inside the spotlight */}
@@ -186,7 +192,7 @@ function SpotlightPortraits({
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(90deg, rgba(10,10,10,0.78) 0%, rgba(10,10,10,0.45) 40%, rgba(10,10,10,0.05) 100%)",
+            "linear-gradient(90deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.25) 50%, rgba(10,10,10,0) 100%)",
         }}
       />
       <div
