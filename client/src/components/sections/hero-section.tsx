@@ -157,9 +157,25 @@ function SpotlightPortraits({
     ((RADIUS - FEATHER) / RADIUS) * 100
   }%, rgba(0,0,0,0) 100%)`;
 
+  const backdropStyle: React.CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: "center",
+    filter: "blur(40px) brightness(0.45) saturate(0.9)",
+    transform: "scale(1.15)",
+    userSelect: "none",
+    pointerEvents: "none",
+  };
+
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] h-full w-full">
-      {/* Base layer: MYIMG2 always visible */}
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] h-full w-full overflow-hidden">
+      {/* Ambient backdrop: blurred MYIMG2 fills entire section so every edge is touched */}
+      <img src="/hero/myimg2.png" alt="" style={backdropStyle} draggable={false} />
+
+      {/* Base layer: sharp MYIMG2 contained on the right, full subject visible */}
       <img src="/hero/myimg2.png" alt="" style={imgStyle} draggable={false} />
 
       {/* Top layer: MYIMG1 revealed only inside the spotlight */}
