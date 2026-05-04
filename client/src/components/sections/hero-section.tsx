@@ -1,83 +1,29 @@
-import { Suspense, useEffect, useRef, useState, useMemo, Component, type ReactNode } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
-import { BlendFunction } from "postprocessing";
-import * as THREE from "three";
 import {
-  Github,
-  Linkedin,
-  Mail,
-  Twitter,
-  Instagram,
-  ArrowUpRight,
-  ArrowDown,
+  Github, Linkedin, Mail, Twitter, Instagram, ArrowUpRight,
 } from "lucide-react";
 import type { AboutInfo } from "@shared";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Reveal } from "@/components/reveal";
 
-/* ─────────────────────────────────────────────────────────────────────────
-   WebGL guard — two layers of protection:
-   1. probeWebGL()  : actually executes a draw call before mounting Canvas,
-                      catching sandboxed/disabled GPU contexts that still
-                      return a non-null object from getContext().
-   2. WebGLBoundary : React error boundary — if THREE still throws after
-                      the probe passes, the 3D layer silently disappears
-                      instead of breaking the whole page.
-   ─────────────────────────────────────────────────────────────────────── */
-class WebGLBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() { return { failed: true }; }
-  render() { return this.state.failed ? null : this.props.children; }
-}
-
-function probeWebGL(): boolean {
-  try {
-    const c = document.createElement("canvas");
-    c.width = 1;
-    c.height = 1;
-    const gl = (c.getContext("webgl2") ?? c.getContext("webgl")) as WebGLRenderingContext | null;
-    if (!gl) return false;
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    return gl.getError() === gl.NO_ERROR;
-  } catch {
-    return false;
-  }
-}
-
-interface HeroSectionProps {
-  aboutInfo: AboutInfo | null;
-  isLoading: boolean;
-}
-
+/* ─── Brand palette ───────────────────────────────────────────── */
 const INK    = "#F2EFE6";
 const BG     = "#0A0A0A";
 const ACCENT = "#FF3D00";
 
+/* ─── Expo-out cubic-bezier ───────────────────────────────────── */
+const EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+/* ─── Roles for cycling ───────────────────────────────────────── */
 const ROLES = [
-  "Creative Developer",
-  "3D Generalist",
-  "UI / UX Designer",
-  "Full-Stack Engineer",
-  "Motion Designer",
-  "Product Engineer",
-  "Frontend Architect",
-  "Interaction Designer",
-  "WebGL Specialist",
-  "Brand Engineer",
-  "Systems Designer",
-  "Generative Artist",
-  "Prototyper",
-  "React Specialist",
-  "Type-Safe Builder",
-  "Performance Nerd",
+  "CREATIVE DEVELOPER", "3D GENERALIST", "UI / UX DESIGNER",
+  "FULL-STACK ENGINEER", "MOTION DESIGNER", "FRONTEND ARCHITECT",
+  "WEBGL SPECIALIST", "BRAND ENGINEER", "SYSTEMS DESIGNER",
+  "GENERATIVE ARTIST", "REACT SPECIALIST", "PERFORMANCE NERD",
 ];
 
-const FOCUS_KEYWORDS = ["INTERFACES", "MOTION", "3D / WEBGL", "DESIGN SYSTEMS", "DX"];
-
-const FALLBACK_SOCIAL = {
+/* ─── Fallbacks ───────────────────────────────────────────────── */
+const FALLBACK = {
   github:    "https://github.com",
   linkedin:  "https://linkedin.com",
   twitter:   "https://twitter.com",
@@ -85,77 +31,192 @@ const FALLBACK_SOCIAL = {
   email:     "hello@codebysrs.dev",
 };
 
-const STATEMENTS = [
-  "DESIGN SYSTEMS", "MOTION FIRST", "PIXEL PERFECT",
-  "PERFORMANCE BUDGET", "SHIP > PERFECT", "ACCESSIBILITY",
-  "TYPE-SAFE", "EDGE-NATIVE",
+interface HeroSectionProps {
+  aboutInfo: AboutInfo | null;
+  isLoading: boolean;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CANVAS 2D WAVEFORM — pure Canvas 2D, zero GPU dependency.
+   Five oscilloscope channels (cream + orange) that breathe and
+   respond to mouse movement. This IS the background.
+════════════════════════════════════════════════════════════════ */
+const CHANNELS = [
+  { y: 0.20, r: 242, g: 239, b: 230, a: 0.07, freq: 2.8, amp: 0.030, spd: 0.50, ph: 0.0 },
+  { y: 0.36, r: 255, g:  61, b:   0, a: 0.14, freq: 4.5, amp: 0.020, spd: 0.95, ph: 1.4 },
+  { y: 0.51, r: 242, g: 239, b: 230, a: 0.06, freq: 1.8, amp: 0.046, spd: 0.38, ph: 2.8 },
+  { y: 0.66, r: 255, g:  61, b:   0, a: 0.09, freq: 6.2, amp: 0.015, spd: 1.70, ph: 0.7 },
+  { y: 0.80, r: 242, g: 239, b: 230, a: 0.05, freq: 3.3, amp: 0.026, spd: 0.62, ph: 4.2 },
 ];
 
-const DATA_FEED = [
-  "BUILD #1024", "UPTIME 99.98%", "NODE v22",
-  "RESPONSE <24H", "TZ UTC+05", "STACK TS+RS",
-];
+function WaveformBG({ mouseRef, paused }: {
+  mouseRef: React.RefObject<{ x: number; y: number }>;
+  paused: boolean;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-/* ── ease curve: expo out ── */
-const EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
+  useEffect(() => {
+    if (paused) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
+    let raf = 0;
+    let t   = 0;
+
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width  = canvas.offsetWidth  * dpr;
+      canvas.height = canvas.offsetHeight * dpr;
+      ctx.scale(dpr, dpr);
+    };
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+    resize();
+
+    const draw = () => {
+      t += 0.007;
+      const W = canvas.offsetWidth;
+      const H = canvas.offsetHeight;
+      ctx.clearRect(0, 0, W, H);
+
+      const mx = mouseRef.current?.x ?? 0;
+      const my = mouseRef.current?.y ?? 0;
+
+      for (const ch of CHANNELS) {
+        const cy  = H * ch.y;
+        const yInfluence = Math.max(0, 1 - Math.abs(my - (ch.y * 2 - 1)) * 1.4);
+        const eAmp = H * ch.amp * (1 + yInfluence * 2.8);
+
+        ctx.beginPath();
+        const step = Math.max(2, Math.floor(W / 500));
+        for (let x = 0; x <= W; x += step) {
+          const nx = x / W;
+          const xInf  = Math.max(0, 1 - Math.abs(nx - (mx * 0.5 + 0.5)) * 3.5);
+          const fMod  = 1 + xInf * 0.9;
+          const y = cy
+            + Math.sin(nx * Math.PI * 2 * ch.freq * fMod  + t * ch.spd          + ch.ph) * eAmp
+            + Math.sin(nx * Math.PI * 2 * ch.freq * 1.618 + t * ch.spd * 0.7    + ch.ph) * eAmp * 0.32
+            + Math.sin(nx * Math.PI * 2 * ch.freq * 0.5   + t * ch.spd * 1.4    + ch.ph) * eAmp * 0.18;
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+
+        const g  = ctx.createLinearGradient(0, 0, W, 0);
+        const cb = `rgba(${ch.r},${ch.g},${ch.b},`;
+        g.addColorStop(0,    cb + "0)");
+        g.addColorStop(0.07, cb + ch.a   + ")");
+        g.addColorStop(0.5,  cb + ch.a * 1.7 + ")");
+        g.addColorStop(0.93, cb + ch.a   + ")");
+        g.addColorStop(1,    cb + "0)");
+        ctx.strokeStyle = g;
+        ctx.lineWidth   = 1.5;
+        ctx.stroke();
+      }
+      raf = requestAnimationFrame(draw);
+    };
+
+    draw();
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [paused, mouseRef]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-[1] h-full w-full"
+    />
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   LETTER — one character with a CSS 3D flip entrance + live
+   mouse-tracking that fans each letter outward from center.
+════════════════════════════════════════════════════════════════ */
+interface LetterProps {
+  char: string;
+  index: number;
+  total: number;
+  delay: number;
+  fromX: number;
+  fromY: number;
+  mouseRef: React.RefObject<{ x: number; y: number }>;
+  paused: boolean;
+  color?: string;
+}
+
+function AnimLetter({ char, index, total, delay, fromX, fromY, mouseRef, paused, color = INK }: LetterProps) {
+  const divRef = useRef<HTMLDivElement>(null);
+
+  /* Apply mouse-driven 3D rotation via rAF to avoid React re-renders */
+  useEffect(() => {
+    if (paused) return;
+    let raf = 0;
+    const factor = ((index / Math.max(total - 1, 1)) - 0.5) * 2; // -1 … +1
+
+    const tick = () => {
+      if (divRef.current) {
+        const mx = mouseRef.current?.x ?? 0;
+        const my = mouseRef.current?.y ?? 0;
+        divRef.current.style.transform =
+          `perspective(700px) rotateY(${factor * mx * 9}deg) rotateX(${my * -4}deg)`;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(raf);
+  }, [paused, index, total, mouseRef]);
+
+  if (char === " ") {
+    return <span style={{ display: "inline-block", width: "0.22em" }} aria-hidden />;
+  }
+
+  return (
+    <div
+      ref={divRef}
+      style={{ display: "inline-block", transformStyle: "preserve-3d", willChange: "transform" }}
+    >
+      <motion.span
+        style={{ display: "inline-block", color }}
+        initial={paused ? false : { opacity: 0, x: fromX, y: fromY, rotateX: -80 }}
+        animate={{ opacity: 1, x: 0, y: 0, rotateX: 0 }}
+        transition={{ delay, duration: 0.85, ease: EXPO }}
+      >
+        {char}
+      </motion.span>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   HERO SECTION
+════════════════════════════════════════════════════════════════ */
 export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   const reducedMotion = !!useReducedMotion();
 
-  /* Gate the R3F canvas on a real GPU probe that runs after mount.
-     Starts false — Canvas never flashes then crashes on GPUless envs. */
-  const [webGLReady, setWebGLReady] = useState(false);
-  useEffect(() => {
-    setWebGLReady(probeWebGL());
-  }, []);
-
-  const fullName  = aboutInfo?.name ?? "DEVELOPER";
   const firstName = (aboutInfo?.name?.split(" ")[0] ?? "DEVELOPER").toUpperCase();
   const lastName  = (aboutInfo?.name?.split(" ").slice(1).join(" ") ?? "ENGINEER").toUpperCase() || "ENGINEER";
-  const bio       = aboutInfo?.bio ?? "I design and build modern web experiences — interfaces, interactions, and the systems that hold them together.";
-  const location  = (aboutInfo?.location ?? "EARTH / GLOBAL").toUpperCase();
+  const fullName  = `${firstName} ${lastName}`;
+  const bio       = aboutInfo?.bio ?? "Building modern web experiences — interfaces, interactions, and the systems that hold them together.";
+  const location  = (aboutInfo?.location ?? "GLOBAL").toUpperCase();
   const available = aboutInfo?.availableForWork ?? true;
 
-  /* role cycling */
-  const [roleIndex, setRoleIndex] = useState(0);
-  useEffect(() => {
-    if (reducedMotion) return;
-    const id = setInterval(() => setRoleIndex(i => (i + 1) % ROLES.length), 1600);
-    return () => clearInterval(id);
-  }, [reducedMotion]);
-  const roleSlotCh = Math.max(...ROLES.map(r => r.length));
-
-  const socialLinks: { Icon: typeof Github; href: string; label: string }[] = [
-    { Icon: Github,    href: aboutInfo?.githubUrl    || FALLBACK_SOCIAL.github,    label: "GitHub"    },
-    { Icon: Linkedin,  href: aboutInfo?.linkedinUrl  || FALLBACK_SOCIAL.linkedin,  label: "LinkedIn"  },
-    { Icon: Twitter,   href: aboutInfo?.twitterUrl   || FALLBACK_SOCIAL.twitter,   label: "Twitter"   },
-    { Icon: Instagram, href: aboutInfo?.instagramUrl || FALLBACK_SOCIAL.instagram, label: "Instagram" },
-    { Icon: Mail,      href: aboutInfo?.email ? `mailto:${aboutInfo.email}` : `mailto:${FALLBACK_SOCIAL.email}`, label: "Email" },
-  ];
-
-  const scrollTo = (id: string) =>
-    document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
-
-  const now          = useNowEverySecond();
-  const feedItem     = useRotator(DATA_FEED,    2400, reducedMotion);
-  const nowStatement = useRotator(STATEMENTS,   2200, reducedMotion);
-
-  /* mouse parallax for the name block */
+  /* Mouse — stored in a ref so Canvas 2D + AnimLetter rAF loops
+     read it without causing React re-renders */
   const sectionRef = useRef<HTMLElement>(null);
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
-
+  const mouseRef   = useRef({ x: 0, y: 0 });
   useEffect(() => {
     if (reducedMotion) return;
     const el = sectionRef.current;
     if (!el) return;
     const onMove = (e: MouseEvent) => {
       const r = el.getBoundingClientRect();
-      setMouse({
+      mouseRef.current = {
         x: ((e.clientX - r.left) / r.width  - 0.5) * 2,
         y: ((e.clientY - r.top)  / r.height - 0.5) * 2,
-      });
+      };
     };
-    const onLeave = () => setMouse({ x: 0, y: 0 });
+    const onLeave = () => { mouseRef.current = { x: 0, y: 0 }; };
     el.addEventListener("mousemove",  onMove,  { passive: true });
     el.addEventListener("mouseleave", onLeave);
     return () => {
@@ -164,460 +225,298 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
     };
   }, [reducedMotion]);
 
+  /* Pre-generate per-letter entrance vectors */
+  const firstLetterData = useMemo(() =>
+    firstName.split("").map(() => ({
+      fromX: (Math.random() - 0.5) * 280,
+      fromY: Math.random() < 0.5 ? -(160 + Math.random() * 120) : (160 + Math.random() * 120),
+    })), [firstName]);
+
+  const lastLetterData = useMemo(() =>
+    lastName.split("").map(() => ({
+      fromX: (Math.random() - 0.5) * 280,
+      fromY: Math.random() < 0.5 ? -(160 + Math.random() * 120) : (160 + Math.random() * 120),
+    })), [lastName]);
+
+  /* Role cycling */
+  const [roleIdx, setRoleIdx] = useState(0);
+  useEffect(() => {
+    if (reducedMotion) return;
+    const id = setInterval(() => setRoleIdx(i => (i + 1) % ROLES.length), 2000);
+    return () => clearInterval(id);
+  }, [reducedMotion]);
+
+  /* Live clock */
+  const clock = useNowEverySecond();
+
+  /* Social links */
+  const socials = [
+    { Icon: Github,    href: aboutInfo?.githubUrl    || FALLBACK.github,    label: "GitHub"    },
+    { Icon: Linkedin,  href: aboutInfo?.linkedinUrl  || FALLBACK.linkedin,  label: "LinkedIn"  },
+    { Icon: Twitter,   href: aboutInfo?.twitterUrl   || FALLBACK.twitter,   label: "Twitter"   },
+    { Icon: Instagram, href: aboutInfo?.instagramUrl || FALLBACK.instagram, label: "Instagram" },
+    { Icon: Mail,      href: aboutInfo?.email        ? `mailto:${aboutInfo.email}` : `mailto:${FALLBACK.email}`, label: "Email" },
+  ];
+
+  const scrollTo = (id: string) =>
+    document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
+
+  /* Total letter counts for perspective fanning */
+  const fn = firstName.split("");
+  const ln = lastName.split("");
+
   return (
     <section
       id="hero"
       ref={sectionRef}
-      className="relative flex min-h-screen w-full flex-col overflow-hidden"
-      style={{ background: BG, color: INK, fontFamily: "var(--font-sans)" }}
+      className="relative w-full overflow-hidden"
+      style={{ minHeight: "100svh", background: BG, color: INK }}
     >
-      {/* ══════════ LAYER 0 — 3D CANVAS ════════════════════════════
-          Wrapped in an error boundary so a missing GPU never breaks
-          the rest of the hero — text / animations work regardless.
-      ════════════════════════════════════════════════════════════ */}
-      {!reducedMotion && webGLReady && (
-        <WebGLBoundary>
-          <div className="pointer-events-none absolute inset-0 z-[0]">
-            <Canvas
-              camera={{ position: [0, 0, 10], fov: 55 }}
-              gl={{ antialias: true, alpha: true }}
-              style={{ background: "transparent" }}
-              onCreated={({ gl }) => {
-                gl.setClearColor(0x000000, 0);
-              }}
-            >
-              <Suspense fallback={null}>
-                <ambientLight intensity={0.4} />
-                <pointLight position={[6, 6, 6]} intensity={2.5} color={ACCENT} />
-                <pointLight position={[-6, -4, -6]} intensity={0.8} color={INK} />
-                <BrandParticles />
-                <WireframeTorus />
-                <EffectComposer>
-                  <Bloom
-                    intensity={1.2}
-                    luminanceThreshold={0.25}
-                    luminanceSmoothing={0.85}
-                    blendFunction={BlendFunction.ADD}
-                  />
-                </EffectComposer>
-              </Suspense>
-            </Canvas>
-          </div>
-        </WebGLBoundary>
-      )}
+      {/* ── LAYER 1: animated waveform canvas ── */}
+      <WaveformBG mouseRef={mouseRef} paused={reducedMotion} />
 
-      {/* ══════════ LAYER 1 — NOISE / SCANLINE / CURSOR ════════════ */}
+      {/* ── LAYER 2: film grain ── */}
       <NoiseOverlay />
+
+      {/* ── LAYER 3: faint column guides ── */}
       <GridLines />
+
+      {/* ── LAYER 4: scanning orange line ── */}
       {!reducedMotion && <Scanline />}
+
+      {/* ── LAYER 5: crosshair cursor ── */}
       {!reducedMotion && <HeroCursor container={sectionRef} />}
 
-      {/* ══════════ TOP STATUS BAR ══════════════════════════════════ */}
-      <div
-        className="relative z-[4] flex w-full shrink-0 items-center justify-between px-6 py-2.5 font-mono text-[11px] uppercase tracking-[0.18em] lg:px-10"
-        style={{ borderBottom: `2px solid ${INK}` }}
+      {/* ═══════════════════════════════════════════════════
+          ABSOLUTE SATELLITE ELEMENTS
+      ═══════════════════════════════════════════════════ */}
+
+      {/* TOP-LEFT: brand mark */}
+      <motion.div
+        className="absolute left-5 top-5 z-[5] font-mono text-[10px] uppercase tracking-[0.3em]"
+        style={{ opacity: 0.35 }}
+        initial={reducedMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 0.35 }}
+        transition={{ delay: 1.8, duration: 0.6 }}
       >
-        <div className="flex items-center gap-3">
-          <span className="inline-block h-2 w-2 brut-blink" style={{ background: available ? ACCENT : "#666" }} aria-hidden />
-          <span className="opacity-80">{available ? "LIVE" : "OFFLINE"}</span>
-          <span className="opacity-20">·</span>
-          <span className="hidden tabular-nums opacity-55 sm:inline-block" style={{ minWidth: "16ch" }}>
-            <ScrambleText text={feedItem} runKey={feedItem} durationMs={420} paused={reducedMotion} />
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span style={{ color: ACCENT }}>[ SECTION 01 ]</span>
-          <span className="opacity-30">/</span>
-          <span className="opacity-60">HERO</span>
-          <span className="hidden tabular-nums opacity-40 md:inline-block" style={{ minWidth: "8ch" }}>{now}</span>
-        </div>
-      </div>
+        <span style={{ color: ACCENT }}>◆</span>{" "}CODEBYSRS
+      </motion.div>
 
-      {/* ══════════ MAIN EDITORIAL COMPOSITION ══════════════════════ */}
-      <main className="relative z-[4] flex flex-1 flex-col px-6 lg:px-10">
+      {/* TOP-RIGHT: section ID + live clock */}
+      <motion.div
+        className="absolute right-5 top-5 z-[5] flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.25em]"
+        initial={reducedMotion ? false : { opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 1.9, duration: 0.6, ease: EXPO }}
+      >
+        <span style={{ color: ACCENT }}>[ SECTION 01 ]</span>
+        <span className="opacity-30">/</span>
+        <span className="opacity-50">HERO</span>
+        <span className="hidden tabular-nums opacity-30 md:inline">{clock}</span>
+      </motion.div>
 
-        {/* ── NAME BLOCK — vertically centered, fills all available space ── */}
-        <div className="flex flex-1 flex-col justify-center py-8">
+      {/* LEFT EDGE: vertical availability text (desktop only) */}
+      <motion.div
+        className="absolute left-0 top-1/2 z-[5] hidden origin-center -translate-x-1/2 -translate-y-1/2 -rotate-90 lg:flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.32em]"
+        style={{ whiteSpace: "nowrap", opacity: 0.38 }}
+        initial={reducedMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 0.38 }}
+        transition={{ delay: 2.2, duration: 0.6 }}
+      >
+        <span
+          className="inline-block h-1.5 w-1.5 brut-blink"
+          style={{ background: available ? ACCENT : "#666" }}
+          aria-hidden
+        />
+        <span>{available ? "AVAILABLE FOR WORK" : "CURRENTLY BOOKED"}</span>
+        <span className="opacity-30">·</span>
+        <span>{location}</span>
+      </motion.div>
 
-          {/* identity kicker — tiny annotation above the name */}
-          {isLoading ? (
-            <Skeleton className="mb-6 h-3 w-56 bg-white/10" />
-          ) : (
+      {/* RIGHT EDGE: vertical role text (desktop only) */}
+      <motion.div
+        className="absolute right-0 top-1/2 z-[5] hidden origin-center translate-x-1/2 -translate-y-1/2 rotate-90 lg:block font-mono text-[10px] uppercase tracking-[0.32em]"
+        style={{ whiteSpace: "nowrap", opacity: 0 }}
+        animate={{ opacity: 0.3 }}
+        transition={{ delay: 2.2, duration: 0.6 }}
+      >
+        <ScrambleText text={ROLES[roleIdx]} runKey={roleIdx} durationMs={500} paused={reducedMotion} />
+      </motion.div>
+
+      {/* ═══════════════════════════════════════════════════
+          CENTER STAGE: THE NAME
+          Absolutely centered — this is the gravitational
+          core of the entire composition.
+      ═══════════════════════════════════════════════════ */}
+      <div
+        className="absolute inset-0 z-[5] flex flex-col items-start justify-center px-5 lg:px-10"
+        style={{ pointerEvents: "none" }}
+      >
+        {isLoading ? (
+          <div className="w-full space-y-6">
+            <Skeleton className="h-36 w-3/4 bg-white/10" />
+            <Skeleton className="h-36 w-full bg-white/10" />
+          </div>
+        ) : (
+          <>
+            {/* tiny annotation above the name */}
             <motion.p
-              className="mb-5 font-mono text-[10px] uppercase tracking-[0.42em] opacity-40"
-              initial={reducedMotion ? false : { opacity: 0, y: 8 }}
-              animate={{ opacity: 0.4, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.05, ease: EXPO }}
+              className="mb-3 font-mono text-[10px] uppercase tracking-[0.45em]"
+              style={{ color: ACCENT, opacity: 0 }}
+              animate={{ opacity: 0.7 }}
+              transition={{ delay: 0.35, duration: 0.5 }}
             >
-              <span style={{ color: ACCENT }}>{"//"}</span> identity = &ldquo;{fullName}&rdquo;
+              // PORTFOLIO · {new Date().getFullYear()}
             </motion.p>
-          )}
 
-          {/* ─── THE NAME — editorial left/right split with mouse parallax ─── */}
-          {isLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-32 w-3/4 bg-white/10" />
-              <Skeleton className="h-32 w-2/3 bg-white/10" />
-            </div>
-          ) : (
-            <div
+            <h1
+              data-testid="hero-name"
+              className="select-none uppercase"
               style={{
-                transform: `translate(${mouse.x * 14}px, ${mouse.y * 7}px)`,
-                transition: "transform 1.1s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                fontWeight:    900,
+                fontSize:      "clamp(3.8rem, 13vw, 15rem)",
+                lineHeight:    0.86,
+                letterSpacing: "-0.04em",
+                width:         "100%",
               }}
             >
-              <h1
-                data-testid="hero-name"
-                className="select-none uppercase"
-                style={{
-                  fontFamily:    "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                  fontWeight:    800,
-                  fontSize:      "clamp(4rem, 14vw, 14rem)",
-                  lineHeight:    0.87,
-                  letterSpacing: "-0.035em",
-                  color:         INK,
-                }}
-              >
-                {/* FIRST NAME — slides in from the left */}
-                <motion.span
-                  className="block text-left"
-                  initial={reducedMotion ? false : { x: -120, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 1.0, delay: 0.12, ease: EXPO }}
-                >
-                  <ScrambleText text={firstName} paused={reducedMotion} durationMs={900} />
-                </motion.span>
-
-                {/* LAST NAME — slides in from the right, accent square as prefix */}
-                <motion.span
-                  className="flex items-baseline justify-end gap-[0.18em]"
-                  initial={reducedMotion ? false : { x: 120, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 1.0, delay: 0.22, ease: EXPO }}
-                >
-                  {/* Accent square — scales with the font */}
-                  <motion.span
-                    aria-hidden
-                    className="inline-block shrink-0"
-                    style={{
-                      width:      "0.38em",
-                      height:     "0.38em",
-                      background: ACCENT,
-                      translateY: "-0.04em",
-                    }}
-                    animate={reducedMotion ? {} : { opacity: [1, 0.4, 1] }}
-                    transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                  <ScrambleText text={lastName} paused={reducedMotion} durationMs={1100} />
-                </motion.span>
-              </h1>
-            </div>
-          )}
-
-          {/* bio — screen-reader only */}
-          {!isLoading && <p data-testid="hero-bio" className="sr-only">{bio}</p>}
-
-          {/* ── ROLE + FOCUS — annotation strip beneath the name ── */}
-          {!isLoading && (
-            <Reveal variant="rise" delay={360}>
-              <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] uppercase tracking-[0.2em]">
-                <span className="opacity-35">ROLE</span>
-                <span className="opacity-15">[</span>
-                <span className="inline-block" style={{ minWidth: `${roleSlotCh}ch`, color: INK }}>
-                  <ScrambleText
-                    text={ROLES[roleIndex].toUpperCase()}
-                    runKey={roleIndex}
+              {/* ── FIRST NAME: letters fly in from random positions ── */}
+              <span className="block" aria-label={firstName}>
+                {fn.map((ch, i) => (
+                  <AnimLetter
+                    key={`fn-${i}`}
+                    char={ch}
+                    index={i}
+                    total={fn.length}
+                    delay={reducedMotion ? 0 : 0.42 + i * 0.07}
+                    fromX={firstLetterData[i]?.fromX ?? 0}
+                    fromY={firstLetterData[i]?.fromY ?? -120}
+                    mouseRef={mouseRef}
                     paused={reducedMotion}
-                    durationMs={520}
+                    color={INK}
                   />
-                </span>
-                <span className="opacity-15">]</span>
-                <span className="opacity-15">·</span>
-                <span className="tabular-nums opacity-30">
-                  {String(roleIndex + 1).padStart(2, "0")}/{String(ROLES.length).padStart(2, "0")}
-                </span>
-
-                {/* thin divider */}
-                <span className="mx-1 opacity-15">|</span>
-
-                {FOCUS_KEYWORDS.map((kw, i) => (
-                  <span key={kw} className="inline-flex items-center gap-2">
-                    <span className="opacity-65">{kw}</span>
-                    {i < FOCUS_KEYWORDS.length - 1 && (
-                      <span style={{ color: ACCENT }} className="opacity-45">/</span>
-                    )}
-                  </span>
                 ))}
-              </div>
-            </Reveal>
-          )}
-
-          {/* NOW statement — floating annotation, right-aligned */}
-          {!isLoading && (
-            <Reveal variant="rise" delay={420}>
-              <div className="mt-4 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.28em] opacity-50">
-                <span style={{ color: ACCENT }}>{"//"}</span>
-                <span>NOW SHIPPING</span>
-                <span className="opacity-50">·</span>
-                <span style={{ color: INK, opacity: 0.8 }}>
-                  <ScrambleText text={nowStatement} runKey={nowStatement} paused={reducedMotion} durationMs={380} />
-                </span>
-                <span
-                  aria-hidden
-                  className="inline-block h-1.5 w-1.5 brut-blink"
-                  style={{ background: ACCENT }}
-                />
-              </div>
-            </Reveal>
-          )}
-        </div>
-
-        {/* ══════════ BOTTOM STRIP ════════════════════════════════════
-            Three zones: availability · social channels · CTAs + scroll
-            Separated by a full-width 2px border from the name block
-        ══════════════════════════════════════════════════════════ */}
-        <div
-          className="shrink-0 grid grid-cols-1 gap-y-4 py-4 font-mono text-[11px] uppercase tracking-[0.2em] lg:grid-cols-3 lg:gap-y-0 lg:items-center"
-          style={{ borderTop: `2px solid ${INK}` }}
-        >
-          {/* Zone 1 — availability + location */}
-          <div className="flex items-center gap-3">
-            <span className="inline-block h-2 w-2 brut-blink" style={{ background: available ? ACCENT : "#666" }} aria-hidden />
-            <span className="opacity-75">
-              {available ? "AVAILABLE FOR WORK" : "BOOKED — JOIN WAITLIST"}
-            </span>
-            <span className="opacity-20">·</span>
-            <span className="opacity-40">{location}</span>
-          </div>
-
-          {/* Zone 2 — social row, centered on desktop */}
-          <div className="flex flex-wrap items-center justify-start gap-x-3 gap-y-1 lg:justify-center">
-            {socialLinks.map(({ Icon, href, label }, i) => (
-              <span key={label} className="inline-flex items-center gap-1.5">
-                <SocialLink Icon={Icon} href={href} label={label} />
-                {i < socialLinks.length - 1 && (
-                  <span className="opacity-15" aria-hidden>·</span>
-                )}
               </span>
-            ))}
-          </div>
 
-          {/* Zone 3 — CTAs + scroll, right-aligned on desktop */}
-          <div className="flex flex-wrap items-center gap-3 lg:justify-end">
-            <BrutButton
-              label="START PROJECT"
-              onClick={() => scrollTo("#contact")}
-              data-testid="button-lets-work-together"
-              variant="solid"
-            />
-            <BrutButton
-              label="VIEW WORK"
-              onClick={() => scrollTo("#projects")}
-              data-testid="button-view-work"
-              variant="ghost"
-            />
-            <button
-              type="button"
-              onClick={() => scrollTo("#about")}
-              className="flex items-center gap-2 opacity-50 hover:opacity-100"
-              style={{ transition: "none" }}
-              aria-label="Scroll down"
+              {/* ── LAST NAME: orange rule extends left, name right-anchors ── */}
+              <span
+                className="flex w-full items-center"
+                style={{ gap: "0.25em" }}
+                aria-label={lastName}
+              >
+                {/* The slash-rule — draws from left as last name slides in */}
+                <motion.span
+                  aria-hidden
+                  style={{
+                    flex:           1,
+                    height:         "clamp(4px, 0.55vw, 10px)",
+                    background:     ACCENT,
+                    display:        "block",
+                    transformOrigin: "left center",
+                  }}
+                  initial={reducedMotion ? false : { scaleX: 0, opacity: 0 }}
+                  animate={{ scaleX: 1, opacity: 0.9 }}
+                  transition={{ delay: 0.55 + fn.length * 0.07, duration: 1.0, ease: EXPO }}
+                />
+                {ln.map((ch, i) => (
+                  <AnimLetter
+                    key={`ln-${i}`}
+                    char={ch}
+                    index={i}
+                    total={ln.length}
+                    delay={reducedMotion ? 0 : 0.65 + fn.length * 0.07 + i * 0.07}
+                    fromX={lastLetterData[i]?.fromX ?? 0}
+                    fromY={lastLetterData[i]?.fromY ?? 120}
+                    mouseRef={mouseRef}
+                    paused={reducedMotion}
+                    color={INK}
+                  />
+                ))}
+              </span>
+            </h1>
+
+            {/* hidden bio for screen readers */}
+            <p data-testid="hero-bio" className="sr-only">{bio}</p>
+
+            {/* ── annotation strip below name ── */}
+            <motion.div
+              className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.25em]"
+              initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: reducedMotion ? 0 : 1.6 + fn.length * 0.07, duration: 0.7, ease: EXPO }}
             >
-              <ArrowDown className={`h-3.5 w-3.5 ${reducedMotion ? "" : "motion-safe:animate-bounce"}`} />
-            </button>
-          </div>
-        </div>
-      </main>
+              <span style={{ color: ACCENT }}>//</span>
+              <span className="opacity-45">NOW BUILDING</span>
+              <span className="opacity-20">·</span>
+              <span
+                className="lg:hidden font-mono text-[11px]"
+                style={{ opacity: 0.55 }}
+              >
+                <ScrambleText text={ROLES[roleIdx]} runKey={roleIdx} durationMs={480} paused={reducedMotion} />
+              </span>
+              <span className="hidden lg:inline opacity-55">
+                <ScrambleText text={ROLES[roleIdx]} runKey={roleIdx} durationMs={480} paused={reducedMotion} />
+              </span>
+            </motion.div>
+          </>
+        )}
+      </div>
+
+      {/* ═══════════════════════════════════════════════════
+          BOTTOM SATELLITES — social + CTAs — absolutely
+          anchored to the bottom edge, NOT in a strip row.
+      ═══════════════════════════════════════════════════ */}
+
+      {/* BOTTOM-LEFT: social links */}
+      <motion.div
+        className="absolute bottom-5 left-5 z-[5] flex flex-wrap items-center gap-3"
+        initial={reducedMotion ? false : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 2.0, duration: 0.6, ease: EXPO }}
+      >
+        {socials.map(({ Icon, href, label }) => (
+          <SocialLink key={label} Icon={Icon} href={href} label={label} />
+        ))}
+      </motion.div>
+
+      {/* BOTTOM-RIGHT: CTA buttons */}
+      <motion.div
+        className="absolute bottom-5 right-5 z-[5] flex items-center gap-3"
+        initial={reducedMotion ? false : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 2.1, duration: 0.6, ease: EXPO }}
+      >
+        <BrutButton
+          label="START PROJECT"
+          onClick={() => scrollTo("#contact")}
+          data-testid="button-lets-work-together"
+          variant="solid"
+        />
+        <BrutButton
+          label="VIEW WORK"
+          onClick={() => scrollTo("#projects")}
+          data-testid="button-view-work"
+          variant="ghost"
+        />
+      </motion.div>
     </section>
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   3D SCENE COMPONENTS
-══════════════════════════════════════════════════════════════════ */
-
-/** Sparse particle cloud using only brand colors — cream + orange */
-function BrandParticles() {
-  const ref = useRef<THREE.Points>(null);
-  const count = 700;
-
-  const { positions, colors } = useMemo(() => {
-    const positions = new Float32Array(count * 3);
-    const colors    = new Float32Array(count * 3);
-
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3;
-      // Spread wide — fill the viewport depth
-      positions[i3]     = (Math.random() - 0.5) * 50;
-      positions[i3 + 1] = (Math.random() - 0.5) * 25;
-      positions[i3 + 2] = (Math.random() - 0.5) * 15 - 4;
-
-      if (Math.random() < 0.12) {
-        // Orange — rare, vibrant
-        colors[i3]     = 1.0;
-        colors[i3 + 1] = 0.24;
-        colors[i3 + 2] = 0.0;
-      } else {
-        // Cream — dim, most particles
-        const brightness = 0.12 + Math.random() * 0.28;
-        colors[i3]     = 0.95 * brightness;
-        colors[i3 + 1] = 0.94 * brightness;
-        colors[i3 + 2] = 0.90 * brightness;
-      }
-    }
-    return { positions, colors };
-  }, []);
-
-  useFrame(({ clock, mouse }) => {
-    if (!ref.current) return;
-    const t = clock.elapsedTime;
-    ref.current.rotation.y = t * 0.018 + mouse.x * 0.08;
-    ref.current.rotation.x = Math.sin(t * 0.04) * 0.06 + mouse.y * 0.04;
-  });
-
-  return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} count={count} />
-        <bufferAttribute attach="attributes-color"    args={[colors, 3]}    count={count} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.07}
-        vertexColors
-        transparent
-        opacity={0.85}
-        sizeAttenuation
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
-    </points>
-  );
-}
-
-/** Wireframe torus knot — the signature 3D shape, responds to mouse */
-function WireframeTorus() {
-  const outer = useRef<THREE.Mesh>(null);
-  const inner = useRef<THREE.Mesh>(null);
-
-  useFrame(({ clock, mouse }) => {
-    const t = clock.elapsedTime;
-    if (outer.current) {
-      outer.current.rotation.x = t * 0.07  + mouse.y * 0.18;
-      outer.current.rotation.y = t * 0.11  + mouse.x * 0.18;
-      outer.current.rotation.z = t * 0.035;
-      const pulse = 1 + Math.sin(t * 0.6) * 0.025;
-      outer.current.scale.setScalar(pulse * 2.6);
-    }
-    if (inner.current) {
-      inner.current.rotation.x = -(t * 0.09  + mouse.y * 0.12);
-      inner.current.rotation.y =   t * 0.06  + mouse.x * 0.12;
-      inner.current.rotation.z = -(t * 0.05);
-      inner.current.scale.setScalar(1.4);
-    }
-  });
-
-  return (
-    <group>
-      {/* Outer torus knot — orange wireframe, the hero shape */}
-      <mesh ref={outer}>
-        <torusKnotGeometry args={[1, 0.28, 180, 20]} />
-        <meshStandardMaterial
-          color={ACCENT}
-          wireframe
-          transparent
-          opacity={0.22}
-          emissive={ACCENT}
-          emissiveIntensity={0.6}
-        />
-      </mesh>
-
-      {/* Inner solid torus knot — subtle, cream */}
-      <mesh ref={inner}>
-        <torusKnotGeometry args={[1, 0.15, 100, 12]} />
-        <meshStandardMaterial
-          color={INK}
-          wireframe
-          transparent
-          opacity={0.06}
-          emissive={INK}
-          emissiveIntensity={0.2}
-        />
-      </mesh>
-    </group>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   UI SUB-COMPONENTS
-══════════════════════════════════════════════════════════════════ */
-
-interface BrutButtonProps {
-  label: string;
-  onClick?: () => void;
-  variant?: "solid" | "ghost";
-  "data-testid"?: string;
-}
-function BrutButton({ label, onClick, variant = "solid", "data-testid": testid }: BrutButtonProps) {
-  const [hover, setHover] = useState(false);
-  const isSolid = variant === "solid";
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      data-testid={testid}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onFocus={() => setHover(true)}
-      onBlur={() => setHover(false)}
-      className="inline-flex items-center gap-3 px-5 py-3 font-mono text-[12px] font-bold uppercase tracking-[0.22em] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
-      style={{
-        background:  isSolid ? (hover ? ACCENT : INK)  : (hover ? INK  : "transparent"),
-        color:       isSolid ? (hover ? INK   : BG)    : (hover ? BG   : INK),
-        border:      `2px solid ${INK}`,
-        transition:  "none",
-      }}
-    >
-      <span>{label}</span>
-      <ArrowUpRight className="h-4 w-4" />
-    </button>
-  );
-}
-
-interface SocialLinkProps { Icon: typeof Github; href: string; label: string; }
-function SocialLink({ Icon, href, label }: SocialLinkProps) {
-  const [hover, setHover] = useState(false);
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={label}
-      data-testid={`link-${label.toLowerCase()}`}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onFocus={() => setHover(true)}
-      onBlur={() => setHover(false)}
-      className="inline-flex items-center gap-1.5 outline-none focus-visible:underline"
-      style={{
-        fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-        color:      hover ? ACCENT : INK,
-        opacity:    hover ? 1 : 0.65,
-        transition: "none",
-      }}
-    >
-      <Icon className="h-3 w-3 shrink-0" />
-      <span>{label}</span>
-    </a>
-  );
-}
-
+/* ════════════════════════════════════════════════════════════════
+   AMBIENT OVERLAYS
+════════════════════════════════════════════════════════════════ */
 function NoiseOverlay() {
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute inset-0 z-[2] opacity-[0.07]"
       style={{
-        backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+        backgroundImage:
+          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>" +
+          "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/>" +
+          "<feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0'/></filter>" +
+          "<rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
         backgroundRepeat: "repeat",
       }}
     />
@@ -631,7 +530,7 @@ function GridLines() {
         <div
           key={x}
           className="absolute inset-y-0 w-px"
-          style={{ left: `${x}%`, background: "rgba(242,239,230,0.035)" }}
+          style={{ left: `${x}%`, background: "rgba(242,239,230,0.03)" }}
         />
       ))}
     </div>
@@ -643,77 +542,19 @@ function Scanline() {
     <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] overflow-hidden">
       <div
         className="absolute inset-x-0 h-px brut-scan"
-        style={{ background: ACCENT, opacity: 0.5, boxShadow: `0 0 6px ${ACCENT}` }}
+        style={{ background: ACCENT, opacity: 0.45, boxShadow: `0 0 6px ${ACCENT}` }}
       />
     </div>
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   HOOKS
-══════════════════════════════════════════════════════════════════ */
-
-function useNowEverySecond() {
-  const [s, setS] = useState(() => fmtClock(new Date()));
-  useEffect(() => {
-    const id = setInterval(() => setS(fmtClock(new Date())), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return s;
-}
-function fmtClock(d: Date) {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
-
-function useScramble(target: string, durationMs: number, runKey: number | string, paused: boolean) {
-  const [out, setOut] = useState<string>(target);
-  useEffect(() => {
-    if (paused) { setOut(target); return; }
-    const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789█▓▒░<>/\\\\";
-    const start  = performance.now();
-    let raf      = 0;
-    const tick   = (now: number) => {
-      const t          = Math.min(1, (now - start) / durationMs);
-      const revealHead = Math.floor(t * (target.length + 4));
-      let s = "";
-      for (let i = 0; i < target.length; i++) {
-        const ch = target[i];
-        if (i < revealHead - 4) s += ch;
-        else if (ch === " ")    s += " ";
-        else s += glyphs[Math.floor(Math.random() * glyphs.length)];
-      }
-      setOut(s);
-      if (t < 1) raf = requestAnimationFrame(tick);
-      else       setOut(target);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, durationMs, runKey, paused]);
-  return out;
-}
-
-interface ScrambleTextProps { text: string; runKey?: number | string; durationMs?: number; paused?: boolean; }
-function ScrambleText({ text, runKey = 0, durationMs = 900, paused = false }: ScrambleTextProps) {
-  const out = useScramble(text, durationMs, runKey, paused);
-  return <span style={{ display: "inline-block", whiteSpace: "pre" }}>{out || "\u00A0"}</span>;
-}
-
-function useRotator<T>(items: T[], intervalMs: number, paused: boolean) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    if (paused || items.length <= 1) return;
-    const id = setInterval(() => setI(n => (n + 1) % items.length), intervalMs);
-    return () => clearInterval(id);
-  }, [items.length, intervalMs, paused]);
-  return items[i];
-}
-
-interface HeroCursorProps { container: React.RefObject<HTMLElement | null>; }
-function HeroCursor({ container }: HeroCursorProps) {
+/* ════════════════════════════════════════════════════════════════
+   CUSTOM CROSSHAIR CURSOR
+════════════════════════════════════════════════════════════════ */
+function HeroCursor({ container }: { container: React.RefObject<HTMLElement | null> }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [vis, setVis] = useState(false);
+
   useEffect(() => {
     const root = container.current;
     if (!root) return;
@@ -723,13 +564,13 @@ function HeroCursor({ container }: HeroCursorProps) {
       raf = 0;
       if (ref.current) ref.current.style.transform = `translate(${p.x - 14}px, ${p.y - 14}px)`;
     };
-    const onMove  = (e: MouseEvent) => {
+    const onMove = (e: MouseEvent) => {
       const r = root.getBoundingClientRect();
       p = { x: e.clientX - r.left, y: e.clientY - r.top };
       if (!raf) raf = requestAnimationFrame(apply);
     };
-    const onEnter = () => setVisible(true);
-    const onLeave = () => setVisible(false);
+    const onEnter = () => setVis(true);
+    const onLeave = () => setVis(false);
     root.addEventListener("mousemove",  onMove,  { passive: true });
     root.addEventListener("mouseenter", onEnter);
     root.addEventListener("mouseleave", onLeave);
@@ -740,16 +581,139 @@ function HeroCursor({ container }: HeroCursorProps) {
       root.removeEventListener("mouseleave", onLeave);
     };
   }, [container]);
+
   return (
     <div
       ref={ref}
       aria-hidden
       className="pointer-events-none absolute left-0 top-0 z-[6] h-7 w-7"
-      style={{ opacity: visible ? 1 : 0, transition: "opacity 0.18s", willChange: "transform", mixBlendMode: "difference" }}
+      style={{
+        opacity: vis ? 1 : 0,
+        transition: "opacity 0.15s",
+        willChange: "transform",
+        mixBlendMode: "difference",
+      }}
     >
       <span className="absolute inset-0 border" style={{ borderColor: ACCENT }} />
       <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2" style={{ background: ACCENT, opacity: 0.7 }} />
       <span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2"  style={{ background: ACCENT, opacity: 0.7 }} />
     </div>
   );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   UI ATOMS
+════════════════════════════════════════════════════════════════ */
+interface BrutButtonProps {
+  label: string;
+  onClick?: () => void;
+  variant?: "solid" | "ghost";
+  "data-testid"?: string;
+}
+function BrutButton({ label, onClick, variant = "solid", "data-testid": tid }: BrutButtonProps) {
+  const [hov, setHov] = useState(false);
+  const solid = variant === "solid";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={tid}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      onFocus={() => setHov(true)}
+      onBlur={() => setHov(false)}
+      className="inline-flex items-center gap-2 px-4 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.22em] outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+      style={{
+        background:  solid ? (hov ? ACCENT  : INK)         : (hov ? INK  : "transparent"),
+        color:       solid ? (hov ? INK     : BG)           : (hov ? BG   : INK),
+        border:      `2px solid ${INK}`,
+        transition:  "none",
+      }}
+    >
+      {label}
+      <ArrowUpRight className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+function SocialLink({ Icon, href, label }: { Icon: typeof Github; href: string; label: string }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      data-testid={`link-${label.toLowerCase()}`}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      onFocus={() => setHov(true)}
+      onBlur={() => setHov(false)}
+      className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] outline-none focus-visible:underline"
+      style={{
+        color:   hov ? ACCENT : INK,
+        opacity: hov ? 1 : 0.5,
+        transition: "none",
+      }}
+    >
+      <Icon className="h-3 w-3 shrink-0" />
+      <span className="hidden sm:inline">{label}</span>
+    </a>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   HOOKS
+════════════════════════════════════════════════════════════════ */
+function useNowEverySecond() {
+  const fmt = (d: Date) => {
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  };
+  const [s, setS] = useState(() => fmt(new Date()));
+  useEffect(() => {
+    const id = setInterval(() => setS(fmt(new Date())), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return s;
+}
+
+/* ── ScrambleText ───────────────────────────────────────────── */
+function useScramble(target: string, durationMs: number, runKey: number | string, paused: boolean) {
+  const [out, setOut] = useState(target);
+  useEffect(() => {
+    if (paused) { setOut(target); return; }
+    const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789█▓▒░<>/\\";
+    const start  = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t    = Math.min(1, (now - start) / durationMs);
+      const head = Math.floor(t * (target.length + 4));
+      let s = "";
+      for (let i = 0; i < target.length; i++) {
+        const ch = target[i];
+        if (i < head - 4) s += ch;
+        else if (ch === " ") s += " ";
+        else s += glyphs[Math.floor(Math.random() * glyphs.length)];
+      }
+      setOut(s);
+      if (t < 1) raf = requestAnimationFrame(tick);
+      else        setOut(target);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, durationMs, runKey, paused]);
+  return out;
+}
+
+interface ScrambleTextProps {
+  text: string;
+  runKey?: number | string;
+  durationMs?: number;
+  paused?: boolean;
+}
+function ScrambleText({ text, runKey = 0, durationMs = 800, paused = false }: ScrambleTextProps) {
+  const out = useScramble(text, durationMs, runKey, paused);
+  return <span style={{ display: "inline-block", whiteSpace: "pre" }}>{out || "\u00A0"}</span>;
 }
