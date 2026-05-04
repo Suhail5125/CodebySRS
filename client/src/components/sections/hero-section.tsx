@@ -4,26 +4,6 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
-
-/* ── WebGL error boundary — if GPU isn't available the 3D layer
-       simply vanishes; all text / animations continue normally. ── */
-class WebGLBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() { return { failed: true }; }
-  render() { return this.state.failed ? null : this.props.children; }
-}
-
-/** Returns true only when a real WebGL context can be created. */
-function webGLAvailable() {
-  try {
-    const c = document.createElement("canvas");
-    return !!(
-      c.getContext("webgl2") ||
-      c.getContext("webgl") ||
-      c.getContext("experimental-webgl")
-    );
-  } catch { return false; }
-}
 import {
   Github,
   Linkedin,
@@ -36,6 +16,36 @@ import {
 import type { AboutInfo } from "@shared";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Reveal } from "@/components/reveal";
+
+/* ─────────────────────────────────────────────────────────────────────────
+   WebGL guard — two layers of protection:
+   1. probeWebGL()  : actually executes a draw call before mounting Canvas,
+                      catching sandboxed/disabled GPU contexts that still
+                      return a non-null object from getContext().
+   2. WebGLBoundary : React error boundary — if THREE still throws after
+                      the probe passes, the 3D layer silently disappears
+                      instead of breaking the whole page.
+   ─────────────────────────────────────────────────────────────────────── */
+class WebGLBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? null : this.props.children; }
+}
+
+function probeWebGL(): boolean {
+  try {
+    const c = document.createElement("canvas");
+    c.width = 1;
+    c.height = 1;
+    const gl = (c.getContext("webgl2") ?? c.getContext("webgl")) as WebGLRenderingContext | null;
+    if (!gl) return false;
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    return gl.getError() === gl.NO_ERROR;
+  } catch {
+    return false;
+  }
+}
 
 interface HeroSectionProps {
   aboutInfo: AboutInfo | null;
@@ -91,6 +101,13 @@ const EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   const reducedMotion = !!useReducedMotion();
+
+  /* Gate the R3F canvas on a real GPU probe that runs after mount.
+     Starts false — Canvas never flashes then crashes on GPUless envs. */
+  const [webGLReady, setWebGLReady] = useState(false);
+  useEffect(() => {
+    setWebGLReady(probeWebGL());
+  }, []);
 
   const fullName  = aboutInfo?.name ?? "DEVELOPER";
   const firstName = (aboutInfo?.name?.split(" ")[0] ?? "DEVELOPER").toUpperCase();
@@ -158,7 +175,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           Wrapped in an error boundary so a missing GPU never breaks
           the rest of the hero — text / animations work regardless.
       ════════════════════════════════════════════════════════════ */}
-      {!reducedMotion && webGLAvailable() && (
+      {!reducedMotion && webGLReady && (
         <WebGLBoundary>
           <div className="pointer-events-none absolute inset-0 z-[0]">
             <Canvas
