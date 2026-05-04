@@ -18,8 +18,8 @@ interface HeroSectionProps {
   isLoading: boolean;
 }
 
-const INK = "#F2EFE6";
-const BG = "#0A0A0A";
+const INK    = "#F2EFE6";
+const BG     = "#0A0A0A";
 const ACCENT = "#FF3D00";
 
 const ROLES = [
@@ -49,15 +49,12 @@ const FOCUS_KEYWORDS = [
   "DX",
 ];
 
-/** Fallback social channels — used when `aboutInfo` is empty so the
- *  hero never collapses to "no socials". Real URLs from the admin
- *  override the matching label. */
 const FALLBACK_SOCIAL = {
-  github: "https://github.com",
-  linkedin: "https://linkedin.com",
-  twitter: "https://twitter.com",
+  github:    "https://github.com",
+  linkedin:  "https://linkedin.com",
+  twitter:   "https://twitter.com",
   instagram: "https://instagram.com",
-  email: "hello@codebysrs.dev",
+  email:     "hello@codebysrs.dev",
 };
 
 const STATEMENTS = [
@@ -83,16 +80,14 @@ const DATA_FEED = [
 export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   const reducedMotion = !!useReducedMotion();
 
-  const fullName = aboutInfo?.name ?? "DEVELOPER";
+  const fullName  = aboutInfo?.name ?? "DEVELOPER";
   const firstName = (aboutInfo?.name?.split(" ")[0] ?? "DEVELOPER").toUpperCase();
-  const lastName = (aboutInfo?.name?.split(" ").slice(1).join(" ") ?? "ENGINEER").toUpperCase() || "ENGINEER";
-  const bio =
-    aboutInfo?.bio ??
-    "I design and build modern web experiences — interfaces, interactions, and the systems that hold them together.";
-  const location = (aboutInfo?.location ?? "EARTH / GLOBAL").toUpperCase();
+  const lastName  = (aboutInfo?.name?.split(" ").slice(1).join(" ") ?? "ENGINEER").toUpperCase() || "ENGINEER";
+  const bio       = aboutInfo?.bio ?? "I design and build modern web experiences — interfaces, interactions, and the systems that hold them together.";
+  const location  = (aboutInfo?.location ?? "EARTH / GLOBAL").toUpperCase();
   const available = aboutInfo?.availableForWork ?? true;
 
-  // Role cycling — fixed-width slot prevents the layout from shifting.
+  // Role cycling
   const [roleIndex, setRoleIndex] = useState(0);
   useEffect(() => {
     if (reducedMotion) return;
@@ -101,28 +96,21 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   }, [reducedMotion]);
   const roleSlotCh = Math.max(...ROLES.map((r) => r.length));
 
-  // Five core channels with fallbacks.
   const socialLinks: { Icon: typeof Github; href: string; label: string }[] = [
-    { Icon: Github, href: aboutInfo?.githubUrl || FALLBACK_SOCIAL.github, label: "GitHub" },
-    { Icon: Linkedin, href: aboutInfo?.linkedinUrl || FALLBACK_SOCIAL.linkedin, label: "LinkedIn" },
-    { Icon: Twitter, href: aboutInfo?.twitterUrl || FALLBACK_SOCIAL.twitter, label: "Twitter" },
+    { Icon: Github,    href: aboutInfo?.githubUrl    || FALLBACK_SOCIAL.github,    label: "GitHub"    },
+    { Icon: Linkedin,  href: aboutInfo?.linkedinUrl  || FALLBACK_SOCIAL.linkedin,  label: "LinkedIn"  },
+    { Icon: Twitter,   href: aboutInfo?.twitterUrl   || FALLBACK_SOCIAL.twitter,   label: "Twitter"   },
     { Icon: Instagram, href: aboutInfo?.instagramUrl || FALLBACK_SOCIAL.instagram, label: "Instagram" },
-    { Icon: Mail, href: aboutInfo?.email ? `mailto:${aboutInfo.email}` : `mailto:${FALLBACK_SOCIAL.email}`, label: "Email" },
+    { Icon: Mail,      href: aboutInfo?.email ? `mailto:${aboutInfo.email}` : `mailto:${FALLBACK_SOCIAL.email}`, label: "Email" },
   ];
 
   const scrollTo = (id: string) =>
     document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
 
-  // Live clock for the top status bar (1Hz).
-  const now = useNowEverySecond();
-
-  // Live data-feed item rotates every 2.4s.
-  const feedItem = useRotator(DATA_FEED, 2400, reducedMotion);
-
-  // Rotating statement for the NOW card.
+  const now         = useNowEverySecond();
+  const feedItem    = useRotator(DATA_FEED,    2400, reducedMotion);
   const nowStatement = useRotator(STATEMENTS, 2200, reducedMotion);
 
-  // Scoped cursor crosshair tracks the mouse only inside this section.
   const sectionRef = useRef<HTMLElement>(null);
 
   return (
@@ -132,18 +120,21 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       className="relative min-h-screen w-full overflow-hidden"
       style={{ background: BG, color: INK, fontFamily: "var(--font-sans)" }}
     >
-      {/* ==========  Background layers ========== */}
+      {/* Background layers */}
       <NoiseOverlay />
       <GridLines />
       {!reducedMotion && <Scanline />}
       {!reducedMotion && <HeroCursor container={sectionRef} />}
 
-      {/* ==========  TOP STATUS BAR ========== */}
-      {/* 2px solid border — matches how other panel headers are styled */}
+      {/* ══════════════════════════════════════════════════
+          TOP STATUS BAR
+          Section label lives here — right side annotation
+          ══════════════════════════════════════════════════ */}
       <div
-        className="relative z-[3] flex w-full items-center justify-between px-6 py-3 font-mono text-[11px] uppercase tracking-[0.18em] lg:px-10"
+        className="relative z-[3] flex w-full items-center justify-between px-6 py-2.5 font-mono text-[11px] uppercase tracking-[0.18em] lg:px-10"
         style={{ borderBottom: `2px solid ${INK}`, color: INK }}
       >
+        {/* Left: availability + live feed */}
         <div className="flex items-center gap-3">
           <span
             className="inline-block h-2 w-2 brut-blink"
@@ -151,244 +142,224 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             aria-hidden
           />
           <span className="opacity-80">{available ? "LIVE" : "OFFLINE"}</span>
-          <span className="opacity-30">/</span>
-          <span
-            className="tabular-nums opacity-60"
-            style={{ minWidth: "16ch", display: "inline-block" }}
-          >
-            <ScrambleText
-              text={feedItem}
-              runKey={feedItem}
-              durationMs={420}
-              paused={reducedMotion}
-            />
+          <span className="opacity-20">·</span>
+          <span className="tabular-nums opacity-55 hidden sm:inline-block" style={{ minWidth: "16ch" }}>
+            <ScrambleText text={feedItem} runKey={feedItem} durationMs={420} paused={reducedMotion} />
           </span>
         </div>
-        <div className="hidden items-center gap-3 md:flex">
-          <span
-            className="tabular-nums opacity-80"
-            style={{ minWidth: "8ch", display: "inline-block", textAlign: "right" }}
-          >
+
+        {/* Right: section index annotation + clock */}
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-2">
+            <span style={{ color: ACCENT }}>[ SECTION 01 ]</span>
+            <span className="opacity-40">/</span>
+            <span className="opacity-70">HERO</span>
+          </div>
+          <span className="hidden tabular-nums opacity-50 md:inline-block" style={{ minWidth: "8ch" }}>
             {now}
           </span>
         </div>
       </div>
 
-      {/* ==========  MAIN CONTENT ========== */}
-      <main className="relative z-[3] mx-auto w-full max-w-[1600px] px-6 pt-4 pb-8 lg:px-10 lg:pt-6">
+      {/* ══════════════════════════════════════════════════
+          MAIN CONTENT
+          ══════════════════════════════════════════════════ */}
+      <main className="relative z-[3] mx-auto w-full max-w-[1600px] px-6 pb-8 pt-6 lg:px-10">
 
-        {/* Outer bordered panel — matches About / Projects panel language */}
+        {/* Single outer bordered frame */}
         <div style={{ border: `2px solid ${INK}` }}>
           <div className="grid grid-cols-12">
 
-            {/* ── LEFT ZONE: Section label (2 cols) ── */}
-            <aside
-              className="col-span-12 lg:col-span-2"
-              style={{ borderRight: `2px solid ${INK}`, borderBottom: `2px solid ${INK}` }}
-            >
-              {/* Section index — matches SectionHeader typographic pattern exactly */}
-              <div className="p-5 font-mono text-[11px] uppercase tracking-[0.22em]">
-                <div style={{ color: ACCENT }}>[ SECTION 01 ]</div>
-                <div className="mt-1 opacity-70">/ HERO</div>
-                <div className="mt-3 h-[2px] w-12" style={{ background: ACCENT }} />
-              </div>
-
-              {/* Manifesto — desktop only */}
-              <div className="hidden p-5 pt-0 lg:block">
-                <div className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-50">MANIFESTO</div>
-                <p className="mt-2 font-mono text-[11px] max-w-[160px] leading-snug opacity-70">
-                  Build sharp.<br />
-                  Ship loud.<br />
-                  Cut the fluff.
-                </p>
-              </div>
-            </aside>
-
-            {/* ── CENTER ZONE: Identity, headline, role, CTAs (7 cols) ── */}
+            {/* ── NAME ZONE — left 9 cols ──────────────────────── */}
             <div
-              className="col-span-12 lg:col-span-7 p-5 lg:p-8"
+              className="col-span-12 lg:col-span-9"
               style={{ borderRight: `2px solid ${INK}` }}
             >
-              {/* Identity kicker — label → headline → role → CTAs */}
-              {isLoading ? (
-                <Skeleton className="mb-6 h-4 w-72 bg-white/10" />
-              ) : (
-                <Reveal variant="clip" delay={0}>
-                  <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.32em] opacity-70">
-                    <span style={{ color: ACCENT }}>{"//"}</span> identity ={" "}
-                    <span style={{ color: INK }}>"{fullName}"</span>
-                  </p>
-                </Reveal>
-              )}
-
-              {/* Headline — name as primary visual anchor */}
-              {isLoading ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-20 w-3/4 bg-white/10" />
-                  <Skeleton className="h-20 w-2/3 bg-white/10" />
-                </div>
-              ) : (
-                <h1
-                  data-testid="hero-name"
-                  className="uppercase tracking-[-0.03em]"
-                  style={{
-                    fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                    fontSize: "clamp(2.5rem, 8vw, 8rem)",
-                    fontWeight: 800,
-                    lineHeight: 0.9,
-                    color: INK,
-                  }}
-                >
-                  <Reveal variant="clip" delay={40}>
-                    <span className="block">
-                      <ScrambleText
-                        text={firstName}
-                        paused={reducedMotion}
-                        durationMs={950}
-                      />
-                    </span>
+              {/* Identity kicker */}
+              <div className="px-6 pt-6 pb-2 lg:px-8">
+                {isLoading ? (
+                  <Skeleton className="h-4 w-64 bg-white/10" />
+                ) : (
+                  <Reveal variant="clip" delay={0}>
+                    <p className="font-mono text-[11px] uppercase tracking-[0.32em] opacity-60">
+                      <span style={{ color: ACCENT }}>{"//"}</span>{" "}
+                      identity = <span style={{ color: INK }}>"{fullName}"</span>
+                    </p>
                   </Reveal>
-                  <Reveal variant="clip" delay={120}>
-                    <span className="block">
-                      <span className="inline-flex items-baseline gap-[0.2em]">
-                        <span
-                          aria-hidden
-                          className="inline-block h-[0.5em] w-[0.5em] translate-y-[-0.05em]"
-                          style={{ background: ACCENT }}
-                        />
-                        <ScrambleText
-                          text={lastName}
-                          paused={reducedMotion}
-                          durationMs={1100}
-                        />
-                      </span>
-                    </span>
-                  </Reveal>
-                </h1>
-              )}
+                )}
+              </div>
 
-              {/* Role cycler */}
-              {!isLoading && (
-                <Reveal variant="rise" delay={180}>
-                  <div className="mt-4 flex flex-wrap items-center gap-3 font-mono text-[12px] uppercase tracking-[0.22em]">
-                    <span className="opacity-50">ROLE</span>
-                    <span className="opacity-30">[</span>
-                    <span
-                      className="inline-block uppercase"
-                      style={{ minWidth: `${roleSlotCh}ch`, color: INK }}
-                    >
-                      <ScrambleText
-                        text={ROLES[roleIndex].toUpperCase()}
-                        runKey={roleIndex}
-                        paused={reducedMotion}
-                        durationMs={520}
-                      />
-                    </span>
-                    <span className="opacity-30">]</span>
-                    <span className="opacity-30">·</span>
-                    <span className="tabular-nums opacity-50">
-                      {String(roleIndex + 1).padStart(2, "0")}/
-                      {String(ROLES.length).padStart(2, "0")}
-                    </span>
+              {/* THE NAME — absolute focal point */}
+              <div className="px-6 pb-0 lg:px-8">
+                {isLoading ? (
+                  <div className="space-y-4 py-4">
+                    <Skeleton className="h-28 w-3/4 bg-white/10" />
+                    <Skeleton className="h-28 w-2/3 bg-white/10" />
                   </div>
-                </Reveal>
-              )}
-
-              {/* FOCUS keywords */}
-              {!isLoading && (
-                <Reveal variant="rise" delay={220}>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.22em]">
-                    <span className="opacity-50">FOCUS</span>
-                    <span className="opacity-30">·</span>
-                    {FOCUS_KEYWORDS.map((kw, i) => (
-                      <span key={kw} className="inline-flex items-center gap-2">
-                        <span style={{ color: INK }} className="opacity-90">{kw}</span>
-                        {i < FOCUS_KEYWORDS.length - 1 && (
-                          <span style={{ color: ACCENT }} className="opacity-70">/</span>
-                        )}
+                ) : (
+                  <h1
+                    data-testid="hero-name"
+                    className="uppercase"
+                    style={{
+                      fontFamily:   "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                      fontSize:     "clamp(3.5rem, 11vw, 11rem)",
+                      fontWeight:   800,
+                      lineHeight:   0.88,
+                      letterSpacing: "-0.03em",
+                      color:        INK,
+                    }}
+                  >
+                    <Reveal variant="clip" delay={30}>
+                      <span className="block">
+                        <ScrambleText text={firstName} paused={reducedMotion} durationMs={950} />
                       </span>
-                    ))}
-                  </div>
-                </Reveal>
-              )}
+                    </Reveal>
+                    <Reveal variant="clip" delay={110}>
+                      <span className="block">
+                        <span className="inline-flex items-baseline gap-[0.18em]">
+                          {/* accent square — a visual punch mark before the last name */}
+                          <span
+                            aria-hidden
+                            className="inline-block translate-y-[-0.04em]"
+                            style={{
+                              width:      "0.42em",
+                              height:     "0.42em",
+                              background: ACCENT,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <ScrambleText text={lastName} paused={reducedMotion} durationMs={1100} />
+                        </span>
+                      </span>
+                    </Reveal>
+                  </h1>
+                )}
+              </div>
 
-              {/* Bio — visually hidden, test-id preserved */}
+              {/* Bio — screen-reader only, test-id preserved */}
               {!isLoading && (
                 <p data-testid="hero-bio" className="sr-only">{bio}</p>
               )}
 
-              {/* CTAs */}
-              <Reveal variant="rise" delay={280}>
-                <div className="mt-6 flex flex-wrap items-stretch gap-3">
-                  <BrutButton
-                    label="START PROJECT"
-                    onClick={() => scrollTo("#contact")}
-                    data-testid="button-lets-work-together"
-                    variant="solid"
-                  />
-                  <BrutButton
-                    label="VIEW WORK"
-                    onClick={() => scrollTo("#projects")}
-                    data-testid="button-view-work"
-                    variant="ghost"
-                  />
-                </div>
-              </Reveal>
-            </div>
+              {/* ── BOTTOM SUB-ROW — role / social / CTAs ──────── */}
+              {/* Horizontal band separated by a full-width 2px top border */}
+              <div style={{ borderTop: `2px solid ${INK}` }} className="grid grid-cols-1 lg:grid-cols-2">
 
-            {/* ── RIGHT ZONE: Channels + NOW card (3 cols) ── */}
-            <div className="col-span-12 lg:col-span-3 flex flex-col">
+                {/* Left half: role cycler + focus keywords */}
+                <div className="px-6 py-5 lg:px-8 lg:border-r-2 lg:border-[#F2EFE6]">
+                  {!isLoading && (
+                    <Reveal variant="rise" delay={170}>
+                      {/* Role cycler */}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.22em]">
+                        <span className="opacity-40">ROLE</span>
+                        <span className="opacity-20">[</span>
+                        <span
+                          className="inline-block"
+                          style={{ minWidth: `${roleSlotCh}ch`, color: INK }}
+                        >
+                          <ScrambleText
+                            text={ROLES[roleIndex].toUpperCase()}
+                            runKey={roleIndex}
+                            paused={reducedMotion}
+                            durationMs={520}
+                          />
+                        </span>
+                        <span className="opacity-20">]</span>
+                        <span className="opacity-20">·</span>
+                        <span className="tabular-nums opacity-35">
+                          {String(roleIndex + 1).padStart(2, "0")}/{String(ROLES.length).padStart(2, "0")}
+                        </span>
+                      </div>
 
-              {/* CHANNELS — compact horizontal mono row */}
-              <Reveal variant="rise" delay={320}>
-                <div
-                  className="p-5"
-                  style={{ borderBottom: `2px solid ${INK}` }}
-                >
-                  <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.32em] opacity-60">
-                    <span style={{ color: ACCENT }}>{"//"}</span>
-                    <span className="ml-2">CHANNELS</span>
-                  </div>
-                  {/* Horizontal social link row — icon + label, separated by · */}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    {socialLinks.map(({ Icon, href, label }, i) => (
-                      <span key={label} className="inline-flex items-center gap-1.5">
-                        <SocialLink Icon={Icon} href={href} label={label} />
-                        {i < socialLinks.length - 1 && (
-                          <span
-                            className="font-mono text-[10px] opacity-30"
-                            aria-hidden
-                          >
-                            ·
+                      {/* Focus strip */}
+                      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.22em]">
+                        <span className="opacity-40">FOCUS</span>
+                        <span className="opacity-20">·</span>
+                        {FOCUS_KEYWORDS.map((kw, i) => (
+                          <span key={kw} className="inline-flex items-center gap-1.5">
+                            <span className="opacity-85">{kw}</span>
+                            {i < FOCUS_KEYWORDS.length - 1 && (
+                              <span style={{ color: ACCENT }} className="opacity-60">/</span>
+                            )}
                           </span>
-                        )}
-                      </span>
-                    ))}
-                  </div>
+                        ))}
+                      </div>
+                    </Reveal>
+                  )}
                 </div>
-              </Reveal>
 
-              {/* NOW card — rotating statement */}
-              {!isLoading && (
-                <Reveal variant="rise" delay={380}>
-                  <div className="p-5" style={{ borderBottom: `2px solid ${INK}` }}>
-                    <div className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.32em] opacity-60">
-                      <span>
-                        <span style={{ color: ACCENT }}>{"//"}</span>
-                        <span className="ml-2">NOW</span>
-                      </span>
-                      <span
-                        aria-hidden
-                        className="inline-block h-1.5 w-1.5 brut-blink"
-                        style={{ background: ACCENT }}
+                {/* Right half: social row + CTAs */}
+                <div className="flex flex-col justify-between gap-4 px-6 py-5 lg:px-8">
+                  {/* Social channels — compact horizontal mono row */}
+                  <Reveal variant="rise" delay={210}>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+                      {socialLinks.map(({ Icon, href, label }, i) => (
+                        <span key={label} className="inline-flex items-center gap-1.5">
+                          <SocialLink Icon={Icon} href={href} label={label} />
+                          {i < socialLinks.length - 1 && (
+                            <span className="opacity-20" aria-hidden>·</span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  </Reveal>
+
+                  {/* CTAs */}
+                  <Reveal variant="rise" delay={250}>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <BrutButton
+                        label="START PROJECT"
+                        onClick={() => scrollTo("#contact")}
+                        data-testid="button-lets-work-together"
+                        variant="solid"
+                      />
+                      <BrutButton
+                        label="VIEW WORK"
+                        onClick={() => scrollTo("#projects")}
+                        data-testid="button-view-work"
+                        variant="ghost"
                       />
                     </div>
+                  </Reveal>
+                </div>
+
+              </div>
+            </div>
+
+            {/* ── NOW CARD — right 3 cols, tall accent column ──── */}
+            {/* border-t always (mobile stacks below name); on desktop the outer
+                container top-border handles it, but border-t-2 re-draws it which
+                is fine since it sits flush — use border-t only on mobile */}
+            <div className="col-span-12 flex flex-col lg:col-span-3 border-t-2 border-[#F2EFE6] lg:border-t-0">
+              {/* Zone label */}
+              <Reveal variant="rise" delay={300}>
+                <div
+                  className="flex items-center justify-between px-5 py-3 font-mono text-[10px] uppercase tracking-[0.28em]"
+                  style={{ borderBottom: `2px solid ${INK}` }}
+                >
+                  <span className="opacity-50">
+                    <span style={{ color: ACCENT }}>{"//"}</span>
+                    <span className="ml-2">NOW</span>
+                  </span>
+                  <span
+                    aria-hidden
+                    className="inline-block h-1.5 w-1.5 brut-blink"
+                    style={{ background: ACCENT }}
+                  />
+                </div>
+              </Reveal>
+
+              {/* Rotating statement — large, fills the column */}
+              <div className="flex flex-1 items-center px-5 py-8">
+                {!isLoading && (
+                  <Reveal variant="clip" delay={340}>
                     <div
                       className="font-bold uppercase tracking-tight"
                       style={{
-                        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                        fontSize: "clamp(1rem, 1.4vw, 1.25rem)",
-                        lineHeight: 1.05,
+                        fontFamily:   "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                        fontSize:     "clamp(1.1rem, 2vw, 1.6rem)",
+                        lineHeight:   1.0,
+                        letterSpacing: "-0.02em",
                       }}
                     >
                       <ScrambleText
@@ -398,18 +369,23 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                         durationMs={420}
                       />
                     </div>
-                  </div>
-                </Reveal>
-              )}
+                  </Reveal>
+                )}
+              </div>
+
+              {/* Accent rule at the bottom of the NOW column */}
+              <div style={{ height: 3, background: ACCENT }} />
             </div>
 
           </div>
         </div>
 
-        {/* ==========  BOTTOM STRIP ========== */}
+        {/* ══════════════════════════════════════════════════
+            BOTTOM STRIP — availability + scroll
+            ══════════════════════════════════════════════════ */}
         <div
-          className="mt-4 flex flex-wrap items-center justify-between gap-4 font-mono text-[11px] uppercase tracking-[0.22em]"
-          style={{ borderTop: `2px solid ${INK}`, paddingTop: "1rem" }}
+          className="mt-0 flex flex-wrap items-center justify-between gap-4 px-1 py-4 font-mono text-[11px] uppercase tracking-[0.22em]"
+          style={{ borderTop: `2px solid ${INK}` }}
         >
           <div className="flex items-center gap-3">
             <span
@@ -420,26 +396,28 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             <span className="opacity-80">
               {available ? "AVAILABLE FOR WORK" : "BOOKED — JOIN WAITLIST"}
             </span>
-            <span className="opacity-30">·</span>
-            <span className="opacity-50">{location}</span>
+            <span className="opacity-20">·</span>
+            <span className="opacity-45">{location}</span>
           </div>
           <button
             type="button"
             onClick={() => scrollTo("#about")}
-            className="group flex items-center gap-2 opacity-70 hover:opacity-100"
+            className="flex items-center gap-2 opacity-60 hover:opacity-100"
+            style={{ transition: "none" }}
           >
             <span>SCROLL</span>
-            <ArrowDown
-              className={`h-3 w-3 ${reducedMotion ? "" : "motion-safe:animate-bounce"}`}
-            />
+            <ArrowDown className={`h-3 w-3 ${reducedMotion ? "" : "motion-safe:animate-bounce"}`} />
           </button>
         </div>
+
       </main>
     </section>
   );
 }
 
-/* ==================== Sub-components ==================== */
+/* ══════════════════════════════════════════════════════════════
+   SUB-COMPONENTS
+══════════════════════════════════════════════════════════════ */
 
 interface BrutButtonProps {
   label: string;
@@ -447,24 +425,9 @@ interface BrutButtonProps {
   variant?: "solid" | "ghost";
   "data-testid"?: string;
 }
-/**
- * Brutalist primary CTA — hard-bordered block, no animation,
- * instant color invert on hover (transition: none).
- */
-function BrutButton({
-  label,
-  onClick,
-  variant = "solid",
-  "data-testid": testid,
-}: BrutButtonProps) {
+function BrutButton({ label, onClick, variant = "solid", "data-testid": testid }: BrutButtonProps) {
   const [hover, setHover] = useState(false);
   const isSolid = variant === "solid";
-  const bg = isSolid
-    ? hover ? ACCENT : INK
-    : hover ? INK : "transparent";
-  const fg = isSolid
-    ? hover ? INK : BG
-    : hover ? BG : INK;
   return (
     <button
       type="button"
@@ -476,10 +439,10 @@ function BrutButton({
       onBlur={() => setHover(false)}
       className="inline-flex items-center gap-3 px-5 py-3 font-mono text-[12px] font-bold uppercase tracking-[0.22em] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
       style={{
-        background: bg,
-        color: fg,
-        border: `2px solid ${INK}`,
-        transition: "none",
+        background:  isSolid ? (hover ? ACCENT : INK)           : (hover ? INK : "transparent"),
+        color:       isSolid ? (hover ? INK   : BG)             : (hover ? BG  : INK),
+        border:      `2px solid ${INK}`,
+        transition:  "none",
       }}
     >
       <span>{label}</span>
@@ -488,12 +451,7 @@ function BrutButton({
   );
 }
 
-/** Compact horizontal social link — icon + label, used in the channel row. */
-interface SocialLinkProps {
-  Icon: typeof Github;
-  href: string;
-  label: string;
-}
+interface SocialLinkProps { Icon: typeof Github; href: string; label: string; }
 function SocialLink({ Icon, href, label }: SocialLinkProps) {
   const [hover, setHover] = useState(false);
   return (
@@ -507,11 +465,11 @@ function SocialLink({ Icon, href, label }: SocialLinkProps) {
       onMouseLeave={() => setHover(false)}
       onFocus={() => setHover(true)}
       onBlur={() => setHover(false)}
-      className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] outline-none focus-visible:underline"
+      className="inline-flex items-center gap-1.5 outline-none focus-visible:underline"
       style={{
-        color: hover ? ACCENT : INK,
-        transition: "none",
         fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+        color:      hover ? ACCENT : INK,
+        transition: "none",
       }}
     >
       <Icon className="h-3 w-3 shrink-0" />
@@ -520,22 +478,19 @@ function SocialLink({ Icon, href, label }: SocialLinkProps) {
   );
 }
 
-/** Subtle SVG noise — gives the bg the brutalist grain feel. */
 function NoiseOverlay() {
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute inset-0 z-[1] opacity-[0.08]"
       style={{
-        backgroundImage:
-          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+        backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
         backgroundRepeat: "repeat",
       }}
     />
   );
 }
 
-/** Static hairline grid — divides the viewport into brutalist columns. */
 function GridLines() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-[1]">
@@ -550,25 +505,21 @@ function GridLines() {
   );
 }
 
-/** A single horizontal hairline that slowly travels the section. */
 function Scanline() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
       <div
         className="absolute inset-x-0 h-px brut-scan"
-        style={{
-          background: ACCENT,
-          opacity: 0.55,
-          boxShadow: `0 0 6px ${ACCENT}`,
-        }}
+        style={{ background: ACCENT, opacity: 0.55, boxShadow: `0 0 6px ${ACCENT}` }}
       />
     </div>
   );
 }
 
-/* ==================== Hooks ==================== */
+/* ══════════════════════════════════════════════════════════════
+   HOOKS
+══════════════════════════════════════════════════════════════ */
 
-/** HH:MM:SS string ticking once per second. */
 function useNowEverySecond() {
   const [s, setS] = useState(() => fmtClock(new Date()));
   useEffect(() => {
@@ -583,24 +534,15 @@ function fmtClock(d: Date) {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-/** Character-scramble decoder. */
-function useScramble(
-  target: string,
-  durationMs: number,
-  runKey: number | string,
-  paused: boolean,
-) {
+function useScramble(target: string, durationMs: number, runKey: number | string, paused: boolean) {
   const [out, setOut] = useState<string>(target);
   useEffect(() => {
-    if (paused) {
-      setOut(target);
-      return;
-    }
+    if (paused) { setOut(target); return; }
     const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789█▓▒░<>/\\\\";
-    const start = performance.now();
-    let raf = 0;
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / durationMs);
+    const start  = performance.now();
+    let raf      = 0;
+    const tick   = (now: number) => {
+      const t          = Math.min(1, (now - start) / durationMs);
       const revealHead = Math.floor(t * (target.length + 4));
       let s = "";
       for (let i = 0; i < target.length; i++) {
@@ -626,21 +568,11 @@ interface ScrambleTextProps {
   durationMs?: number;
   paused?: boolean;
 }
-function ScrambleText({
-  text,
-  runKey = 0,
-  durationMs = 900,
-  paused = false,
-}: ScrambleTextProps) {
+function ScrambleText({ text, runKey = 0, durationMs = 900, paused = false }: ScrambleTextProps) {
   const out = useScramble(text, durationMs, runKey, paused);
-  return (
-    <span style={{ display: "inline-block", whiteSpace: "pre" }}>
-      {out || "\u00A0"}
-    </span>
-  );
+  return <span style={{ display: "inline-block", whiteSpace: "pre" }}>{out || "\u00A0"}</span>;
 }
 
-/** Cycles through `items` every `intervalMs`. */
 function useRotator<T>(items: T[], intervalMs: number, paused: boolean) {
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -651,36 +583,33 @@ function useRotator<T>(items: T[], intervalMs: number, paused: boolean) {
   return items[i];
 }
 
-interface HeroCursorProps {
-  container: React.RefObject<HTMLElement | null>;
-}
-/** Brutalist square crosshair that tracks the mouse — only inside the hero. */
+interface HeroCursorProps { container: React.RefObject<HTMLElement | null>; }
 function HeroCursor({ container }: HeroCursorProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const root = container.current;
     if (!root) return;
-    let raf = 0;
+    let raf     = 0;
     let pending = { x: 0, y: 0 };
     const apply = () => {
       raf = 0;
       if (!ref.current) return;
       ref.current.style.transform = `translate(${pending.x - 14}px, ${pending.y - 14}px)`;
     };
-    const onMove = (e: MouseEvent) => {
+    const onMove  = (e: MouseEvent) => {
       const rect = root.getBoundingClientRect();
-      pending = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      pending    = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       if (!raf) raf = requestAnimationFrame(apply);
     };
     const onEnter = () => setVisible(true);
     const onLeave = () => setVisible(false);
-    root.addEventListener("mousemove", onMove, { passive: true });
+    root.addEventListener("mousemove",  onMove,  { passive: true });
     root.addEventListener("mouseenter", onEnter);
     root.addEventListener("mouseleave", onLeave);
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      root.removeEventListener("mousemove", onMove);
+      root.removeEventListener("mousemove",  onMove);
       root.removeEventListener("mouseenter", onEnter);
       root.removeEventListener("mouseleave", onLeave);
     };
@@ -691,21 +620,15 @@ function HeroCursor({ container }: HeroCursorProps) {
       aria-hidden
       className="pointer-events-none absolute left-0 top-0 z-[6] h-7 w-7"
       style={{
-        opacity: visible ? 1 : 0,
+        opacity:    visible ? 1 : 0,
         transition: "opacity 0.2s ease-out",
         willChange: "transform",
         mixBlendMode: "difference",
       }}
     >
       <span className="absolute inset-0 border" style={{ borderColor: ACCENT }} />
-      <span
-        className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2"
-        style={{ background: ACCENT, opacity: 0.7 }}
-      />
-      <span
-        className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2"
-        style={{ background: ACCENT, opacity: 0.7 }}
-      />
+      <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2" style={{ background: ACCENT, opacity: 0.7 }} />
+      <span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2"  style={{ background: ACCENT, opacity: 0.7 }} />
     </div>
   );
 }
