@@ -130,6 +130,69 @@ function WaveformBG({ mouseRef, paused }: {
 }
 
 /* ════════════════════════════════════════════════════════════════
+   SPOTLIGHT PORTRAITS — MYIMG2 base, MYIMG1 revealed inside a
+   circular mask that follows the cursor.
+════════════════════════════════════════════════════════════════ */
+function SpotlightPortraits({
+  spotlightRef,
+  reducedMotion,
+}: {
+  spotlightRef: React.RefObject<HTMLDivElement>;
+  reducedMotion: boolean;
+}) {
+  const imgStyle: React.CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: "center",
+    userSelect: "none",
+    pointerEvents: "none",
+  };
+
+  const RADIUS = 240;
+  const FEATHER = 60;
+  const maskValue = `radial-gradient(circle ${RADIUS}px at var(--mx, -9999px) var(--my, -9999px), rgba(0,0,0,1) 0%, rgba(0,0,0,1) ${
+    ((RADIUS - FEATHER) / RADIUS) * 100
+  }%, rgba(0,0,0,0) 100%)`;
+
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] h-full w-full">
+      {/* Base layer: MYIMG2 always visible */}
+      <img src="/hero/myimg2.png" alt="" style={imgStyle} draggable={false} />
+
+      {/* Top layer: MYIMG1 revealed only inside the spotlight */}
+      {!reducedMotion && (
+        <div
+          ref={spotlightRef}
+          className="absolute inset-0 h-full w-full"
+          style={{
+            opacity: 0,
+            transition: "opacity 200ms ease-out",
+            WebkitMaskImage: maskValue,
+            maskImage: maskValue,
+            WebkitMaskRepeat: "no-repeat",
+            maskRepeat: "no-repeat",
+          }}
+        >
+          <img src="/hero/myimg1.png" alt="" style={imgStyle} draggable={false} />
+        </div>
+      )}
+
+      {/* Contrast overlay so foreground text stays legible */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.35) 45%, rgba(10,10,10,0.7) 100%)",
+        }}
+      />
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
    LETTER — one character with a CSS 3D flip entrance + live
    mouse-tracking that fans each letter outward from center.
 ════════════════════════════════════════════════════════════════ */
@@ -204,6 +267,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   /* Mouse — stored in a ref so Canvas 2D + AnimLetter rAF loops
      read it without causing React re-renders */
   const sectionRef = useRef<HTMLElement>(null);
+  const spotlightRef = useRef<HTMLDivElement>(null);
   const mouseRef   = useRef({ x: 0, y: 0 });
   useEffect(() => {
     if (reducedMotion) return;
@@ -215,12 +279,28 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
         x: ((e.clientX - r.left) / r.width  - 0.5) * 2,
         y: ((e.clientY - r.top)  / r.height - 0.5) * 2,
       };
+      const sl = spotlightRef.current;
+      if (sl) {
+        sl.style.setProperty("--mx", `${e.clientX - r.left}px`);
+        sl.style.setProperty("--my", `${e.clientY - r.top}px`);
+        sl.style.opacity = "1";
+      }
     };
-    const onLeave = () => { mouseRef.current = { x: 0, y: 0 }; };
+    const onLeave = () => {
+      mouseRef.current = { x: 0, y: 0 };
+      const sl = spotlightRef.current;
+      if (sl) sl.style.opacity = "0";
+    };
+    const onEnter = () => {
+      const sl = spotlightRef.current;
+      if (sl) sl.style.opacity = "1";
+    };
     el.addEventListener("mousemove",  onMove,  { passive: true });
+    el.addEventListener("mouseenter", onEnter);
     el.addEventListener("mouseleave", onLeave);
     return () => {
       el.removeEventListener("mousemove",  onMove);
+      el.removeEventListener("mouseenter", onEnter);
       el.removeEventListener("mouseleave", onLeave);
     };
   }, [reducedMotion]);
@@ -272,8 +352,8 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       className="relative w-full overflow-hidden"
       style={{ minHeight: "100svh", background: BG, color: INK }}
     >
-      {/* ── LAYER 1: animated waveform canvas ── */}
-      <WaveformBG mouseRef={mouseRef} paused={reducedMotion} />
+      {/* ── LAYER 1: dual-portrait spotlight reveal ── */}
+      <SpotlightPortraits spotlightRef={spotlightRef} reducedMotion={reducedMotion} />
 
       {/* ── LAYER 2: film grain ── */}
       <NoiseOverlay />
