@@ -28,17 +28,35 @@ const FALLBACK = {
 };
 
 /* ═══════════════════════════════════════════════════════════════
-   MAGNETIC DOT GRID — Canvas 2D, zero GPU required.
-   Dots push away from cursor (spring physics), glow orange
-   when near. Makes the hero feel alive and responsive.
-═══════════════════════════════════════════════════════════════ */
-interface Dot { rx: number; ry: number; cx: number; cy: number; vy: number; vx: number; }
+   COMBINED HERO BACKGROUND — single Canvas 2D draw loop:
 
-function DotGridBG({
+   PASS 1 — Magnetic dot grid
+     Dots spring away from cursor, glow orange when near.
+
+   PASS 2 — Oscilloscope waveform channels
+     Five sine channels (cream + orange), drawn ON TOP of the
+     dots with edge-fade gradients. Mouse Y amplifies nearby
+     channels, mouse X warps their local frequency.
+
+   Both effects share one rAF loop — zero GPU, works everywhere.
+═══════════════════════════════════════════════════════════════ */
+interface Dot { rx: number; ry: number; cx: number; cy: number; vx: number; vy: number; }
+
+const WAVE_CHANNELS = [
+  { y: 0.22, r: 242, g: 239, b: 230, a: 0.09, freq: 2.8, amp: 0.030, spd: 0.50, ph: 0.0 },
+  { y: 0.38, r: 255, g:  61, b:   0, a: 0.16, freq: 4.5, amp: 0.020, spd: 0.95, ph: 1.4 },
+  { y: 0.52, r: 242, g: 239, b: 230, a: 0.07, freq: 1.9, amp: 0.045, spd: 0.38, ph: 2.8 },
+  { y: 0.66, r: 255, g:  61, b:   0, a: 0.11, freq: 6.1, amp: 0.016, spd: 1.65, ph: 0.7 },
+  { y: 0.80, r: 242, g: 239, b: 230, a: 0.06, freq: 3.3, amp: 0.026, spd: 0.62, ph: 4.2 },
+];
+
+function HeroBG({
   mousePxRef,
+  mouseRef,
   paused,
 }: {
   mousePxRef: React.RefObject<{ x: number; y: number }>;
+  mouseRef:   React.RefObject<{ x: number; y: number }>;
   paused: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -52,20 +70,21 @@ function DotGridBG({
     if (!ctx) return;
 
     let raf = 0;
-    const SPACING = 38;
-    const RADIUS   = 110;
-    const STRENGTH = 0.55;
+    let t   = 0;
+
+    /* ── dot grid constants ── */
+    const SPACING  = 38;
+    const RADIUS   = 120;
+    const STRENGTH = 0.52;
     const SPRING   = 0.08;
     const DAMP     = 0.75;
 
     const buildGrid = () => {
       const W = canvas.offsetWidth;
       const H = canvas.offsetHeight;
-      const cols = Math.ceil(W / SPACING) + 1;
-      const rows = Math.ceil(H / SPACING) + 1;
       const dots: Dot[] = [];
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
+      for (let r = 0; r <= Math.ceil(H / SPACING); r++) {
+        for (let c = 0; c <= Math.ceil(W / SPACING); c++) {
           const rx = c * SPACING;
           const ry = r * SPACING;
           dots.push({ rx, ry, cx: rx, cy: ry, vx: 0, vy: 0 });
@@ -86,44 +105,80 @@ function DotGridBG({
     resize();
 
     const draw = () => {
+      t += 0.007;
       const W  = canvas.offsetWidth;
       const H  = canvas.offsetHeight;
       ctx.clearRect(0, 0, W, H);
 
-      const mx = mousePxRef.current?.x ?? -9999;
-      const my = mousePxRef.current?.y ?? -9999;
+      const mx  = mousePxRef.current?.x ?? -9999;
+      const my  = mousePxRef.current?.y ?? -9999;
+      const mnx = mouseRef.current?.x   ?? 0;   /* −1…+1 */
+      const mny = mouseRef.current?.y   ?? 0;
 
+      /* ── PASS 1: dots ── */
       for (const d of dotsRef.current) {
-        const dx   = mx - d.rx;
-        const dy   = my - d.ry;
+        const dx  = mx - d.rx;
+        const dy  = my - d.ry;
         const dist = Math.sqrt(dx * dx + dy * dy);
         const inf  = Math.max(0, 1 - dist / RADIUS);
 
-        /* spring toward repulsion target */
-        const targetX = d.rx - dx * inf * STRENGTH;
-        const targetY = d.ry - dy * inf * STRENGTH;
-        d.vx = (d.vx + (targetX - d.cx) * SPRING) * DAMP;
-        d.vy = (d.vy + (targetY - d.cy) * SPRING) * DAMP;
+        const tx = d.rx - dx * inf * STRENGTH;
+        const ty = d.ry - dy * inf * STRENGTH;
+        d.vx = (d.vx + (tx - d.cx) * SPRING) * DAMP;
+        d.vy = (d.vy + (ty - d.cy) * SPRING) * DAMP;
         d.cx += d.vx;
         d.cy += d.vy;
 
-        const size    = 1.4 + inf * 2.2;
-        const opacity = 0.055 + inf * 0.32;
-        const r       = inf > 0.12 ? 255 : 242;
-        const g       = inf > 0.12 ? 61  : 239;
-        const b       = inf > 0.12 ? 0   : 230;
+        const size    = 1.4 + inf * 2.4;
+        const opacity = 0.05 + inf * 0.30;
+        const dr = inf > 0.1 ? 255 : 242;
+        const dg = inf > 0.1 ?  61 : 239;
+        const db = inf > 0.1 ?   0 : 230;
 
         ctx.beginPath();
         ctx.arc(d.cx, d.cy, size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r},${g},${b},${opacity})`;
+        ctx.fillStyle = `rgba(${dr},${dg},${db},${opacity})`;
         ctx.fill();
       }
+
+      /* ── PASS 2: waveform channels ── */
+      const step = Math.max(2, Math.floor(W / 480));
+      for (const ch of WAVE_CHANNELS) {
+        const cy       = H * ch.y;
+        const yInf     = Math.max(0, 1 - Math.abs(mny - (ch.y * 2 - 1)) * 1.3);
+        const eAmp     = H * ch.amp * (1 + yInf * 2.6);
+
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += step) {
+          const nx   = x / W;
+          const xInf = Math.max(0, 1 - Math.abs(nx - (mnx * 0.5 + 0.5)) * 3.5);
+          const fMod = 1 + xInf * 0.85;
+          const y = cy
+            + Math.sin(nx * Math.PI * 2 * ch.freq * fMod  + t * ch.spd         + ch.ph) * eAmp
+            + Math.sin(nx * Math.PI * 2 * ch.freq * 1.618 + t * ch.spd * 0.7   + ch.ph) * eAmp * 0.30
+            + Math.sin(nx * Math.PI * 2 * ch.freq * 0.5   + t * ch.spd * 1.4   + ch.ph) * eAmp * 0.16;
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+
+        /* edge-fade gradient */
+        const g  = ctx.createLinearGradient(0, 0, W, 0);
+        const cb = `rgba(${ch.r},${ch.g},${ch.b},`;
+        g.addColorStop(0,    cb + "0)");
+        g.addColorStop(0.06, cb + ch.a       + ")");
+        g.addColorStop(0.5,  cb + ch.a * 1.8 + ")");
+        g.addColorStop(0.94, cb + ch.a       + ")");
+        g.addColorStop(1,    cb + "0)");
+        ctx.strokeStyle = g;
+        ctx.lineWidth   = 1.5;
+        ctx.stroke();
+      }
+
       raf = requestAnimationFrame(draw);
     };
 
     draw();
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
-  }, [paused, mousePxRef]);
+  }, [paused, mousePxRef, mouseRef]);
 
   return (
     <canvas
@@ -275,8 +330,8 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       className="relative w-full overflow-hidden"
       style={{ minHeight: "100svh", background: BG, color: INK }}
     >
-      {/* ── magnetic dot grid canvas ── */}
-      <DotGridBG mousePxRef={mousePxRef} paused={reducedMotion} />
+      {/* ── dots + waveform canvas ── */}
+      <HeroBG mousePxRef={mousePxRef} mouseRef={mouseRef} paused={reducedMotion} />
 
       {/* ── grain ── */}
       <NoiseOverlay />
