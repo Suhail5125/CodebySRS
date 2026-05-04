@@ -358,7 +358,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       id="hero"
       ref={sectionRef}
       className="relative w-full overflow-hidden"
-      style={{ minHeight: "100svh", background: BG, color: INK }}
+      style={{ minHeight: "calc(100svh - 4.5rem)", height: "calc(100svh - 4.5rem)", background: BG, color: INK }}
     >
       {/* ── LAYER 1: dual-portrait spotlight reveal ── */}
       <SpotlightPortraits spotlightRef={spotlightRef} reducedMotion={reducedMotion} />
@@ -376,15 +376,25 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           ABSOLUTE SATELLITE ELEMENTS
       ═══════════════════════════════════════════════════ */}
 
-      {/* TOP-LEFT: brand mark */}
+      {/* TOP-LEFT: brand mark + availability badge */}
       <motion.div
-        className="absolute left-5 top-5 z-[5] font-mono text-[10px] uppercase tracking-[0.3em]"
-        style={{ opacity: 0.35 }}
+        className="absolute left-5 top-5 z-[8] flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em]"
         initial={reducedMotion ? false : { opacity: 0 }}
-        animate={{ opacity: 0.35 }}
+        animate={{ opacity: 1 }}
         transition={{ delay: 1.8, duration: 0.6 }}
       >
-        <span style={{ color: ACCENT }}>◆</span>{" "}CODEBYSRS
+        <span style={{ opacity: 0.5 }}>
+          <span style={{ color: ACCENT }}>◆</span>{" "}CODEBYSRS
+        </span>
+        <span className="hidden sm:inline opacity-25">/</span>
+        <span className="hidden sm:inline-flex items-center gap-1.5" style={{ opacity: 0.6 }}>
+          <span
+            className="inline-block h-1.5 w-1.5 brut-blink"
+            style={{ background: available ? ACCENT : "#666" }}
+            aria-hidden
+          />
+          {available ? "AVAILABLE" : "BOOKED"} · {location}
+        </span>
       </motion.div>
 
       {/* TOP-RIGHT: section ID + live clock */}
@@ -398,34 +408,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
         <span className="opacity-30">/</span>
         <span className="opacity-50">HERO</span>
         <span className="hidden tabular-nums opacity-30 md:inline">{clock}</span>
-      </motion.div>
-
-      {/* LEFT EDGE: vertical availability text (desktop only) */}
-      <motion.div
-        className="absolute left-0 top-1/2 z-[5] hidden origin-center -translate-x-1/2 -translate-y-1/2 -rotate-90 lg:flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.32em]"
-        style={{ whiteSpace: "nowrap", opacity: 0.38 }}
-        initial={reducedMotion ? false : { opacity: 0 }}
-        animate={{ opacity: 0.38 }}
-        transition={{ delay: 2.2, duration: 0.6 }}
-      >
-        <span
-          className="inline-block h-1.5 w-1.5 brut-blink"
-          style={{ background: available ? ACCENT : "#666" }}
-          aria-hidden
-        />
-        <span>{available ? "AVAILABLE FOR WORK" : "CURRENTLY BOOKED"}</span>
-        <span className="opacity-30">·</span>
-        <span>{location}</span>
-      </motion.div>
-
-      {/* RIGHT EDGE: vertical role text (desktop only) */}
-      <motion.div
-        className="absolute right-0 top-1/2 z-[5] hidden origin-center translate-x-1/2 -translate-y-1/2 rotate-90 lg:block font-mono text-[10px] uppercase tracking-[0.32em]"
-        style={{ whiteSpace: "nowrap", opacity: 0 }}
-        animate={{ opacity: 0.3 }}
-        transition={{ delay: 2.2, duration: 0.6 }}
-      >
-        <ScrambleText text={ROLES[roleIdx]} runKey={roleIdx} durationMs={500} paused={reducedMotion} />
       </motion.div>
 
       {/* ═══════════════════════════════════════════════════
