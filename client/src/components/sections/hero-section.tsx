@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { AboutInfo } from "@shared";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Reveal } from "@/components/reveal";
 
 interface HeroSectionProps {
   aboutInfo: AboutInfo | null;
@@ -50,8 +51,7 @@ const FOCUS_KEYWORDS = [
 
 /** Fallback social channels — used when `aboutInfo` is empty so the
  *  hero never collapses to "no socials". Real URLs from the admin
- *  override the matching label. Trimmed to the five core channels
- *  by user request (Dribbble / Codepen / YouTube removed). */
+ *  override the matching label. */
 const FALLBACK_SOCIAL = {
   github: "https://github.com",
   linkedin: "https://linkedin.com",
@@ -96,17 +96,12 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   const [roleIndex, setRoleIndex] = useState(0);
   useEffect(() => {
     if (reducedMotion) return;
-    // Faster cycle (1.6s) so the role keyword visibly changes
-    // multiple times even within the first hero glance.
     const id = setInterval(() => setRoleIndex((i) => (i + 1) % ROLES.length), 1600);
     return () => clearInterval(id);
   }, [reducedMotion]);
-  // Width of the longest role string in characters — locks the slot.
   const roleSlotCh = Math.max(...ROLES.map((r) => r.length));
 
-  // Five core channels — real URLs override the brand fallbacks so the
-  // visual never collapses while data loads. (Dribbble/Codepen/YouTube
-  // removed per user request to keep the row clean.)
+  // Five core channels with fallbacks.
   const socialLinks: { Icon: typeof Github; href: string; label: string }[] = [
     { Icon: Github, href: aboutInfo?.githubUrl || FALLBACK_SOCIAL.github, label: "GitHub" },
     { Icon: Linkedin, href: aboutInfo?.linkedinUrl || FALLBACK_SOCIAL.linkedin, label: "LinkedIn" },
@@ -118,14 +113,13 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   const scrollTo = (id: string) =>
     document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
 
-  // Live clock for the top status bar (1Hz, fixed-width slot).
+  // Live clock for the top status bar (1Hz).
   const now = useNowEverySecond();
 
-  // Live data-feed item rotates every 2.4s in the top status bar.
+  // Live data-feed item rotates every 2.4s.
   const feedItem = useRotator(DATA_FEED, 2400, reducedMotion);
 
-  // Rotating headline for the right-rail "NOW" card. Reuses the
-  // STATEMENTS array so we don't introduce a parallel data source.
+  // Rotating statement for the NOW card.
   const nowStatement = useRotator(STATEMENTS, 2200, reducedMotion);
 
   // Scoped cursor crosshair tracks the mouse only inside this section.
@@ -138,16 +132,17 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       className="relative min-h-screen w-full overflow-hidden"
       style={{ background: BG, color: INK, fontFamily: "var(--font-sans)" }}
     >
-      {/* ==========  Background layers (no gradients, brutalist) ========== */}
+      {/* ==========  Background layers ========== */}
       <NoiseOverlay />
       <GridLines />
       {!reducedMotion && <Scanline />}
       {!reducedMotion && <HeroCursor container={sectionRef} />}
 
       {/* ==========  TOP STATUS BAR ========== */}
+      {/* 2px solid border — matches how other panel headers are styled */}
       <div
-        className="relative z-[3] flex w-full items-center justify-between border-b border-[#F2EFE6]/15 px-6 py-3 font-mono text-[11px] uppercase tracking-[0.18em] lg:px-10"
-        style={{ color: INK }}
+        className="relative z-[3] flex w-full items-center justify-between px-6 py-3 font-mono text-[11px] uppercase tracking-[0.18em] lg:px-10"
+        style={{ borderBottom: `2px solid ${INK}`, color: INK }}
       >
         <div className="flex items-center gap-3">
           <span
@@ -171,307 +166,253 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             />
           </span>
         </div>
-        {/* Right side: just the live clock — location was removed
-            because it already appears next to AVAILABLE FOR WORK
-            in the bottom strip below the hero. */}
         <div className="hidden items-center gap-3 md:flex">
-          <span className="tabular-nums opacity-80" style={{ minWidth: "8ch", display: "inline-block", textAlign: "right" }}>
+          <span
+            className="tabular-nums opacity-80"
+            style={{ minWidth: "8ch", display: "inline-block", textAlign: "right" }}
+          >
             {now}
           </span>
         </div>
       </div>
 
-      {/* ==========  MAIN GRID ========== */}
+      {/* ==========  MAIN CONTENT ========== */}
       <main className="relative z-[3] mx-auto w-full max-w-[1600px] px-6 pt-4 pb-8 lg:px-10 lg:pt-6">
-        <div className="grid grid-cols-12 gap-x-6 gap-y-6">
-          {/* Left aside — section index + manifesto + coords.
-              Trimmed to remove duplication with the top status bar
-              (clock) and the bottom strip (status / version), so the
-              hero reads as one organized column instead of a noisy
-              telemetry dump. */}
-          <aside className="col-span-12 lg:col-span-2">
-            <div className="font-mono text-[10px] uppercase tracking-[0.22em]">
-              {/* Section index */}
-              <div className="opacity-50">SECTION</div>
-              <div
-                className="mt-1 text-[28px] font-bold leading-none tabular-nums"
-                style={{ color: ACCENT }}
-              >
-                01
+
+        {/* Outer bordered panel — matches About / Projects panel language */}
+        <div style={{ border: `2px solid ${INK}` }}>
+          <div className="grid grid-cols-12">
+
+            {/* ── LEFT ZONE: Section label (2 cols) ── */}
+            <aside
+              className="col-span-12 lg:col-span-2"
+              style={{ borderRight: `2px solid ${INK}`, borderBottom: `2px solid ${INK}` }}
+            >
+              {/* Section index — matches SectionHeader typographic pattern exactly */}
+              <div className="p-5 font-mono text-[11px] uppercase tracking-[0.22em]">
+                <div style={{ color: ACCENT }}>[ SECTION 01 ]</div>
+                <div className="mt-1 opacity-70">/ HERO</div>
+                <div className="mt-3 h-[2px] w-12" style={{ background: ACCENT }} />
               </div>
-              <div className="mt-1 opacity-50">/ HERO</div>
 
-              <div className="mt-8 hidden h-px w-12 bg-[#F2EFE6]/30 lg:block" />
-
-              {/* Manifesto */}
-              <div className="mt-5 hidden lg:block">
-                <div className="opacity-50">MANIFESTO</div>
-                <p className="mt-2 max-w-[160px] leading-snug opacity-80">
-                  Build sharp.
-                  <br />
-                  Ship loud.
-                  <br />
+              {/* Manifesto — desktop only */}
+              <div className="hidden p-5 pt-0 lg:block">
+                <div className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-50">MANIFESTO</div>
+                <p className="mt-2 font-mono text-[11px] max-w-[160px] leading-snug opacity-70">
+                  Build sharp.<br />
+                  Ship loud.<br />
                   Cut the fluff.
                 </p>
               </div>
+            </aside>
 
-              <div className="mt-8 hidden h-px w-12 bg-[#F2EFE6]/30 lg:block" />
+            {/* ── CENTER ZONE: Identity, headline, role, CTAs (7 cols) ── */}
+            <div
+              className="col-span-12 lg:col-span-7 p-5 lg:p-8"
+              style={{ borderRight: `2px solid ${INK}` }}
+            >
+              {/* Identity kicker — label → headline → role → CTAs */}
+              {isLoading ? (
+                <Skeleton className="mb-6 h-4 w-72 bg-white/10" />
+              ) : (
+                <Reveal variant="clip" delay={0}>
+                  <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.32em] opacity-70">
+                    <span style={{ color: ACCENT }}>{"//"}</span> identity ={" "}
+                    <span style={{ color: INK }}>"{fullName}"</span>
+                  </p>
+                </Reveal>
+              )}
 
-              {/* Coords — non-duplicative with the bottom-strip
-                  location label (which shows "EARTH / GLOBAL"). */}
-              <div className="mt-5 hidden lg:block">
-                <div className="opacity-50">COORDS</div>
-                <div className="mt-2 leading-snug opacity-90">
-                  <div className="tabular-nums">13.0827° N</div>
-                  <div className="tabular-nums">80.2707° E</div>
+              {/* Headline — name as primary visual anchor */}
+              {isLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-20 w-3/4 bg-white/10" />
+                  <Skeleton className="h-20 w-2/3 bg-white/10" />
                 </div>
-              </div>
-            </div>
-          </aside>
-
-          {/* Center column — identity, headline, role, FOCUS, CTAs.
-              Trimmed from `col-span-10` to `col-span-7` so the
-              right rail can carry CHANNELS + NOW, distributing
-              hero content across the full screen. */}
-          <div className="col-span-12 lg:col-span-7">
-            {/* Tag */}
-            {isLoading ? (
-              <Skeleton className="mb-6 h-4 w-72 bg-white/10" />
-            ) : (
-              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.32em] opacity-70 brut-fade">
-                <span style={{ color: ACCENT }}>{"//"}</span> identity ={" "}
-                <span className="text-[#F2EFE6]">"{fullName}"</span>
-              </p>
-            )}
-
-            {/* Headline — shutter rise per line */}
-            {isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-20 w-3/4 bg-white/10" />
-                <Skeleton className="h-20 w-2/3 bg-white/10" />
-              </div>
-            ) : (
-              <h1
-                data-testid="hero-name"
-                className="uppercase tracking-[-0.03em]"
-                style={{
-                  fontFamily:
-                    "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                  // Reduced from `clamp(3.5rem, 11vw, 11rem)` so the
-                  // header + hero + CTAs + socials + AVAILABLE FOR WORK
-                  // + scroll indicator all fit a 1080p viewport.
-                  fontSize: "clamp(2.5rem, 8vw, 8rem)",
-                  fontWeight: 800,
-                  lineHeight: 0.9,
-                  color: INK,
-                }}
-              >
-                <span
-                  className={
-                    reducedMotion ? "block" : "block brut-fade"
-                  }
-                  style={
-                    reducedMotion
-                      ? undefined
-                      : { animationDelay: "0.05s" }
-                  }
-                >
-                  <ScrambleText
-                    text={firstName}
-                    paused={reducedMotion}
-                    durationMs={950}
-                  />
-                </span>
-                <span
-                  className={
-                    reducedMotion
-                      ? "block"
-                      : "block brut-fade"
-                  }
-                  style={
-                    reducedMotion
-                      ? undefined
-                      : { animationDelay: "0.18s" }
-                  }
-                >
-                  <span className="inline-flex items-baseline gap-[0.2em]">
-                    <span
-                      aria-hidden
-                      className="inline-block h-[0.5em] w-[0.5em] translate-y-[-0.05em]"
-                      style={{ background: ACCENT }}
-                    />
-                    <ScrambleText
-                      text={lastName}
-                      paused={reducedMotion}
-                      durationMs={1100}
-                    />
-                  </span>
-                </span>
-              </h1>
-            )}
-
-            {/* Role cycler — FIXED-WIDTH SLOT, no layout shift */}
-            {!isLoading && (
-              <div
-                className="mt-4 flex flex-wrap items-center gap-3 font-mono text-[12px] uppercase tracking-[0.22em] brut-fade"
-                style={{ animationDelay: "0.2s" }}
-              >
-                <span className="opacity-50">ROLE</span>
-                <span className="opacity-30">[</span>
-                <span
-                  className="inline-block uppercase"
+              ) : (
+                <h1
+                  data-testid="hero-name"
+                  className="uppercase tracking-[-0.03em]"
                   style={{
-                    minWidth: `${roleSlotCh}ch`,
+                    fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                    fontSize: "clamp(2.5rem, 8vw, 8rem)",
+                    fontWeight: 800,
+                    lineHeight: 0.9,
                     color: INK,
                   }}
                 >
-                  <ScrambleText
-                    text={ROLES[roleIndex].toUpperCase()}
-                    runKey={roleIndex}
-                    paused={reducedMotion}
-                    durationMs={520}
-                  />
-                </span>
-                <span className="opacity-30">]</span>
-                <span className="opacity-30">·</span>
-                <span className="tabular-nums opacity-50">
-                  {String(roleIndex + 1).padStart(2, "0")}/
-                  {String(ROLES.length).padStart(2, "0")}
-                </span>
-              </div>
-            )}
-
-            {/* FOCUS keywords — secondary tagline below the role cycler */}
-            {!isLoading && (
-              <div
-                className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.22em] brut-fade"
-                style={{ animationDelay: "0.28s" }}
-              >
-                <span className="opacity-50">FOCUS</span>
-                <span className="opacity-30">·</span>
-                {FOCUS_KEYWORDS.map((kw, i) => (
-                  <span key={kw} className="inline-flex items-center gap-2">
-                    <span style={{ color: INK }} className="opacity-90">
-                      {kw}
+                  <Reveal variant="clip" delay={40}>
+                    <span className="block">
+                      <ScrambleText
+                        text={firstName}
+                        paused={reducedMotion}
+                        durationMs={950}
+                      />
                     </span>
-                    {i < FOCUS_KEYWORDS.length - 1 && (
-                      <span style={{ color: ACCENT }} className="opacity-70">
-                        /
+                  </Reveal>
+                  <Reveal variant="clip" delay={120}>
+                    <span className="block">
+                      <span className="inline-flex items-baseline gap-[0.2em]">
+                        <span
+                          aria-hidden
+                          className="inline-block h-[0.5em] w-[0.5em] translate-y-[-0.05em]"
+                          style={{ background: ACCENT }}
+                        />
+                        <ScrambleText
+                          text={lastName}
+                          paused={reducedMotion}
+                          durationMs={1100}
+                        />
                       </span>
-                    )}
-                  </span>
-                ))}
-              </div>
-            )}
+                    </span>
+                  </Reveal>
+                </h1>
+              )}
 
-            {/* Bio — visually hidden by user request (the About section
-                below already carries this copy), but the `hero-bio`
-                test-id is preserved for the data-testid contract. */}
-            {!isLoading && (
-              <p data-testid="hero-bio" className="sr-only">
-                {bio}
-              </p>
-            )}
+              {/* Role cycler */}
+              {!isLoading && (
+                <Reveal variant="rise" delay={180}>
+                  <div className="mt-4 flex flex-wrap items-center gap-3 font-mono text-[12px] uppercase tracking-[0.22em]">
+                    <span className="opacity-50">ROLE</span>
+                    <span className="opacity-30">[</span>
+                    <span
+                      className="inline-block uppercase"
+                      style={{ minWidth: `${roleSlotCh}ch`, color: INK }}
+                    >
+                      <ScrambleText
+                        text={ROLES[roleIndex].toUpperCase()}
+                        runKey={roleIndex}
+                        paused={reducedMotion}
+                        durationMs={520}
+                      />
+                    </span>
+                    <span className="opacity-30">]</span>
+                    <span className="opacity-30">·</span>
+                    <span className="tabular-nums opacity-50">
+                      {String(roleIndex + 1).padStart(2, "0")}/
+                      {String(ROLES.length).padStart(2, "0")}
+                    </span>
+                  </div>
+                </Reveal>
+              )}
 
-            {/* CTAs — fully STATIC by user request: no entrance fade,
-                no magnetic cursor pull. Buttons themselves use
-                `transition: none` (see BrutButton). */}
-            <div className="mt-6 flex flex-wrap items-stretch gap-3">
-              <BrutButton
-                label="START PROJECT"
-                onClick={() => scrollTo("#contact")}
-                data-testid="button-lets-work-together"
-                variant="solid"
-              />
-              <BrutButton
-                label="VIEW WORK"
-                onClick={() => scrollTo("#projects")}
-                data-testid="button-view-work"
-                variant="ghost"
-              />
+              {/* FOCUS keywords */}
+              {!isLoading && (
+                <Reveal variant="rise" delay={220}>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.22em]">
+                    <span className="opacity-50">FOCUS</span>
+                    <span className="opacity-30">·</span>
+                    {FOCUS_KEYWORDS.map((kw, i) => (
+                      <span key={kw} className="inline-flex items-center gap-2">
+                        <span style={{ color: INK }} className="opacity-90">{kw}</span>
+                        {i < FOCUS_KEYWORDS.length - 1 && (
+                          <span style={{ color: ACCENT }} className="opacity-70">/</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </Reveal>
+              )}
+
+              {/* Bio — visually hidden, test-id preserved */}
+              {!isLoading && (
+                <p data-testid="hero-bio" className="sr-only">{bio}</p>
+              )}
+
+              {/* CTAs */}
+              <Reveal variant="rise" delay={280}>
+                <div className="mt-6 flex flex-wrap items-stretch gap-3">
+                  <BrutButton
+                    label="START PROJECT"
+                    onClick={() => scrollTo("#contact")}
+                    data-testid="button-lets-work-together"
+                    variant="solid"
+                  />
+                  <BrutButton
+                    label="VIEW WORK"
+                    onClick={() => scrollTo("#projects")}
+                    data-testid="button-view-work"
+                    variant="ghost"
+                  />
+                </div>
+              </Reveal>
             </div>
 
-          </div>
+            {/* ── RIGHT ZONE: Channels + NOW card (3 cols) ── */}
+            <div className="col-span-12 lg:col-span-3 flex flex-col">
 
-          {/* Right rail — CHANNELS + NOW card. On mobile it stacks
-              under the center column so reading order stays
-              top-to-bottom. */}
-          <div className="col-span-12 lg:col-span-3">
-            {/* ============ CHANNELS panel ============ */}
-            {socialLinks.length > 0 && (
-              <div
-                className="brut-fade"
-                style={{ animationDelay: "0.4s" }}
-              >
-                <div className="mb-4 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.32em] opacity-60">
-                  <span style={{ color: ACCENT }}>{"//"}</span>
-                  <span>CHANNELS</span>
-                  <span className="opacity-30">·</span>
-                  <span className="tabular-nums opacity-50">
-                    {String(socialLinks.length).padStart(2, "0")}
-                  </span>
-                  <div className="ml-2 h-px flex-1 bg-[#F2EFE6]/15" />
+              {/* CHANNELS — compact horizontal mono row */}
+              <Reveal variant="rise" delay={320}>
+                <div
+                  className="p-5"
+                  style={{ borderBottom: `2px solid ${INK}` }}
+                >
+                  <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.32em] opacity-60">
+                    <span style={{ color: ACCENT }}>{"//"}</span>
+                    <span className="ml-2">CHANNELS</span>
+                  </div>
+                  {/* Horizontal social link row — icon + label, separated by · */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    {socialLinks.map(({ Icon, href, label }, i) => (
+                      <span key={label} className="inline-flex items-center gap-1.5">
+                        <SocialLink Icon={Icon} href={href} label={label} />
+                        {i < socialLinks.length - 1 && (
+                          <span
+                            className="font-mono text-[10px] opacity-30"
+                            aria-hidden
+                          >
+                            ·
+                          </span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                {/* 2-col stack — vertical channel list per the
-                    right-rail spec. */}
-                <div className="grid grid-cols-2 gap-3">
-                  {socialLinks.map(({ Icon, href, label }, i) => (
-                    <SocialTile
-                      key={label}
-                      Icon={Icon}
-                      href={href}
-                      label={label}
-                      index={i}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+              </Reveal>
 
-            {/* ============ NOW card — rotating statement ============ */}
-            {!isLoading && (
-              <div
-                className="mt-6 brut-fade"
-                style={{
-                  animationDelay: "0.5s",
-                  border: `2px solid ${INK}`,
-                }}
-              >
-                <div
-                  className="flex items-center justify-between border-b border-[#F2EFE6]/20 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.32em] opacity-60"
-                >
-                  <span>
-                    <span style={{ color: ACCENT }}>{"//"}</span> NOW
-                  </span>
-                  <span
-                    aria-hidden
-                    className="inline-block h-1.5 w-1.5 brut-blink"
-                    style={{ background: ACCENT }}
-                  />
-                </div>
-                <div
-                  className="px-4 py-4 font-bold uppercase tracking-tight"
-                  style={{
-                    fontFamily:
-                      "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                    fontSize: "clamp(1rem, 1.6vw, 1.35rem)",
-                    lineHeight: 1.05,
-                  }}
-                >
-                  <ScrambleText
-                    text={nowStatement}
-                    runKey={nowStatement}
-                    paused={reducedMotion}
-                    durationMs={420}
-                  />
-                </div>
-              </div>
-            )}
+              {/* NOW card — rotating statement */}
+              {!isLoading && (
+                <Reveal variant="rise" delay={380}>
+                  <div className="p-5" style={{ borderBottom: `2px solid ${INK}` }}>
+                    <div className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.32em] opacity-60">
+                      <span>
+                        <span style={{ color: ACCENT }}>{"//"}</span>
+                        <span className="ml-2">NOW</span>
+                      </span>
+                      <span
+                        aria-hidden
+                        className="inline-block h-1.5 w-1.5 brut-blink"
+                        style={{ background: ACCENT }}
+                      />
+                    </div>
+                    <div
+                      className="font-bold uppercase tracking-tight"
+                      style={{
+                        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                        fontSize: "clamp(1rem, 1.4vw, 1.25rem)",
+                        lineHeight: 1.05,
+                      }}
+                    >
+                      <ScrambleText
+                        text={nowStatement}
+                        runKey={nowStatement}
+                        paused={reducedMotion}
+                        durationMs={420}
+                      />
+                    </div>
+                  </div>
+                </Reveal>
+              )}
+            </div>
+
           </div>
         </div>
 
         {/* ==========  BOTTOM STRIP ========== */}
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 font-mono text-[11px] uppercase tracking-[0.22em]">
+        <div
+          className="mt-4 flex flex-wrap items-center justify-between gap-4 font-mono text-[11px] uppercase tracking-[0.22em]"
+          style={{ borderTop: `2px solid ${INK}`, paddingTop: "1rem" }}
+        >
           <div className="flex items-center gap-3">
             <span
               className="inline-block h-2 w-2 brut-blink"
@@ -509,11 +450,8 @@ interface BrutButtonProps {
   "data-testid"?: string;
 }
 /**
- * Brutalist primary CTA — STATIC by request: hard-bordered block,
- * no animation, instant color invert on hover (transition: none).
- *
- * Solid variant = cream BG → accent BG on hover.
- * Ghost variant = transparent BG → cream BG on hover (inverse).
+ * Brutalist primary CTA — hard-bordered block, no animation,
+ * instant color invert on hover (transition: none).
  */
 function BrutButton({
   label,
@@ -549,6 +487,38 @@ function BrutButton({
       <span>{label}</span>
       <ArrowUpRight className="h-4 w-4" />
     </button>
+  );
+}
+
+/** Compact horizontal social link — icon + label, used in the channel row. */
+interface SocialLinkProps {
+  Icon: typeof Github;
+  href: string;
+  label: string;
+}
+function SocialLink({ Icon, href, label }: SocialLinkProps) {
+  const [hover, setHover] = useState(false);
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      data-testid={`link-${label.toLowerCase()}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+      className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] outline-none focus-visible:underline"
+      style={{
+        color: hover ? ACCENT : INK,
+        transition: "none",
+        fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+      }}
+    >
+      <Icon className="h-3 w-3 shrink-0" />
+      <span>{label}</span>
+    </a>
   );
 }
 
@@ -600,7 +570,7 @@ function Scanline() {
 
 /* ==================== Hooks ==================== */
 
-/** HH:MM:SS string ticking once per second — shared across remounts cheaply. */
+/** HH:MM:SS string ticking once per second. */
 function useNowEverySecond() {
   const [s, setS] = useState(() => fmtClock(new Date()));
   useEffect(() => {
@@ -615,102 +585,7 @@ function fmtClock(d: Date) {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-/* ============================================================
- * SocialTile — bold brutalist square channel button.
- *  - 64-px square, 2-px cream border, label below the icon
- *  - Hover: accent block sweeps up from bottom (color invert),
- *    icon scales + the corner ARROW pings out, top tick fills
- *  - Staggered fade-in via `animationDelay` keyed by `index`
- * ============================================================ */
-interface SocialTileProps {
-  Icon: typeof Github;
-  href: string;
-  label: string;
-  index: number;
-}
-function SocialTile({ Icon, href, label, index }: SocialTileProps) {
-  const [hover, setHover] = useState(false);
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={label}
-      data-testid={`link-${label.toLowerCase()}`}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onFocus={() => setHover(true)}
-      onBlur={() => setHover(false)}
-      className="group relative inline-flex h-16 w-16 shrink-0 flex-col items-center justify-center overflow-hidden text-[9px] font-bold uppercase tracking-[0.18em] outline-none brut-fade focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] sm:h-20 sm:w-20 sm:text-[10px]"
-      style={{
-        color: INK,
-        background: "transparent",
-        border: `2px solid ${INK}`,
-        animationDelay: `${0.55 + index * 0.06}s`,
-        fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-      }}
-    >
-      {/* Sweep block — bottom → top */}
-      <span
-        aria-hidden
-        className="absolute inset-x-0 bottom-0"
-        style={{
-          height: "100%",
-          background: ACCENT,
-          transform: hover ? "translateY(0%)" : "translateY(101%)",
-          transition: "transform 0.32s cubic-bezier(0.2,0.8,0.2,1)",
-        }}
-      />
-      {/* Top tick */}
-      <span
-        aria-hidden
-        className="absolute left-0 top-0 h-[2px]"
-        style={{
-          width: hover ? "100%" : "0%",
-          background: INK,
-          transition: "width 0.24s cubic-bezier(0.2,0.8,0.2,1)",
-        }}
-      />
-      {/* Corner ping arrow — top-right */}
-      <ArrowUpRight
-        aria-hidden
-        className="absolute right-1 top-1 h-3 w-3"
-        style={{
-          color: hover ? INK : `${INK}55`,
-          opacity: hover ? 1 : 0.5,
-          transform: hover ? "translate(2px,-2px)" : "translate(0,0)",
-          transition:
-            "transform 0.22s cubic-bezier(0.2,0.8,0.2,1), opacity 0.18s, color 0.05s 0.14s linear",
-        }}
-      />
-      {/* Icon */}
-      <Icon
-        className="relative h-5 w-5 sm:h-6 sm:w-6"
-        style={{
-          color: hover ? INK : INK,
-          transform: hover ? "scale(1.12)" : "scale(1)",
-          transition: "transform 0.22s cubic-bezier(0.2,0.8,0.2,1)",
-        }}
-      />
-      {/* Label */}
-      <span
-        className="relative mt-1.5"
-        style={{
-          color: hover ? INK : INK,
-          transition: "color 0.05s 0.14s linear",
-        }}
-      >
-        {label.toUpperCase()}
-      </span>
-    </a>
-  );
-}
-
-/* ==================== Advanced animation helpers ==================== */
-
-/** Character-scramble decoder — cycles random glyphs into the target string,
- *  revealing characters left-to-right. The natural fallback (paused / done)
- *  is always the full target string, so content is never invisible. */
+/** Character-scramble decoder. */
 function useScramble(
   target: string,
   durationMs: number,
@@ -728,7 +603,6 @@ function useScramble(
     let raf = 0;
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / durationMs);
-      // Reveal slightly past the end so the trailing chars settle smoothly.
       const revealHead = Math.floor(t * (target.length + 4));
       let s = "";
       for (let i = 0; i < target.length; i++) {
@@ -750,12 +624,10 @@ function useScramble(
 
 interface ScrambleTextProps {
   text: string;
-  /** Change to re-trigger the scramble. */
   runKey?: number | string;
   durationMs?: number;
   paused?: boolean;
 }
-/** Renders a string with a character-scramble decode-in effect. */
 function ScrambleText({
   text,
   runKey = 0,
@@ -770,67 +642,7 @@ function ScrambleText({
   );
 }
 
-interface MagneticProps {
-  children: React.ReactNode;
-  /** 0..1 — how strongly the wrapper drifts toward the cursor. */
-  strength?: number;
-  /** Activation radius multiplier × the wrapper's max dimension. */
-  radiusMul?: number;
-  disabled?: boolean;
-}
-/** Magnetic wrapper — drifts toward the cursor when nearby, snaps back on leave. */
-function Magnetic({
-  children,
-  strength = 0.35,
-  radiusMul = 1.6,
-  disabled = false,
-}: MagneticProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (disabled) return;
-    const el = ref.current;
-    if (!el) return;
-    let raf = 0;
-    let lastEvent: MouseEvent | null = null;
-    const apply = () => {
-      raf = 0;
-      if (!lastEvent) return;
-      const rect = el.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = lastEvent.clientX - cx;
-      const dy = lastEvent.clientY - cy;
-      const radius = Math.max(rect.width, rect.height) * radiusMul;
-      const dist = Math.hypot(dx, dy);
-      if (dist < radius) {
-        el.style.transform = `translate(${dx * strength}px, ${dy * strength}px)`;
-      } else {
-        el.style.transform = "translate(0,0)";
-      }
-    };
-    const onMove = (e: MouseEvent) => {
-      lastEvent = e;
-      if (!raf) raf = requestAnimationFrame(apply);
-    };
-    const onLeave = () => {
-      el.style.transform = "translate(0,0)";
-    };
-    window.addEventListener("mousemove", onMove, { passive: true });
-    el.addEventListener("mouseleave", onLeave);
-    return () => {
-      if (raf) cancelAnimationFrame(raf);
-      window.removeEventListener("mousemove", onMove);
-      el.removeEventListener("mouseleave", onLeave);
-    };
-  }, [strength, radiusMul, disabled]);
-  return (
-    <div ref={ref} className={disabled ? "inline-flex" : "inline-flex brut-magnet"}>
-      {children}
-    </div>
-  );
-}
-
-/** Cycles through `items` every `intervalMs` — used by the live data feed. */
+/** Cycles through `items` every `intervalMs`. */
 function useRotator<T>(items: T[], intervalMs: number, paused: boolean) {
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -887,12 +699,7 @@ function HeroCursor({ container }: HeroCursorProps) {
         mixBlendMode: "difference",
       }}
     >
-      {/* Square ring */}
-      <span
-        className="absolute inset-0 border"
-        style={{ borderColor: ACCENT }}
-      />
-      {/* Crosshair lines */}
+      <span className="absolute inset-0 border" style={{ borderColor: ACCENT }} />
       <span
         className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2"
         style={{ background: ACCENT, opacity: 0.7 }}
