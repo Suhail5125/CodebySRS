@@ -2,7 +2,7 @@ import type { AboutInfo, Project, Skill, Testimonial, Experience } from "@shared
 
 export const DUMMY_ABOUT: AboutInfo = {
   id: "dummy-about",
-  name: "Sahil R. Sharma",
+  name: "Studio Codebysrs",
   title: "Full-Stack Engineer · 3D Web Specialist",
   bio: "I build production-grade web platforms with React, Node and WebGL. Brutalist by design, type-safe by default. Ten years shipping for startups, agencies and Fortune 500 brands.",
   avatarUrl: null,
@@ -191,7 +191,7 @@ export const DUMMY_TESTIMONIALS: Testimonial[] = [
     role: "VP Product",
     company: "Helix Labs",
     content:
-      "Sahil rebuilt our checkout in three weeks. Conversion went up 22% and the codebase is finally something we enjoy working in.",
+      "The team rebuilt our checkout in three weeks. Conversion went up 22% and the codebase is finally something we enjoy working in.",
     rating: 5,
     avatarUrl: null,
     isVisible: true,
@@ -219,7 +219,7 @@ export const DUMMY_TESTIMONIALS: Testimonial[] = [
     role: "Founder",
     company: "Fieldnote",
     content:
-      "Hired Sahil to consult, ended up shipping the whole MVP with him. Type-safe end-to-end and faster than any team I've worked with.",
+      "Hired the studio to consult, ended up shipping the whole MVP with them. Type-safe end-to-end and faster than any team I've worked with.",
     rating: 5,
     avatarUrl: null,
     isVisible: true,

@@ -361,9 +361,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       {/* ── LAYER 3: faint column guides ── */}
       <GridLines />
 
-      {/* ── LAYER 4: scanning orange line ── */}
-      {!reducedMotion && <Scanline />}
-
       {/* ── LAYER 5: crosshair cursor ── */}
       {!reducedMotion && <HeroCursor container={sectionRef} />}
 
@@ -433,12 +430,12 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
         style={{ pointerEvents: "none" }}
       >
         {isLoading ? (
-          <div className="w-full space-y-6">
-            <Skeleton className="h-36 w-3/4 bg-white/10" />
-            <Skeleton className="h-36 w-full bg-white/10" />
+          <div className="w-full max-w-[58%] space-y-6">
+            <Skeleton className="h-24 w-3/4 bg-white/10" />
+            <Skeleton className="h-24 w-full bg-white/10" />
           </div>
         ) : (
-          <>
+          <div className="w-full max-w-full sm:max-w-[70%] lg:max-w-[55%]">
             {/* tiny annotation above the name */}
             <motion.p
               className="mb-3 font-mono text-[10px] uppercase tracking-[0.45em]"
@@ -454,13 +451,13 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
               className="select-none uppercase"
               style={{
                 fontWeight:    900,
-                fontSize:      "clamp(3.8rem, 13vw, 15rem)",
-                lineHeight:    0.86,
+                fontSize:      "clamp(2.8rem, 7.5vw, 8.5rem)",
+                lineHeight:    0.88,
                 letterSpacing: "-0.04em",
                 width:         "100%",
               }}
             >
-              {/* ── FIRST NAME: letters fly in from random positions ── */}
+              {/* ── FIRST NAME ── */}
               <span className="block" aria-label={firstName}>
                 {fn.map((ch, i) => (
                   <AnimLetter
@@ -478,26 +475,8 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                 ))}
               </span>
 
-              {/* ── LAST NAME: orange rule extends left, name right-anchors ── */}
-              <span
-                className="flex w-full items-center"
-                style={{ gap: "0.25em" }}
-                aria-label={lastName}
-              >
-                {/* The slash-rule — draws from left as last name slides in */}
-                <motion.span
-                  aria-hidden
-                  style={{
-                    flex:           1,
-                    height:         "clamp(4px, 0.55vw, 10px)",
-                    background:     ACCENT,
-                    display:        "block",
-                    transformOrigin: "left center",
-                  }}
-                  initial={reducedMotion ? false : { scaleX: 0, opacity: 0 }}
-                  animate={{ scaleX: 1, opacity: 0.9 }}
-                  transition={{ delay: 0.55 + fn.length * 0.07, duration: 1.0, ease: EXPO }}
-                />
+              {/* ── LAST NAME with short orange underline beneath ── */}
+              <span className="block" aria-label={lastName}>
                 {ln.map((ch, i) => (
                   <AnimLetter
                     key={`ln-${i}`}
@@ -513,6 +492,19 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                   />
                 ))}
               </span>
+              <motion.span
+                aria-hidden
+                className="mt-2 block"
+                style={{
+                  width:           "clamp(80px, 18%, 200px)",
+                  height:          "clamp(4px, 0.45vw, 8px)",
+                  background:      ACCENT,
+                  transformOrigin: "left center",
+                }}
+                initial={reducedMotion ? false : { scaleX: 0, opacity: 0 }}
+                animate={{ scaleX: 1, opacity: 0.9 }}
+                transition={{ delay: 0.55 + fn.length * 0.07, duration: 0.9, ease: EXPO }}
+              />
             </h1>
 
             {/* hidden bio for screen readers */}
@@ -538,7 +530,29 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                 <ScrambleText text={ROLES[roleIdx]} runKey={roleIdx} durationMs={480} paused={reducedMotion} />
               </span>
             </motion.div>
-          </>
+
+            {/* ── CTAs (left-anchored, pointer-events on so clickable) ── */}
+            <motion.div
+              className="mt-8 flex flex-wrap items-center gap-3"
+              style={{ pointerEvents: "auto" }}
+              initial={reducedMotion ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 2.1, duration: 0.6, ease: EXPO }}
+            >
+              <BrutButton
+                label="START PROJECT"
+                onClick={() => scrollTo("#contact")}
+                data-testid="button-lets-work-together"
+                variant="solid"
+              />
+              <BrutButton
+                label="VIEW WORK"
+                onClick={() => scrollTo("#projects")}
+                data-testid="button-view-work"
+                variant="ghost"
+              />
+            </motion.div>
+          </div>
         )}
       </div>
 
@@ -559,26 +573,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
         ))}
       </motion.div>
 
-      {/* BOTTOM-RIGHT: CTA buttons */}
-      <motion.div
-        className="absolute bottom-5 right-5 z-[5] flex items-center gap-3"
-        initial={reducedMotion ? false : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2.1, duration: 0.6, ease: EXPO }}
-      >
-        <BrutButton
-          label="START PROJECT"
-          onClick={() => scrollTo("#contact")}
-          data-testid="button-lets-work-together"
-          variant="solid"
-        />
-        <BrutButton
-          label="VIEW WORK"
-          onClick={() => scrollTo("#projects")}
-          data-testid="button-view-work"
-          variant="ghost"
-        />
-      </motion.div>
     </section>
   );
 }
