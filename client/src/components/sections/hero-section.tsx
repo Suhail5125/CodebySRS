@@ -152,8 +152,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           />
           <span className="opacity-80">{available ? "LIVE" : "OFFLINE"}</span>
           <span className="opacity-30">/</span>
-          <span className="opacity-80">CodebySRS · DEV-OS</span>
-          <span className="opacity-30">/</span>
           <span
             className="tabular-nums opacity-60"
             style={{ minWidth: "16ch", display: "inline-block" }}
