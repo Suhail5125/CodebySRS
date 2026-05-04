@@ -146,7 +146,7 @@ function SpotlightPortraits({
     width: "100%",
     height: "100%",
     objectFit: "cover",
-    objectPosition: "70% bottom",
+    objectPosition: "center 30%",
     userSelect: "none",
     pointerEvents: "none",
   };
