@@ -380,8 +380,8 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           num="01"
           name="HERO"
           kicker="// PORTFOLIO"
-          headline="INTRODUCTION"
-          right={`CODEBYSRS · ${new Date().getFullYear()} · ${clock}`}
+          headline={`PORTFOLIO · ${new Date().getFullYear()}`}
+          right="CODEBYSRS"
           variant="banner"
         />
       </motion.div>
