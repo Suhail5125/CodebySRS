@@ -146,7 +146,7 @@ function SpotlightPortraits({
     width: "100%",
     height: "100%",
     objectFit: "cover",
-    objectPosition: "center center",
+    objectPosition: "center",
     userSelect: "none",
     pointerEvents: "none",
   };
@@ -158,14 +158,8 @@ function SpotlightPortraits({
   }%, rgba(0,0,0,0) 100%)`;
 
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute right-0 top-0 z-[1] h-full w-full overflow-hidden lg:aspect-[3/2] lg:w-auto lg:max-w-full"
-    >
-      {/* Base layer: MYIMG2 fills the right-side image panel edge-to-edge.
-          On lg+ the panel locks to the source 3:2 aspect so the full
-          subject is visible with zero crop; on smaller screens it spans
-          the full width and cover-crops as needed. */}
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] h-full w-full">
+      {/* Base layer: MYIMG2 always visible */}
       <img src="/hero/myimg2.png" alt="" style={imgStyle} draggable={false} />
 
       {/* Top layer: MYIMG1 revealed only inside the spotlight */}
@@ -186,20 +180,12 @@ function SpotlightPortraits({
         </div>
       )}
 
-      {/* Contrast overlay — stronger on the left where copy lives,
-          softer on the right where the portrait should breathe. */}
+      {/* Contrast overlay so foreground text stays legible */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(90deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.25) 50%, rgba(10,10,10,0) 100%)",
-        }}
-      />
-      <div
-        className="absolute inset-x-0 bottom-0 h-32"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,0.85) 100%)",
+            "linear-gradient(180deg, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.35) 45%, rgba(10,10,10,0.7) 100%)",
         }}
       />
     </div>
@@ -364,7 +350,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       id="hero"
       ref={sectionRef}
       className="relative w-full overflow-hidden"
-      style={{ minHeight: "calc(100svh - 4.5rem)", height: "calc(100svh - 4.5rem)", background: BG, color: INK }}
+      style={{ minHeight: "100svh", background: BG, color: INK }}
     >
       {/* ── LAYER 1: dual-portrait spotlight reveal ── */}
       <SpotlightPortraits spotlightRef={spotlightRef} reducedMotion={reducedMotion} />
@@ -382,25 +368,15 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           ABSOLUTE SATELLITE ELEMENTS
       ═══════════════════════════════════════════════════ */}
 
-      {/* TOP-LEFT: brand mark + availability badge */}
+      {/* TOP-LEFT: brand mark */}
       <motion.div
-        className="absolute left-5 top-5 z-[8] flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em]"
+        className="absolute left-5 top-5 z-[5] font-mono text-[10px] uppercase tracking-[0.3em]"
+        style={{ opacity: 0.35 }}
         initial={reducedMotion ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
+        animate={{ opacity: 0.35 }}
         transition={{ delay: 1.8, duration: 0.6 }}
       >
-        <span style={{ opacity: 0.5 }}>
-          <span style={{ color: ACCENT }}>◆</span>{" "}CODEBYSRS
-        </span>
-        <span className="hidden sm:inline opacity-25">/</span>
-        <span className="hidden sm:inline-flex items-center gap-1.5" style={{ opacity: 0.6 }}>
-          <span
-            className="inline-block h-1.5 w-1.5 brut-blink"
-            style={{ background: available ? ACCENT : "#666" }}
-            aria-hidden
-          />
-          {available ? "AVAILABLE" : "BOOKED"} · {location}
-        </span>
+        <span style={{ color: ACCENT }}>◆</span>{" "}CODEBYSRS
       </motion.div>
 
       {/* TOP-RIGHT: section ID + live clock */}
@@ -414,6 +390,34 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
         <span className="opacity-30">/</span>
         <span className="opacity-50">HERO</span>
         <span className="hidden tabular-nums opacity-30 md:inline">{clock}</span>
+      </motion.div>
+
+      {/* LEFT EDGE: vertical availability text (desktop only) */}
+      <motion.div
+        className="absolute left-0 top-1/2 z-[5] hidden origin-center -translate-x-1/2 -translate-y-1/2 -rotate-90 lg:flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.32em]"
+        style={{ whiteSpace: "nowrap", opacity: 0.38 }}
+        initial={reducedMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 0.38 }}
+        transition={{ delay: 2.2, duration: 0.6 }}
+      >
+        <span
+          className="inline-block h-1.5 w-1.5 brut-blink"
+          style={{ background: available ? ACCENT : "#666" }}
+          aria-hidden
+        />
+        <span>{available ? "AVAILABLE FOR WORK" : "CURRENTLY BOOKED"}</span>
+        <span className="opacity-30">·</span>
+        <span>{location}</span>
+      </motion.div>
+
+      {/* RIGHT EDGE: vertical role text (desktop only) */}
+      <motion.div
+        className="absolute right-0 top-1/2 z-[5] hidden origin-center translate-x-1/2 -translate-y-1/2 rotate-90 lg:block font-mono text-[10px] uppercase tracking-[0.32em]"
+        style={{ whiteSpace: "nowrap", opacity: 0 }}
+        animate={{ opacity: 0.3 }}
+        transition={{ delay: 2.2, duration: 0.6 }}
+      >
+        <ScrambleText text={ROLES[roleIdx]} runKey={roleIdx} durationMs={500} paused={reducedMotion} />
       </motion.div>
 
       {/* ═══════════════════════════════════════════════════
@@ -559,7 +563,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
 
       {/* BOTTOM-LEFT: social links */}
       <motion.div
-        className="absolute bottom-6 left-5 z-[8] flex flex-wrap items-center gap-3"
+        className="absolute bottom-5 left-5 z-[5] flex flex-wrap items-center gap-3"
         initial={reducedMotion ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 2.0, duration: 0.6, ease: EXPO }}
