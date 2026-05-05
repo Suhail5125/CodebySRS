@@ -42,3 +42,8 @@ build = ["npm", "run", "build"]
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 120000
+
+[userenv]
+
+[userenv.shared]
+GITHUB_TOKEN = "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"
