@@ -330,4 +330,256 @@ export class DbStorage implements IStorage {
   }
 }
 
-export const storage = new DbStorage();
+export class MockStorage implements IStorage {
+  private users: User[] = [];
+  private projects: Project[] = [];
+  private skills: Skill[] = [];
+  private testimonials: Testimonial[] = [];
+  private experiences: Experience[] = [];
+  private contactMessages: ContactMessage[] = [];
+  private about: AboutInfo | undefined;
+
+  constructor() {
+    // Load mock data
+    import("./mocks").then((mocks) => {
+      this.projects = [...mocks.MOCK_PROJECTS];
+      this.skills = [...mocks.MOCK_SKILLS];
+      this.testimonials = [...mocks.MOCK_TESTIMONIALS];
+      this.experiences = [...mocks.MOCK_EXPERIENCE];
+      this.about = { ...mocks.MOCK_ABOUT };
+    });
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.find((u) => u.id === id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return this.users.find((u) => u.username === username);
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const newUser = { ...user, id: `u-${Date.now()}` } as User;
+    this.users.push(newUser);
+    return newUser;
+  }
+
+  async getAllProjects(): Promise<Project[]> {
+    return this.projects;
+  }
+
+  async getProject(id: string): Promise<Project | undefined> {
+    return this.projects.find((p) => p.id === id);
+  }
+
+  async createProject(project: InsertProject): Promise<Project> {
+    const newProject = {
+      ...project,
+      id: `p-${Date.now()}`,
+      featured: project.featured ?? false,
+      order: project.order ?? 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as Project;
+    this.projects.push(newProject);
+    return newProject;
+  }
+
+  async updateProject(id: string, project: Partial<InsertProject>): Promise<Project | undefined> {
+    const index = this.projects.findIndex((p) => p.id === id);
+    if (index === -1) return undefined;
+    this.projects[index] = { ...this.projects[index], ...project, updatedAt: new Date() } as Project;
+    return this.projects[index];
+  }
+
+  async deleteProject(id: string): Promise<boolean> {
+    const initialLen = this.projects.length;
+    this.projects = this.projects.filter((p) => p.id !== id);
+    return this.projects.length < initialLen;
+  }
+
+  async getAllSkills(): Promise<Skill[]> {
+    return this.skills;
+  }
+
+  async getSkill(id: string): Promise<Skill | undefined> {
+    return this.skills.find((s) => s.id === id);
+  }
+
+  async createSkill(skill: InsertSkill): Promise<Skill> {
+    const newSkill = {
+      ...skill,
+      id: `s-${Date.now()}`,
+      order: skill.order ?? 0,
+      icon: skill.icon ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as Skill;
+    this.skills.push(newSkill);
+    return newSkill;
+  }
+
+  async updateSkill(id: string, skill: Partial<InsertSkill>): Promise<Skill | undefined> {
+    const index = this.skills.findIndex((s) => s.id === id);
+    if (index === -1) return undefined;
+    this.skills[index] = { ...this.skills[index], ...skill, updatedAt: new Date() } as Skill;
+    return this.skills[index];
+  }
+
+  async deleteSkill(id: string): Promise<boolean> {
+    const initialLen = this.skills.length;
+    this.skills = this.skills.filter((s) => s.id !== id);
+    return this.skills.length < initialLen;
+  }
+
+  async reorderSkills(updates: { id: string; category: string; order: number }[]): Promise<void> {
+    updates.forEach((u) => {
+      const s = this.skills.find((sk) => sk.id === u.id);
+      if (s) {
+        s.category = u.category;
+        s.order = u.order;
+      }
+    });
+  }
+
+  async getAllTestimonials(): Promise<Testimonial[]> {
+    return this.testimonials;
+  }
+
+  async getTestimonial(id: string): Promise<Testimonial | undefined> {
+    return this.testimonials.find((t) => t.id === id);
+  }
+
+  async createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial> {
+    const newT = {
+      ...testimonial,
+      id: `t-${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isVisible: testimonial.isVisible ?? true,
+      order: testimonial.order ?? 0,
+      rating: testimonial.rating ?? 5,
+      role: testimonial.role ?? null,
+      company: testimonial.company ?? null,
+      avatarUrl: testimonial.avatarUrl ?? null,
+    } as Testimonial;
+    this.testimonials.push(newT);
+    return newT;
+  }
+
+  async updateTestimonial(id: string, testimonial: Partial<InsertTestimonial>): Promise<Testimonial | undefined> {
+    const index = this.testimonials.findIndex((t) => t.id === id);
+    if (index === -1) return undefined;
+    this.testimonials[index] = { ...this.testimonials[index], ...testimonial, updatedAt: new Date() } as Testimonial;
+    return this.testimonials[index];
+  }
+
+  async deleteTestimonial(id: string): Promise<boolean> {
+    const initialLen = this.testimonials.length;
+    this.testimonials = this.testimonials.filter((t) => t.id !== id);
+    return this.testimonials.length < initialLen;
+  }
+
+  async getAllContactMessages(): Promise<ContactMessage[]> {
+    return this.contactMessages;
+  }
+
+  async getContactMessage(id: string): Promise<ContactMessage | undefined> {
+    return this.contactMessages.find((m) => m.id === id);
+  }
+
+  async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
+    const newM = {
+      ...message,
+      id: `m-${Date.now()}`,
+      createdAt: new Date(),
+      read: false,
+      starred: false,
+    } as ContactMessage;
+    this.contactMessages.push(newM);
+    return newM;
+  }
+
+  async markMessageAsRead(id: string): Promise<boolean> {
+    const m = this.contactMessages.find((msg) => msg.id === id);
+    if (m) {
+      m.read = true;
+      return true;
+    }
+    return false;
+  }
+
+  async toggleMessageStarred(id: string, starred: boolean): Promise<boolean> {
+    const m = this.contactMessages.find((msg) => msg.id === id);
+    if (m) {
+      m.starred = starred;
+      return true;
+    }
+    return false;
+  }
+
+  async deleteContactMessage(id: string): Promise<boolean> {
+    const initialLen = this.contactMessages.length;
+    this.contactMessages = this.contactMessages.filter((m) => m.id !== id);
+    return this.contactMessages.length < initialLen;
+  }
+
+  async getAboutInfo(): Promise<AboutInfo | undefined> {
+    return this.about;
+  }
+
+  async updateAboutInfo(info: InsertAboutInfo): Promise<AboutInfo> {
+    this.about = { ...this.about, ...info, updatedAt: new Date() } as AboutInfo;
+    return this.about;
+  }
+
+  async getExperiences(): Promise<Experience[]> {
+    return this.experiences;
+  }
+
+  async getExperience(id: string): Promise<Experience | undefined> {
+    return this.experiences.find((e) => e.id === id);
+  }
+
+  async createExperience(exp: InsertExperience): Promise<Experience> {
+    const newE = {
+      ...exp,
+      id: `e-${Date.now()}`,
+      order: exp.order ?? 0,
+      createdAt: new Date(),
+    } as Experience;
+    this.experiences.push(newE);
+    return newE;
+  }
+
+  async updateExperience(id: string, exp: Partial<InsertExperience>): Promise<Experience | undefined> {
+    const index = this.experiences.findIndex((e) => e.id === id);
+    if (index === -1) return undefined;
+    this.experiences[index] = { ...this.experiences[index], ...exp } as Experience;
+    return this.experiences[index];
+  }
+
+  async deleteExperience(id: string): Promise<boolean> {
+    const initialLen = this.experiences.length;
+    this.experiences = this.experiences.filter((e) => e.id !== id);
+    return this.experiences.length < initialLen;
+  }
+
+  async reorderExperiences(updates: { id: string; order: number }[]): Promise<void> {
+    updates.forEach((u) => {
+      const e = this.experiences.find((ex) => ex.id === u.id);
+      if (e) e.order = u.order;
+    });
+  }
+}
+
+// Export storage instance based on configuration
+export let storage: IStorage;
+
+if (config.database.storageType === "mock") {
+  storage = new MockStorage();
+  console.log("✅ Using Mock Storage (In-Memory)");
+} else {
+  storage = new DbStorage();
+  console.log("✅ Using Database Storage (PostgreSQL)");
+}
