@@ -11,6 +11,10 @@ functions/lib/
 .env.local
 .env.*.local
 
+# Security: Never commit credentials
+**/credentials.json
+**/secrets.json
+
 # Database
 *.db
 *.db-journal
