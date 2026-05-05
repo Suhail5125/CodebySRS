@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Navigation } from "@/components/layout/navigation";
+import { SideHeader } from "@/components/layout/side-header";
 import { HeroSection } from "@/components/sections/hero-section";
 import { ProjectsSection } from "@/components/sections/projects-section";
 import { SkillsSection } from "@/components/sections/skills-section";
@@ -10,7 +10,6 @@ import { TestimonialsSection } from "@/components/sections/testimonials-section"
 import { ContactSection } from "@/components/sections/contact-section";
 import { Footer } from "@/components/layout/footer";
 import { SEO } from "@/components/seo";
-import { BootPreloader } from "@/components/boot-preloader";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Project, Skill, AboutInfo, InsertContactMessage, Testimonial } from "@shared";
@@ -26,7 +25,6 @@ import {
 export default function Home() {
   const { toast } = useToast();
 
-  // Enable section snap-scroll on the html element while Home is mounted.
   useEffect(() => {
     document.documentElement.classList.add("snap-sections");
     return () => {
@@ -47,8 +45,6 @@ export default function Home() {
     queryKey: ["/api/testimonials"],
   });
 
-  // Fall back to dummy fixtures whenever the API is empty so every section
-  // has something to render in the brutalist layout.
   const safeAbout: AboutInfo = aboutInfo ?? DUMMY_ABOUT;
   const safeProjects: Project[] = projects.length > 0 ? projects : DUMMY_PROJECTS;
   const safeSkills: Skill[] = skills.length > 0 ? skills : DUMMY_SKILLS;
@@ -86,11 +82,10 @@ export default function Home() {
     <div className="min-h-screen bg-background relative">
       <SEO />
       <ScrollIndicator />
-      <BootPreloader />
+
+      <SideHeader />
 
       <main>
-        <Navigation />
-
         <HeroSection aboutInfo={safeAbout} isLoading={aboutLoading} />
         <ProjectsSection projects={safeProjects} isLoading={projectsLoading} />
         <SkillsSection skills={safeSkills} isLoading={skillsLoading} />
