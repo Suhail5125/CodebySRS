@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  Github, Linkedin, Mail, Twitter, Instagram, ArrowUpRight,
+  Github, Linkedin, Mail, Twitter, Instagram,
 } from "lucide-react";
 import type { AboutInfo } from "@shared";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SectionHeader } from "@/components/section-header";
 
 /* ─── Brand palette ───────────────────────────────────────────── */
 const INK    = "#F2EFE6";
@@ -253,6 +252,80 @@ function AnimLetter({ char, index, total, delay, fromX, fromY, mouseRef, paused,
 }
 
 /* ════════════════════════════════════════════════════════════════
+   SKILLS TICKER
+════════════════════════════════════════════════════════════════ */
+const SKILLS = [
+  "REACT", "TYPESCRIPT", "WEBGL", "THREE.JS", "NODE.JS", "NEXT.JS",
+  "GSAP", "FRAMER MOTION", "TAILWIND", "POSTGRESQL", "FIGMA",
+  "GLSL", "VITE", "DOCKER", "GRAPHQL", "CANVAS 2D", "CSS GRID",
+];
+
+function SkillsTicker({ paused }: { paused: boolean }) {
+  const items = [...SKILLS, ...SKILLS];
+  return (
+    <div
+      aria-hidden
+      className="absolute bottom-0 inset-x-0 z-[5] overflow-hidden"
+      style={{
+        borderTop: `1px solid rgba(242,239,230,0.1)`,
+        background: "rgba(10,10,10,0.55)",
+        backdropFilter: "blur(4px)",
+        height: 36,
+      }}
+    >
+      <div
+        className="flex items-center h-full whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.28em]"
+        style={{
+          animation: paused ? "none" : "hero-ticker 28s linear infinite",
+          willChange: "transform",
+        }}
+      >
+        {items.map((skill, i) => (
+          <span key={i} className="flex items-center shrink-0">
+            <span style={{ color: i % SKILLS.length === 0 ? ACCENT : INK, opacity: 0.45 }}>
+              {skill}
+            </span>
+            <span aria-hidden style={{ opacity: 0.18, margin: "0 1.2em" }}>·</span>
+          </span>
+        ))}
+      </div>
+      <style>{`
+        @keyframes hero-ticker {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CORNER REGISTRATION MARKS — L-shaped tick marks at each corner
+════════════════════════════════════════════════════════════════ */
+function CornerMarks() {
+  const markStyle = (corner: "tl" | "tr" | "bl" | "br"): React.CSSProperties => {
+    const base: React.CSSProperties = {
+      position: "absolute",
+      width: 14,
+      height: 14,
+      opacity: 0.5,
+    };
+    if (corner === "tl") return { ...base, top: 0, left: 0, borderTop: `2px solid ${ACCENT}`, borderLeft: `2px solid ${ACCENT}` };
+    if (corner === "tr") return { ...base, top: 0, right: 0, borderTop: `2px solid ${ACCENT}`, borderRight: `2px solid ${ACCENT}` };
+    if (corner === "bl") return { ...base, bottom: 0, left: 0, borderBottom: `2px solid ${ACCENT}`, borderLeft: `2px solid ${ACCENT}` };
+    return { ...base, bottom: 0, right: 0, borderBottom: `2px solid ${ACCENT}`, borderRight: `2px solid ${ACCENT}` };
+  };
+  return (
+    <>
+      <span aria-hidden style={markStyle("tl")} />
+      <span aria-hidden style={markStyle("tr")} />
+      <span aria-hidden style={markStyle("bl")} />
+      <span aria-hidden style={markStyle("br")} />
+    </>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
    HERO SECTION
 ════════════════════════════════════════════════════════════════ */
 export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
@@ -319,6 +392,14 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       fromY: Math.random() < 0.5 ? -(160 + Math.random() * 120) : (160 + Math.random() * 120),
     })), [lastName]);
 
+  /* Flying headline — starts large + centred, flies to top-right corner and stays */
+  const [headlineFlown, setHeadlineFlown] = useState(false);
+  useEffect(() => {
+    if (reducedMotion) { setHeadlineFlown(true); return; }
+    const t1 = setTimeout(() => setHeadlineFlown(true), 500);
+    return () => clearTimeout(t1);
+  }, [reducedMotion]);
+
   /* Role cycling */
   const [roleIdx, setRoleIdx] = useState(0);
   useEffect(() => {
@@ -332,11 +413,11 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
 
   /* Social links */
   const socials = [
-    { Icon: Github,    href: aboutInfo?.githubUrl    || FALLBACK.github,    label: "GitHub"    },
-    { Icon: Linkedin,  href: aboutInfo?.linkedinUrl  || FALLBACK.linkedin,  label: "LinkedIn"  },
-    { Icon: Twitter,   href: aboutInfo?.twitterUrl   || FALLBACK.twitter,   label: "Twitter"   },
-    { Icon: Instagram, href: aboutInfo?.instagramUrl || FALLBACK.instagram, label: "Instagram" },
-    { Icon: Mail,      href: aboutInfo?.email        ? `mailto:${aboutInfo.email}` : `mailto:${FALLBACK.email}`, label: "Email" },
+    { abbr: "GH",   href: aboutInfo?.githubUrl    || FALLBACK.github,    label: "GitHub",    Icon: Github    },
+    { abbr: "LI",   href: aboutInfo?.linkedinUrl  || FALLBACK.linkedin,  label: "LinkedIn",  Icon: Linkedin  },
+    { abbr: "TW",   href: aboutInfo?.twitterUrl   || FALLBACK.twitter,   label: "Twitter",   Icon: Twitter   },
+    { abbr: "IG",   href: aboutInfo?.instagramUrl || FALLBACK.instagram, label: "Instagram", Icon: Instagram },
+    { abbr: "MAIL", href: aboutInfo?.email ? `mailto:${aboutInfo.email}` : `mailto:${FALLBACK.email}`, label: "Email", Icon: Mail },
   ];
 
   const scrollTo = (id: string) =>
@@ -366,57 +447,46 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       {!reducedMotion && <HeroCursor container={sectionRef} />}
 
       {/* ═══════════════════════════════════════════════════
-          ABSOLUTE SATELLITE ELEMENTS
+          FLYING "CODEBYSRS" — starts large and centred,
+          flies up to the top-right corner and stays there.
+          transformOrigin: right top so scaling expands from
+          the corner where the text will ultimately rest.
       ═══════════════════════════════════════════════════ */}
-
-      {/* TOP: banner-style section header (matches section 05) */}
       <motion.div
-        className="absolute inset-x-0 top-0 z-[5] px-5 pt-5 lg:px-10"
-        initial={reducedMotion ? false : { opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: reducedMotion ? 0 : 0.2, duration: 0.7, ease: EXPO }}
+        aria-hidden
+        className="pointer-events-none absolute z-[7]"
+        style={{
+          right:           "clamp(20px, 2.5vw, 40px)",
+          top:             "clamp(20px, 3vh, 50px)",
+          transformOrigin: "right top",
+          textAlign:       "right",
+          fontFamily:      "Inter, sans-serif",
+          fontWeight:      800,
+          fontSize:        "clamp(36px, 6vw, 84px)",
+          lineHeight:      0.92,
+          letterSpacing:   "-0.035em",
+          textTransform:   "uppercase",
+          color:           INK,
+          whiteSpace:      "nowrap",
+          opacity:         0.88,
+        }}
+        initial={{ scale: 2.6, y: "36vh", opacity: 0 }}
+        animate={{
+          scale:   headlineFlown ? 1   : 2.6,
+          y:       headlineFlown ? 0   : "36vh",
+          opacity: headlineFlown ? 0.88 : 0,
+        }}
+        transition={{
+          scale:   { duration: headlineFlown ? 0.85 : 0.25, ease: EXPO },
+          y:       { duration: headlineFlown ? 0.85 : 0.25, ease: EXPO },
+          opacity: { duration: 0.35 },
+        }}
       >
-        <SectionHeader
-          num="01"
-          name="HERO"
-          kicker={`// PORTFOLIO ${new Date().getFullYear()}`}
-          headline="CODEBYSRS"
-          variant="banner"
-        />
-      </motion.div>
-
-      {/* LEFT EDGE: vertical availability text (desktop only) */}
-      <motion.div
-        className="absolute left-0 top-1/2 z-[5] hidden origin-center -translate-x-1/2 -translate-y-1/2 -rotate-90 lg:flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.32em]"
-        style={{ whiteSpace: "nowrap", opacity: 0.38 }}
-        initial={reducedMotion ? false : { opacity: 0 }}
-        animate={{ opacity: 0.38 }}
-        transition={{ delay: 2.2, duration: 0.6 }}
-      >
-        <span
-          className="inline-block h-1.5 w-1.5 brut-blink"
-          style={{ background: available ? ACCENT : "#666" }}
-          aria-hidden
-        />
-        <span>{available ? "AVAILABLE FOR WORK" : "CURRENTLY BOOKED"}</span>
-        <span className="opacity-30">·</span>
-        <span>{location}</span>
-      </motion.div>
-
-      {/* RIGHT EDGE: vertical role text (desktop only) */}
-      <motion.div
-        className="absolute right-0 top-1/2 z-[5] hidden origin-center translate-x-1/2 -translate-y-1/2 rotate-90 lg:block font-mono text-[10px] uppercase tracking-[0.32em]"
-        style={{ whiteSpace: "nowrap", opacity: 0 }}
-        animate={{ opacity: 0.3 }}
-        transition={{ delay: 2.2, duration: 0.6 }}
-      >
-        <ScrambleText text={ROLES[roleIdx]} runKey={roleIdx} durationMs={500} paused={reducedMotion} />
+        CODEBYSRS
       </motion.div>
 
       {/* ═══════════════════════════════════════════════════
-          CENTER STAGE: THE NAME
-          Absolutely centered — this is the gravitational
-          core of the entire composition.
+          CENTER STAGE: THE NAME + INFO-BAR + ANNOTATION
       ═══════════════════════════════════════════════════ */}
       <div
         className="absolute inset-0 z-[5] flex flex-col items-start justify-center px-5 lg:px-10"
@@ -428,95 +498,178 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             <Skeleton className="h-24 w-full bg-white/10" />
           </div>
         ) : (
-          <div className="w-full max-w-full sm:max-w-[70%] lg:max-w-[55%]">
-            <h1
-              data-testid="hero-name"
-              className="select-none uppercase"
+          <div className="w-full max-w-full sm:max-w-[70%] lg:max-w-[58%]">
+
+            {/* ── Large stencil section index ── */}
+            <div
+              aria-hidden
               style={{
-                fontWeight:    900,
-                fontSize:      "clamp(2.8rem, 7.5vw, 8.5rem)",
-                lineHeight:    0.88,
-                letterSpacing: "-0.04em",
-                width:         "100%",
+                fontWeight:          900,
+                fontSize:            "6rem",
+                lineHeight:          1,
+                letterSpacing:       "-0.05em",
+                WebkitTextStroke:    `1px rgba(242,239,230,0.12)`,
+                color:               "transparent",
+                userSelect:          "none",
+                marginBottom:        "-1.5rem",
+                fontFamily:          "Inter, sans-serif",
               }}
             >
-              {/* ── FIRST NAME ── */}
-              <span className="block" aria-label={firstName}>
-                {fn.map((ch, i) => (
-                  <AnimLetter
-                    key={`fn-${i}`}
-                    char={ch}
-                    index={i}
-                    total={fn.length}
-                    delay={reducedMotion ? 0 : 0.42 + i * 0.07}
-                    fromX={firstLetterData[i]?.fromX ?? 0}
-                    fromY={firstLetterData[i]?.fromY ?? -120}
-                    mouseRef={mouseRef}
-                    paused={reducedMotion}
-                    color={INK}
-                  />
-                ))}
-              </span>
+              01
+            </div>
 
-              {/* ── LAST NAME with short orange underline beneath ── */}
-              <span className="block" aria-label={lastName}>
-                {ln.map((ch, i) => (
-                  <AnimLetter
-                    key={`ln-${i}`}
-                    char={ch}
-                    index={i}
-                    total={ln.length}
-                    delay={reducedMotion ? 0 : 0.65 + fn.length * 0.07 + i * 0.07}
-                    fromX={lastLetterData[i]?.fromX ?? 0}
-                    fromY={lastLetterData[i]?.fromY ?? 120}
-                    mouseRef={mouseRef}
-                    paused={reducedMotion}
-                    color={INK}
-                  />
-                ))}
-              </span>
-              <motion.span
+            {/* ── Name panel with corner marks + horizontal rules ── */}
+            <motion.div
+              initial={reducedMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: reducedMotion ? 0 : 0.38, duration: 0.5 }}
+              style={{ position: "relative", paddingTop: 8, paddingBottom: 8 }}
+            >
+              {/* Top rule */}
+              <div
                 aria-hidden
-                className="mt-2 block"
-                style={{
-                  width:           "clamp(80px, 18%, 200px)",
-                  height:          "clamp(4px, 0.45vw, 8px)",
-                  background:      ACCENT,
-                  transformOrigin: "left center",
-                }}
-                initial={reducedMotion ? false : { scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 0.9 }}
-                transition={{ delay: 0.55 + fn.length * 0.07, duration: 0.9, ease: EXPO }}
+                style={{ height: 1, background: `rgba(242,239,230,0.18)`, marginBottom: 8 }}
               />
-            </h1>
+
+              {/* Corner registration marks */}
+              <CornerMarks />
+
+              <h1
+                data-testid="hero-name"
+                className="select-none uppercase"
+                style={{
+                  fontWeight:    900,
+                  fontSize:      "clamp(2.8rem, 7.5vw, 8.5rem)",
+                  lineHeight:    0.88,
+                  letterSpacing: "-0.04em",
+                  width:         "100%",
+                  padding:       "4px 16px",
+                }}
+              >
+                {/* ── FIRST NAME ── */}
+                <span className="block" aria-label={firstName}>
+                  {fn.map((ch, i) => (
+                    <AnimLetter
+                      key={`fn-${i}`}
+                      char={ch}
+                      index={i}
+                      total={fn.length}
+                      delay={reducedMotion ? 0 : 0.42 + i * 0.07}
+                      fromX={firstLetterData[i]?.fromX ?? 0}
+                      fromY={firstLetterData[i]?.fromY ?? -120}
+                      mouseRef={mouseRef}
+                      paused={reducedMotion}
+                      color={INK}
+                    />
+                  ))}
+                </span>
+
+                {/* ── LAST NAME ── */}
+                <span className="block" aria-label={lastName}>
+                  {ln.map((ch, i) => (
+                    <AnimLetter
+                      key={`ln-${i}`}
+                      char={ch}
+                      index={i}
+                      total={ln.length}
+                      delay={reducedMotion ? 0 : 0.65 + fn.length * 0.07 + i * 0.07}
+                      fromX={lastLetterData[i]?.fromX ?? 0}
+                      fromY={lastLetterData[i]?.fromY ?? 120}
+                      mouseRef={mouseRef}
+                      paused={reducedMotion}
+                      color={INK}
+                    />
+                  ))}
+                </span>
+
+                {/* Orange underline bar */}
+                <motion.span
+                  aria-hidden
+                  className="mt-2 block"
+                  style={{
+                    width:           "clamp(80px, 18%, 200px)",
+                    height:          "clamp(4px, 0.45vw, 8px)",
+                    background:      ACCENT,
+                    transformOrigin: "left center",
+                    marginLeft:      16,
+                  }}
+                  initial={reducedMotion ? false : { scaleX: 0, opacity: 0 }}
+                  animate={{ scaleX: 1, opacity: 0.9 }}
+                  transition={{ delay: 0.55 + fn.length * 0.07, duration: 0.9, ease: EXPO }}
+                />
+              </h1>
+
+              {/* Bottom rule */}
+              <div
+                aria-hidden
+                style={{ height: 1, background: `rgba(242,239,230,0.18)`, marginTop: 8 }}
+              />
+            </motion.div>
 
             {/* hidden bio for screen readers */}
             <p data-testid="hero-bio" className="sr-only">{bio}</p>
 
-            {/* ── annotation strip below name ── */}
+            {/* ── BRUTALIST INFO-BAR ── */}
             <motion.div
-              className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.25em]"
+              className="mt-0 flex flex-wrap items-center gap-x-3 gap-y-1 px-1 py-2 font-mono text-[10px] uppercase tracking-[0.2em]"
+              style={{
+                borderTop: `1px solid rgba(242,239,230,0.18)`,
+              }}
+              initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: reducedMotion ? 0 : 1.3 + fn.length * 0.07, duration: 0.6, ease: EXPO }}
+            >
+              {/* STATUS cell */}
+              <span className="flex items-center gap-1.5">
+                <span style={{ opacity: 0.38 }}>STATUS</span>
+                <span aria-hidden style={{ opacity: 0.25 }}>|</span>
+                <span
+                  className="inline-block h-1.5 w-1.5 brut-blink shrink-0"
+                  style={{ background: available ? ACCENT : "#666" }}
+                  aria-hidden
+                />
+                <span style={{ color: available ? ACCENT : INK, opacity: available ? 1 : 0.65 }}>
+                  {available ? "AVAILABLE" : "BOOKED"}
+                </span>
+              </span>
+
+              <span aria-hidden style={{ opacity: 0.22 }}>·</span>
+
+              {/* ROLE cell */}
+              <span className="flex items-center gap-1.5">
+                <span style={{ opacity: 0.38 }}>ROLE</span>
+                <span aria-hidden style={{ opacity: 0.25 }}>|</span>
+                <ScrambleText text={ROLES[roleIdx]} runKey={roleIdx} durationMs={480} paused={reducedMotion} />
+              </span>
+
+              <span aria-hidden style={{ opacity: 0.22 }}>·</span>
+
+              {/* CLOCK cell */}
+              <span className="flex items-center gap-1.5">
+                <span style={{ opacity: 0.38 }}>TIME</span>
+                <span aria-hidden style={{ opacity: 0.25 }}>|</span>
+                <span style={{ opacity: 0.75 }}>{clock}</span>
+              </span>
+            </motion.div>
+
+            {/* ── TERMINAL ANNOTATION STRIP ── */}
+            <motion.div
+              className="mt-4 flex items-center gap-0 font-mono text-[11px] uppercase tracking-[0.22em]"
+              style={{ width: "100%" }}
               initial={reducedMotion ? false : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: reducedMotion ? 0 : 1.6 + fn.length * 0.07, duration: 0.7, ease: EXPO }}
             >
-              <span style={{ color: ACCENT }}>//</span>
-              <span className="opacity-45">NOW BUILDING</span>
-              <span className="opacity-20">·</span>
-              <span
-                className="lg:hidden font-mono text-[11px]"
-                style={{ opacity: 0.55 }}
-              >
-                <ScrambleText text={ROLES[roleIdx]} runKey={roleIdx} durationMs={480} paused={reducedMotion} />
-              </span>
-              <span className="hidden lg:inline opacity-55">
-                <ScrambleText text={ROLES[roleIdx]} runKey={roleIdx} durationMs={480} paused={reducedMotion} />
-              </span>
+              <span style={{ color: ACCENT, opacity: 0.7, marginRight: "0.5em" }}>&gt;&gt;&gt;</span>
+              <span style={{ opacity: 0.35, marginRight: "0.6em" }}>[OUTPUT]</span>
+              <span style={{ opacity: 0.5, marginRight: "0.5em" }}>NOW BUILDING</span>
+              <span style={{ opacity: 0.75 }}>REACT · WEBGL · SYSTEMS</span>
+              <BlinkingCursor paused={reducedMotion} />
             </motion.div>
 
-            {/* ── CTAs (left-anchored, pointer-events on so clickable) ── */}
+            {/* ── CTAs ── */}
             <motion.div
-              className="mt-8 flex flex-wrap items-center gap-3"
+              className="mt-7 flex flex-wrap items-center gap-3"
               style={{ pointerEvents: "auto" }}
               initial={reducedMotion ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -535,28 +688,74 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                 variant="ghost"
               />
             </motion.div>
+
+            {/* ── Keyboard nav hint ── */}
+            <motion.div
+              className="mt-5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em]"
+              style={{ opacity: 0, pointerEvents: "none" }}
+              animate={{ opacity: 0.3 }}
+              transition={{ delay: reducedMotion ? 0 : 2.6, duration: 0.8, ease: EXPO }}
+              aria-hidden
+            >
+              <span style={{ color: ACCENT }}>$</span>
+              <span>[ ↑↓ / scroll to explore ]</span>
+              <BlinkingCursor paused={reducedMotion} />
+            </motion.div>
           </div>
         )}
       </div>
 
       {/* ═══════════════════════════════════════════════════
-          BOTTOM SATELLITES — social + CTAs — absolutely
-          anchored to the bottom edge, NOT in a strip row.
+          BOTTOM-LEFT: social links — slash-separated row
       ═══════════════════════════════════════════════════ */}
-
-      {/* BOTTOM-LEFT: social links */}
       <motion.div
-        className="absolute bottom-5 left-5 z-[5] flex flex-wrap items-center gap-3"
+        className="absolute bottom-16 left-5 z-[5] flex items-center font-mono text-[10px] uppercase tracking-[0.22em]"
         initial={reducedMotion ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 2.0, duration: 0.6, ease: EXPO }}
       >
-        {socials.map(({ Icon, href, label }) => (
-          <SocialLink key={label} Icon={Icon} href={href} label={label} />
+        {socials.map(({ abbr, href, label, Icon }, idx) => (
+          <span key={label} className="flex items-center">
+            <SocialLink abbr={abbr} href={href} label={label} Icon={Icon} />
+            {idx < socials.length - 1 && (
+              <span aria-hidden style={{ opacity: 0.25, margin: "0 0.4em" }}>/</span>
+            )}
+          </span>
         ))}
       </motion.div>
 
+      {/* ═══════════════════════════════════════════════════
+          BOTTOM EDGE: skills ticker marquee
+      ═══════════════════════════════════════════════════ */}
+      <SkillsTicker paused={reducedMotion} />
+
     </section>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BLINKING CURSOR GLYPH
+════════════════════════════════════════════════════════════════ */
+function BlinkingCursor({ paused }: { paused: boolean }) {
+  const [vis, setVis] = useState(true);
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => setVis(v => !v), 530);
+    return () => clearInterval(id);
+  }, [paused]);
+  return (
+    <span
+      aria-hidden
+      style={{
+        display:         "inline-block",
+        width:           "0.55em",
+        height:          "1em",
+        background:      INK,
+        opacity:         vis ? 0.7 : 0,
+        marginLeft:      "0.3em",
+        verticalAlign:   "text-bottom",
+      }}
+    />
   );
 }
 
@@ -590,17 +789,6 @@ function GridLines() {
           style={{ left: `${x}%`, background: "rgba(242,239,230,0.03)" }}
         />
       ))}
-    </div>
-  );
-}
-
-function Scanline() {
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] overflow-hidden">
-      <div
-        className="absolute inset-x-0 h-px brut-scan"
-        style={{ background: ACCENT, opacity: 0.45, boxShadow: `0 0 6px ${ACCENT}` }}
-      />
     </div>
   );
 }
@@ -681,19 +869,28 @@ function BrutButton({ label, onClick, variant = "solid", "data-testid": tid }: B
       onBlur={() => setHov(false)}
       className="inline-flex items-center gap-2 px-4 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.22em] outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
       style={{
+        borderRadius: 0,
         background:  solid ? (hov ? ACCENT  : INK)         : (hov ? INK  : "transparent"),
         color:       solid ? (hov ? INK     : BG)           : (hov ? BG   : INK),
         border:      `2px solid ${INK}`,
+        opacity:     1,
         transition:  "none",
       }}
     >
+      <span aria-hidden style={{ opacity: 0.6 }}>[</span>
       {label}
-      <ArrowUpRight className="h-3.5 w-3.5" />
+      <span aria-hidden style={{ opacity: 0.6 }}>]</span>
     </button>
   );
 }
 
-function SocialLink({ Icon, href, label }: { Icon: typeof Github; href: string; label: string }) {
+interface SocialLinkProps {
+  abbr: string;
+  href: string;
+  label: string;
+  Icon: typeof Github;
+}
+function SocialLink({ abbr, href, label, Icon }: SocialLinkProps) {
   const [hov, setHov] = useState(false);
   return (
     <a
@@ -706,15 +903,14 @@ function SocialLink({ Icon, href, label }: { Icon: typeof Github; href: string; 
       onMouseLeave={() => setHov(false)}
       onFocus={() => setHov(true)}
       onBlur={() => setHov(false)}
-      className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] outline-none focus-visible:underline"
+      className="outline-none focus-visible:underline"
       style={{
-        color:   hov ? ACCENT : INK,
-        opacity: hov ? 1 : 0.5,
+        color:      hov ? ACCENT : INK,
+        opacity:    hov ? 1 : 0.5,
         transition: "none",
       }}
     >
-      <Icon className="h-3 w-3 shrink-0" />
-      <span className="hidden sm:inline">{label}</span>
+      {abbr}
     </a>
   );
 }
