@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   Github, Linkedin, Mail, Twitter, Instagram,
@@ -193,65 +193,6 @@ function SpotlightPortraits({
 }
 
 /* ════════════════════════════════════════════════════════════════
-   LETTER — one character with a CSS 3D flip entrance + live
-   mouse-tracking that fans each letter outward from center.
-════════════════════════════════════════════════════════════════ */
-interface LetterProps {
-  char: string;
-  index: number;
-  total: number;
-  delay: number;
-  fromX: number;
-  fromY: number;
-  mouseRef: React.RefObject<{ x: number; y: number }>;
-  paused: boolean;
-  color?: string;
-}
-
-function AnimLetter({ char, index, total, delay, fromX, fromY, mouseRef, paused, color = INK }: LetterProps) {
-  const divRef = useRef<HTMLDivElement>(null);
-
-  /* Apply mouse-driven 3D rotation via rAF to avoid React re-renders */
-  useEffect(() => {
-    if (paused) return;
-    let raf = 0;
-    const factor = ((index / Math.max(total - 1, 1)) - 0.5) * 2; // -1 … +1
-
-    const tick = () => {
-      if (divRef.current) {
-        const mx = mouseRef.current?.x ?? 0;
-        const my = mouseRef.current?.y ?? 0;
-        divRef.current.style.transform =
-          `perspective(700px) rotateY(${factor * mx * 9}deg) rotateX(${my * -4}deg)`;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    tick();
-    return () => cancelAnimationFrame(raf);
-  }, [paused, index, total, mouseRef]);
-
-  if (char === " ") {
-    return <span style={{ display: "inline-block", width: "0.22em" }} aria-hidden />;
-  }
-
-  return (
-    <div
-      ref={divRef}
-      style={{ display: "inline-block", transformStyle: "preserve-3d", willChange: "transform" }}
-    >
-      <motion.span
-        style={{ display: "inline-block", color }}
-        initial={paused ? false : { opacity: 0, x: fromX, y: fromY, rotateX: -80 }}
-        animate={{ opacity: 1, x: 0, y: 0, rotateX: 0 }}
-        transition={{ delay, duration: 0.85, ease: EXPO }}
-      >
-        {char}
-      </motion.span>
-    </div>
-  );
-}
-
-/* ════════════════════════════════════════════════════════════════
    SKILLS TICKER
 ════════════════════════════════════════════════════════════════ */
 const SKILLS = [
@@ -300,45 +241,15 @@ function SkillsTicker({ paused }: { paused: boolean }) {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   CORNER REGISTRATION MARKS — L-shaped tick marks at each corner
-════════════════════════════════════════════════════════════════ */
-function CornerMarks() {
-  const markStyle = (corner: "tl" | "tr" | "bl" | "br"): React.CSSProperties => {
-    const base: React.CSSProperties = {
-      position: "absolute",
-      width: 14,
-      height: 14,
-      opacity: 0.5,
-    };
-    if (corner === "tl") return { ...base, top: 0, left: 0, borderTop: `2px solid ${ACCENT}`, borderLeft: `2px solid ${ACCENT}` };
-    if (corner === "tr") return { ...base, top: 0, right: 0, borderTop: `2px solid ${ACCENT}`, borderRight: `2px solid ${ACCENT}` };
-    if (corner === "bl") return { ...base, bottom: 0, left: 0, borderBottom: `2px solid ${ACCENT}`, borderLeft: `2px solid ${ACCENT}` };
-    return { ...base, bottom: 0, right: 0, borderBottom: `2px solid ${ACCENT}`, borderRight: `2px solid ${ACCENT}` };
-  };
-  return (
-    <>
-      <span aria-hidden style={markStyle("tl")} />
-      <span aria-hidden style={markStyle("tr")} />
-      <span aria-hidden style={markStyle("bl")} />
-      <span aria-hidden style={markStyle("br")} />
-    </>
-  );
-}
-
-/* ════════════════════════════════════════════════════════════════
    HERO SECTION
 ════════════════════════════════════════════════════════════════ */
 export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
   const reducedMotion = !!useReducedMotion();
 
-  const firstName = (aboutInfo?.name?.split(" ")[0] ?? "DEVELOPER").toUpperCase();
-  const lastName  = (aboutInfo?.name?.split(" ").slice(1).join(" ") ?? "ENGINEER").toUpperCase() || "ENGINEER";
-  const fullName  = `${firstName} ${lastName}`;
-  const bio       = aboutInfo?.bio ?? "Building modern web experiences — interfaces, interactions, and the systems that hold them together.";
   const location  = (aboutInfo?.location ?? "GLOBAL").toUpperCase();
   const available = aboutInfo?.availableForWork ?? true;
 
-  /* Mouse — stored in a ref so Canvas 2D + AnimLetter rAF loops
+  /* Mouse — stored in a ref so Canvas 2D and background rAF loops
      read it without causing React re-renders */
   const sectionRef = useRef<HTMLElement>(null);
   const spotlightRef = useRef<HTMLDivElement>(null);
@@ -379,25 +290,12 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
     };
   }, [reducedMotion]);
 
-  /* Pre-generate per-letter entrance vectors */
-  const firstLetterData = useMemo(() =>
-    firstName.split("").map(() => ({
-      fromX: (Math.random() - 0.5) * 280,
-      fromY: Math.random() < 0.5 ? -(160 + Math.random() * 120) : (160 + Math.random() * 120),
-    })), [firstName]);
-
-  const lastLetterData = useMemo(() =>
-    lastName.split("").map(() => ({
-      fromX: (Math.random() - 0.5) * 280,
-      fromY: Math.random() < 0.5 ? -(160 + Math.random() * 120) : (160 + Math.random() * 120),
-    })), [lastName]);
-
-  /* Flying headline — starts large + centred, flies to top-right corner and stays */
+  /* Flying headline — animates from large center into top-right corner position */
   const [headlineFlown, setHeadlineFlown] = useState(false);
   useEffect(() => {
     if (reducedMotion) { setHeadlineFlown(true); return; }
     const t1 = setTimeout(() => setHeadlineFlown(true), 500);
-    return () => clearTimeout(t1);
+    return () => { clearTimeout(t1); };
   }, [reducedMotion]);
 
   /* Role cycling */
@@ -413,19 +311,16 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
 
   /* Social links */
   const socials = [
-    { abbr: "GH",   href: aboutInfo?.githubUrl    || FALLBACK.github,    label: "GitHub",    Icon: Github    },
-    { abbr: "LI",   href: aboutInfo?.linkedinUrl  || FALLBACK.linkedin,  label: "LinkedIn",  Icon: Linkedin  },
-    { abbr: "TW",   href: aboutInfo?.twitterUrl   || FALLBACK.twitter,   label: "Twitter",   Icon: Twitter   },
-    { abbr: "IG",   href: aboutInfo?.instagramUrl || FALLBACK.instagram, label: "Instagram", Icon: Instagram },
-    { abbr: "MAIL", href: aboutInfo?.email ? `mailto:${aboutInfo.email}` : `mailto:${FALLBACK.email}`, label: "Email", Icon: Mail },
+    { href: aboutInfo?.githubUrl    || FALLBACK.github,    label: "GitHub",    Icon: Github    },
+    { href: aboutInfo?.linkedinUrl  || FALLBACK.linkedin,  label: "LinkedIn",  Icon: Linkedin  },
+    { href: aboutInfo?.twitterUrl   || FALLBACK.twitter,   label: "Twitter",   Icon: Twitter   },
+    { href: aboutInfo?.instagramUrl || FALLBACK.instagram, label: "Instagram", Icon: Instagram },
+    { href: aboutInfo?.email ? `mailto:${aboutInfo.email}` : `mailto:${FALLBACK.email}`, label: "Email", Icon: Mail },
   ];
 
   const scrollTo = (id: string) =>
     document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
 
-  /* Total letter counts for perspective fanning */
-  const fn = firstName.split("");
-  const ln = lastName.split("");
 
   return (
     <section
@@ -448,9 +343,9 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
 
       {/* ═══════════════════════════════════════════════════
           FLYING "CODEBYSRS" — starts large and centred,
-          flies up to the top-right corner and stays there.
-          transformOrigin: right top so scaling expands from
-          the corner where the text will ultimately rest.
+          flies up and shrinks into the banner headline slot.
+          transformOrigin: right top → expands outward from
+          the top-right corner where the real headline lives.
       ═══════════════════════════════════════════════════ */}
       <motion.div
         aria-hidden
@@ -468,13 +363,12 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           textTransform:   "uppercase",
           color:           INK,
           whiteSpace:      "nowrap",
-          opacity:         0.88,
         }}
         initial={{ scale: 2.6, y: "36vh", opacity: 0 }}
         animate={{
-          scale:   headlineFlown ? 1   : 2.6,
-          y:       headlineFlown ? 0   : "36vh",
-          opacity: headlineFlown ? 0.88 : 0,
+          scale:   headlineFlown ? 1    : 2.6,
+          y:       headlineFlown ? 0    : "36vh",
+          opacity: 1,
         }}
         transition={{
           scale:   { duration: headlineFlown ? 0.85 : 0.25, ease: EXPO },
@@ -486,7 +380,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       </motion.div>
 
       {/* ═══════════════════════════════════════════════════
-          CENTER STAGE: THE NAME + INFO-BAR + ANNOTATION
+          CENTER STAGE: INFO-BAR + ANNOTATION
       ═══════════════════════════════════════════════════ */}
       <div
         className="absolute inset-0 z-[5] flex flex-col items-start justify-center px-5 lg:px-10"
@@ -494,186 +388,106 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       >
         {isLoading ? (
           <div className="w-full max-w-[58%] space-y-6">
-            <Skeleton className="h-24 w-3/4 bg-white/10" />
-            <Skeleton className="h-24 w-full bg-white/10" />
+            <Skeleton className="h-6 w-1/2 bg-white/10" />
+            <Skeleton className="h-20 w-3/4 bg-white/10" />
+            <Skeleton className="h-10 w-full bg-white/10" />
+            <Skeleton className="h-8 w-2/5 bg-white/10" />
           </div>
         ) : (
-          <div className="w-full max-w-full sm:max-w-[70%] lg:max-w-[58%]">
+          <div className="w-full max-w-full sm:max-w-[72%] lg:max-w-[56%]">
 
-            {/* ── Large stencil section index ── */}
-            <div
-              aria-hidden
-              style={{
-                fontWeight:          900,
-                fontSize:            "6rem",
-                lineHeight:          1,
-                letterSpacing:       "-0.05em",
-                WebkitTextStroke:    `1px rgba(242,239,230,0.12)`,
-                color:               "transparent",
-                userSelect:          "none",
-                marginBottom:        "-1.5rem",
-                fontFamily:          "Inter, sans-serif",
-              }}
-            >
-              01
-            </div>
-
-            {/* ── Name panel with corner marks + horizontal rules ── */}
+            {/* ── STATUS / ROLE / TIME bar ── */}
             <motion.div
-              initial={reducedMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: reducedMotion ? 0 : 0.38, duration: 0.5 }}
-              style={{ position: "relative", paddingTop: 8, paddingBottom: 8 }}
-            >
-              {/* Top rule */}
-              <div
-                aria-hidden
-                style={{ height: 1, background: `rgba(242,239,230,0.18)`, marginBottom: 8 }}
-              />
-
-              {/* Corner registration marks */}
-              <CornerMarks />
-
-              <h1
-                data-testid="hero-name"
-                className="select-none uppercase"
-                style={{
-                  fontWeight:    900,
-                  fontSize:      "clamp(2.8rem, 7.5vw, 8.5rem)",
-                  lineHeight:    0.88,
-                  letterSpacing: "-0.04em",
-                  width:         "100%",
-                  padding:       "4px 16px",
-                }}
-              >
-                {/* ── FIRST NAME ── */}
-                <span className="block" aria-label={firstName}>
-                  {fn.map((ch, i) => (
-                    <AnimLetter
-                      key={`fn-${i}`}
-                      char={ch}
-                      index={i}
-                      total={fn.length}
-                      delay={reducedMotion ? 0 : 0.42 + i * 0.07}
-                      fromX={firstLetterData[i]?.fromX ?? 0}
-                      fromY={firstLetterData[i]?.fromY ?? -120}
-                      mouseRef={mouseRef}
-                      paused={reducedMotion}
-                      color={INK}
-                    />
-                  ))}
-                </span>
-
-                {/* ── LAST NAME ── */}
-                <span className="block" aria-label={lastName}>
-                  {ln.map((ch, i) => (
-                    <AnimLetter
-                      key={`ln-${i}`}
-                      char={ch}
-                      index={i}
-                      total={ln.length}
-                      delay={reducedMotion ? 0 : 0.65 + fn.length * 0.07 + i * 0.07}
-                      fromX={lastLetterData[i]?.fromX ?? 0}
-                      fromY={lastLetterData[i]?.fromY ?? 120}
-                      mouseRef={mouseRef}
-                      paused={reducedMotion}
-                      color={INK}
-                    />
-                  ))}
-                </span>
-
-                {/* Orange underline bar */}
-                <motion.span
-                  aria-hidden
-                  className="mt-2 block"
-                  style={{
-                    width:           "clamp(80px, 18%, 200px)",
-                    height:          "clamp(4px, 0.45vw, 8px)",
-                    background:      ACCENT,
-                    transformOrigin: "left center",
-                    marginLeft:      16,
-                  }}
-                  initial={reducedMotion ? false : { scaleX: 0, opacity: 0 }}
-                  animate={{ scaleX: 1, opacity: 0.9 }}
-                  transition={{ delay: 0.55 + fn.length * 0.07, duration: 0.9, ease: EXPO }}
-                />
-              </h1>
-
-              {/* Bottom rule */}
-              <div
-                aria-hidden
-                style={{ height: 1, background: `rgba(242,239,230,0.18)`, marginTop: 8 }}
-              />
-            </motion.div>
-
-            {/* hidden bio for screen readers */}
-            <p data-testid="hero-bio" className="sr-only">{bio}</p>
-
-            {/* ── BRUTALIST INFO-BAR ── */}
-            <motion.div
-              className="mt-0 flex flex-wrap items-center gap-x-3 gap-y-1 px-1 py-2 font-mono text-[10px] uppercase tracking-[0.2em]"
-              style={{
-                borderTop: `1px solid rgba(242,239,230,0.18)`,
-              }}
-              initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.2em]"
+              initial={reducedMotion ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: reducedMotion ? 0 : 1.3 + fn.length * 0.07, duration: 0.6, ease: EXPO }}
+              transition={{ delay: reducedMotion ? 0 : 1.1, duration: 0.55, ease: EXPO }}
             >
-              {/* STATUS cell */}
               <span className="flex items-center gap-1.5">
-                <span style={{ opacity: 0.38 }}>STATUS</span>
-                <span aria-hidden style={{ opacity: 0.25 }}>|</span>
                 <span
-                  className="inline-block h-1.5 w-1.5 brut-blink shrink-0"
+                  className="inline-block h-1.5 w-1.5 shrink-0 brut-blink"
                   style={{ background: available ? ACCENT : "#666" }}
                   aria-hidden
                 />
                 <span style={{ color: available ? ACCENT : INK, opacity: available ? 1 : 0.65 }}>
-                  {available ? "AVAILABLE" : "BOOKED"}
+                  {available ? "AVAILABLE FOR WORK" : "CURRENTLY BOOKED"}
                 </span>
               </span>
-
-              <span aria-hidden style={{ opacity: 0.22 }}>·</span>
-
-              {/* ROLE cell */}
+              <span aria-hidden style={{ opacity: 0.2 }}>·</span>
               <span className="flex items-center gap-1.5">
-                <span style={{ opacity: 0.38 }}>ROLE</span>
-                <span aria-hidden style={{ opacity: 0.25 }}>|</span>
+                <span style={{ opacity: 0.35 }}>ROLE</span>
+                <span aria-hidden style={{ opacity: 0.2 }}>|</span>
                 <ScrambleText text={ROLES[roleIdx]} runKey={roleIdx} durationMs={480} paused={reducedMotion} />
               </span>
-
-              <span aria-hidden style={{ opacity: 0.22 }}>·</span>
-
-              {/* CLOCK cell */}
-              <span className="flex items-center gap-1.5">
-                <span style={{ opacity: 0.38 }}>TIME</span>
-                <span aria-hidden style={{ opacity: 0.25 }}>|</span>
-                <span style={{ opacity: 0.75 }}>{clock}</span>
-              </span>
+              <span aria-hidden style={{ opacity: 0.2 }}>·</span>
+              <span style={{ opacity: 0.4 }}>{clock}</span>
             </motion.div>
 
-            {/* ── TERMINAL ANNOTATION STRIP ── */}
+            {/* ── SOCIALS ROW ── */}
             <motion.div
-              className="mt-4 flex items-center gap-0 font-mono text-[11px] uppercase tracking-[0.22em]"
-              style={{ width: "100%" }}
-              initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+              className="flex items-center gap-2"
+              style={{ pointerEvents: "auto" }}
+              initial={reducedMotion ? false : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: reducedMotion ? 0 : 1.6 + fn.length * 0.07, duration: 0.7, ease: EXPO }}
+              transition={{ delay: reducedMotion ? 0 : 1.55, duration: 0.6, ease: EXPO }}
             >
-              <span style={{ color: ACCENT, opacity: 0.7, marginRight: "0.5em" }}>&gt;&gt;&gt;</span>
-              <span style={{ opacity: 0.35, marginRight: "0.6em" }}>[OUTPUT]</span>
-              <span style={{ opacity: 0.5, marginRight: "0.5em" }}>NOW BUILDING</span>
-              <span style={{ opacity: 0.75 }}>REACT · WEBGL · SYSTEMS</span>
-              <BlinkingCursor paused={reducedMotion} />
+              {socials.map(({ href, label, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  data-testid={`link-${label.toLowerCase()}`}
+                  className="group outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 36,
+                    height: 36,
+                    border: `1px solid rgba(242,239,230,0.18)`,
+                    color: INK,
+                    opacity: 0.55,
+                    transition: "opacity 0.15s, color 0.15s, border-color 0.15s",
+                  }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.opacity = "1";
+                    el.style.color = ACCENT;
+                    el.style.borderColor = ACCENT;
+                  }}
+                  onMouseLeave={e => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.opacity = "0.55";
+                    el.style.color = INK;
+                    el.style.borderColor = "rgba(242,239,230,0.18)";
+                  }}
+                  onFocus={e => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.opacity = "1";
+                    el.style.color = ACCENT;
+                    el.style.borderColor = ACCENT;
+                  }}
+                  onBlur={e => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.opacity = "0.55";
+                    el.style.color = INK;
+                    el.style.borderColor = "rgba(242,239,230,0.18)";
+                  }}
+                >
+                  <Icon size={14} strokeWidth={1.5} />
+                </a>
+              ))}
             </motion.div>
 
             {/* ── CTAs ── */}
             <motion.div
-              className="mt-7 flex flex-wrap items-center gap-3"
+              className="mt-6 flex flex-wrap items-center gap-3"
               style={{ pointerEvents: "auto" }}
               initial={reducedMotion ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 2.1, duration: 0.6, ease: EXPO }}
+              transition={{ delay: reducedMotion ? 0 : 1.75, duration: 0.6, ease: EXPO }}
             >
               <BrutButton
                 label="START PROJECT"
@@ -689,40 +503,22 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
               />
             </motion.div>
 
-            {/* ── Keyboard nav hint ── */}
+            {/* ── TERMINAL STRIP ── */}
             <motion.div
-              className="mt-5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em]"
-              style={{ opacity: 0, pointerEvents: "none" }}
-              animate={{ opacity: 0.3 }}
-              transition={{ delay: reducedMotion ? 0 : 2.6, duration: 0.8, ease: EXPO }}
-              aria-hidden
+              className="mt-4 flex items-center font-mono text-[10px] uppercase tracking-[0.22em]"
+              initial={reducedMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: reducedMotion ? 0 : 2.0, duration: 0.7, ease: EXPO }}
             >
-              <span style={{ color: ACCENT }}>$</span>
-              <span>[ ↑↓ / scroll to explore ]</span>
+              <span style={{ color: ACCENT, opacity: 0.6, marginRight: "0.5em" }}>&gt;&gt;&gt;</span>
+              <span style={{ opacity: 0.3, marginRight: "0.5em" }}>NOW BUILDING</span>
+              <span style={{ opacity: 0.6 }}>REACT · WEBGL · SYSTEMS</span>
               <BlinkingCursor paused={reducedMotion} />
             </motion.div>
+
           </div>
         )}
       </div>
-
-      {/* ═══════════════════════════════════════════════════
-          BOTTOM-LEFT: social links — slash-separated row
-      ═══════════════════════════════════════════════════ */}
-      <motion.div
-        className="absolute bottom-16 left-5 z-[5] flex items-center font-mono text-[10px] uppercase tracking-[0.22em]"
-        initial={reducedMotion ? false : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2.0, duration: 0.6, ease: EXPO }}
-      >
-        {socials.map(({ abbr, href, label, Icon }, idx) => (
-          <span key={label} className="flex items-center">
-            <SocialLink abbr={abbr} href={href} label={label} Icon={Icon} />
-            {idx < socials.length - 1 && (
-              <span aria-hidden style={{ opacity: 0.25, margin: "0 0.4em" }}>/</span>
-            )}
-          </span>
-        ))}
-      </motion.div>
 
       {/* ═══════════════════════════════════════════════════
           BOTTOM EDGE: skills ticker marquee
@@ -881,37 +677,6 @@ function BrutButton({ label, onClick, variant = "solid", "data-testid": tid }: B
       {label}
       <span aria-hidden style={{ opacity: 0.6 }}>]</span>
     </button>
-  );
-}
-
-interface SocialLinkProps {
-  abbr: string;
-  href: string;
-  label: string;
-  Icon: typeof Github;
-}
-function SocialLink({ abbr, href, label, Icon }: SocialLinkProps) {
-  const [hov, setHov] = useState(false);
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={label}
-      data-testid={`link-${label.toLowerCase()}`}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      onFocus={() => setHov(true)}
-      onBlur={() => setHov(false)}
-      className="outline-none focus-visible:underline"
-      style={{
-        color:      hov ? ACCENT : INK,
-        opacity:    hov ? 1 : 0.5,
-        transition: "none",
-      }}
-    >
-      {abbr}
-    </a>
   );
 }
 
