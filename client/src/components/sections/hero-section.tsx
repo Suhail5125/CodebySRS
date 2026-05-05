@@ -379,9 +379,8 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
         <SectionHeader
           num="01"
           name="HERO"
-          kicker={`PORTFOLIO · ${new Date().getFullYear()}`}
+          kicker={`// PORTFOLIO ${new Date().getFullYear()}`}
           headline="CODEBYSRS"
-          right={clock}
           variant="banner"
         />
       </motion.div>
