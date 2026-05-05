@@ -18,7 +18,8 @@ interface ServerConfig {
  * Database configuration interface
  */
 interface DatabaseConfig {
-  url: string;
+  url?: string;
+  storageType: "db" | "mock";
 }
 
 /**
