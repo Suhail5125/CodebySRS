@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import type { AboutInfo } from "@shared";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SectionHeader } from "@/components/section-header";
 
 /* ─── Brand palette ───────────────────────────────────────────── */
 const INK    = "#F2EFE6";
@@ -368,28 +369,21 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           ABSOLUTE SATELLITE ELEMENTS
       ═══════════════════════════════════════════════════ */}
 
-      {/* TOP-LEFT: brand mark */}
+      {/* TOP: banner-style section header (matches section 05) */}
       <motion.div
-        className="absolute left-5 top-5 z-[5] font-mono text-[10px] uppercase tracking-[0.3em]"
-        style={{ opacity: 0.35 }}
-        initial={reducedMotion ? false : { opacity: 0 }}
-        animate={{ opacity: 0.35 }}
-        transition={{ delay: 1.8, duration: 0.6 }}
+        className="absolute inset-x-0 top-0 z-[5] px-5 pt-5 lg:px-10"
+        initial={reducedMotion ? false : { opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: reducedMotion ? 0 : 0.2, duration: 0.7, ease: EXPO }}
       >
-        <span style={{ color: ACCENT }}>◆</span>{" "}CODEBYSRS
-      </motion.div>
-
-      {/* TOP-RIGHT: section ID + live clock */}
-      <motion.div
-        className="absolute right-5 top-5 z-[5] flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.25em]"
-        initial={reducedMotion ? false : { opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 1.9, duration: 0.6, ease: EXPO }}
-      >
-        <span style={{ color: ACCENT }}>[ SECTION 01 ]</span>
-        <span className="opacity-30">/</span>
-        <span className="opacity-50">HERO</span>
-        <span className="hidden tabular-nums opacity-30 md:inline">{clock}</span>
+        <SectionHeader
+          num="01"
+          name="HERO"
+          kicker="// PORTFOLIO"
+          headline="INTRODUCTION"
+          right={`CODEBYSRS · ${new Date().getFullYear()} · ${clock}`}
+          variant="banner"
+        />
       </motion.div>
 
       {/* LEFT EDGE: vertical availability text (desktop only) */}
@@ -436,16 +430,6 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
           </div>
         ) : (
           <div className="w-full max-w-full sm:max-w-[70%] lg:max-w-[55%]">
-            {/* tiny annotation above the name */}
-            <motion.p
-              className="mb-3 font-mono text-[10px] uppercase tracking-[0.45em]"
-              style={{ color: ACCENT, opacity: 0 }}
-              animate={{ opacity: 0.7 }}
-              transition={{ delay: 0.35, duration: 0.5 }}
-            >
-              // PORTFOLIO · {new Date().getFullYear()}
-            </motion.p>
-
             <h1
               data-testid="hero-name"
               className="select-none uppercase"
