@@ -59,6 +59,7 @@ export default function AdminProjects() {
     githubUrl: "",
     liveUrl: "",
     featured: false,
+    order: 0,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [techInput, setTechInput] = useState("");
@@ -156,6 +157,7 @@ export default function AdminProjects() {
         githubUrl: project.githubUrl || "",
         liveUrl: project.liveUrl || "",
         featured: project.featured,
+        order: project.order ?? 0,
       });
     } else {
       setEditingProject(null);
@@ -167,6 +169,7 @@ export default function AdminProjects() {
         githubUrl: "",
         liveUrl: "",
         featured: false,
+        order: 0,
       });
     }
     setIsDialogOpen(true);
@@ -390,7 +393,7 @@ export default function AdminProjects() {
                       <div className="flex gap-2">
                         <Input
                           type="url"
-                          value={formData.imageUrl}
+                          value={formData.imageUrl || ""}
                           onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                           placeholder="https://example.com/project-image.jpg"
                           className="h-11 flex-1"
@@ -420,7 +423,7 @@ export default function AdminProjects() {
                     <Input
                       id="githubUrl"
                       type="url"
-                      value={formData.githubUrl}
+                      value={formData.githubUrl || ""}
                       onChange={(e) =>
                         setFormData({ ...formData, githubUrl: e.target.value })
                       }
@@ -432,7 +435,7 @@ export default function AdminProjects() {
                     <Input
                       id="liveUrl"
                       type="url"
-                      value={formData.liveUrl}
+                      value={formData.liveUrl || ""}
                       onChange={(e) =>
                         setFormData({ ...formData, liveUrl: e.target.value })
                       }

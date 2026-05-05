@@ -118,6 +118,7 @@ export function loadConfig(): Config {
     },
     database: {
       url: process.env.DATABASE_URL || "postgresql://localhost:5432/portfolio",
+      storageType: (process.env.STORAGE_TYPE as "db" | "mock") || (process.env.DATABASE_URL ? "db" : "mock"),
     },
     session: {
       secret: process.env.SESSION_SECRET || "your-super-secret-session-key-change-this-in-production",

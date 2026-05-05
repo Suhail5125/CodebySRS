@@ -211,7 +211,11 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
     for (let i = 0; i < n; i++) {
       const id = shuffled[i].id;
       timers.push(setTimeout(() => {
-        setGlowingIds(prev => new Set([...prev, id]));
+        setGlowingIds(prev => {
+          const next = new Set(prev);
+          next.add(id);
+          return next;
+        });
       }, Math.round(step * i)));
     }
     return () => timers.forEach(clearTimeout);

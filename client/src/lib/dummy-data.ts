@@ -4,7 +4,7 @@ export const DUMMY_ABOUT: AboutInfo = {
   id: "dummy-about",
   name: "Studio Codebysrs",
   title: "Full-Stack Engineer · 3D Web Specialist",
-  bio: "",
+  bio: "Studio Codebysrs is a digital production house specializing in high-performance web applications and immersive 3D experiences. We bridge the gap between brutalist design and technical excellence, shipping products that are as robust as they are visually arresting.",
   avatarUrl: null,
   resumeUrl: "#",
   email: "hello@codebysrs.dev",
@@ -21,9 +21,8 @@ export const DUMMY_ABOUT: AboutInfo = {
   totalClients: 42,
   yearsExperience: 10,
   technologiesCount: 36,
-  createdAt: new Date(),
   updatedAt: new Date(),
-} as unknown as AboutInfo;
+};
 
 export const DUMMY_PROJECTS: Project[] = [
   {
@@ -32,13 +31,12 @@ export const DUMMY_PROJECTS: Project[] = [
     description:
       "Real-time 3D product configurator for an industrial OEM. Three.js + React + Vercel Edge.",
     imageUrl: null,
-    technologies: ["React", "Three.js", "WebGL", "Vercel Edge", "TypeScript"],
+    technologies: JSON.stringify(["React", "Three.js", "WebGL", "Vercel Edge", "TypeScript"]),
     githubUrl: "#",
     liveUrl: "#",
     featured: true,
     order: 1,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: "p-002",
@@ -46,13 +44,12 @@ export const DUMMY_PROJECTS: Project[] = [
     description:
       "Headless CMS for a media network. PostgreSQL, Drizzle ORM, fine-grained RBAC.",
     imageUrl: null,
-    technologies: ["Next.js", "Postgres", "Drizzle", "Trpc"],
+    technologies: JSON.stringify(["Next.js", "Postgres", "Drizzle", "Trpc"]),
     githubUrl: "#",
     liveUrl: "#",
     featured: true,
     order: 2,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: "p-003",
@@ -60,13 +57,12 @@ export const DUMMY_PROJECTS: Project[] = [
     description:
       "Realtime energy telemetry dashboard. WebSockets, sub-second charting, dark-only UI.",
     imageUrl: null,
-    technologies: ["React", "WebSockets", "D3", "Tailwind"],
+    technologies: JSON.stringify(["React", "WebSockets", "D3", "Tailwind"]),
     githubUrl: "#",
     liveUrl: "#",
     featured: true,
     order: 3,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: "p-004",
@@ -74,13 +70,12 @@ export const DUMMY_PROJECTS: Project[] = [
     description:
       "E-commerce for a craft brewery. Headless Shopify, custom checkout, +38% conversion.",
     imageUrl: null,
-    technologies: ["Shopify", "Hydrogen", "Remix", "Stripe"],
+    technologies: JSON.stringify(["Shopify", "Hydrogen", "Remix", "Stripe"]),
     githubUrl: "#",
     liveUrl: "#",
     featured: true,
     order: 4,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: "p-005",
@@ -88,13 +83,12 @@ export const DUMMY_PROJECTS: Project[] = [
     description:
       "Offline-first PWA for field researchers. Sync engine, conflict resolution, IndexedDB.",
     imageUrl: null,
-    technologies: ["PWA", "IndexedDB", "Service Worker", "React"],
+    technologies: JSON.stringify(["PWA", "IndexedDB", "Service Worker", "React"]),
     githubUrl: "#",
     liveUrl: "#",
     featured: true,
     order: 5,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: "p-006",
@@ -102,40 +96,39 @@ export const DUMMY_PROJECTS: Project[] = [
     description:
       "Marketing site for a motion design studio. WebGL hero, 100/100 Lighthouse.",
     imageUrl: null,
-    technologies: ["Astro", "Three.js", "GSAP", "Cloudflare"],
+    technologies: JSON.stringify(["Astro", "Three.js", "GSAP", "Cloudflare"]),
     githubUrl: "#",
     liveUrl: "#",
     featured: true,
     order: 6,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
 ];
 
 export const DUMMY_SKILLS: Skill[] = [
   // Frontend
-  { id: "s-1", name: "React", category: "Frontend", proficiency: 96, order: 1, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-2", name: "TypeScript", category: "Frontend", proficiency: 94, order: 2, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-3", name: "Next.js", category: "Frontend", proficiency: 90, order: 3, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-4", name: "Tailwind CSS", category: "Frontend", proficiency: 92, order: 4, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-5", name: "Framer Motion", category: "Frontend", proficiency: 84, order: 5, icon: null, createdAt: new Date(), updatedAt: new Date() },
+  { id: "s-1", name: "React", category: "Frontend", proficiency: 96, order: 1, icon: null },
+  { id: "s-2", name: "TypeScript", category: "Frontend", proficiency: 94, order: 2, icon: null },
+  { id: "s-3", name: "Next.js", category: "Frontend", proficiency: 90, order: 3, icon: null },
+  { id: "s-4", name: "Tailwind CSS", category: "Frontend", proficiency: 92, order: 4, icon: null },
+  { id: "s-5", name: "Framer Motion", category: "Frontend", proficiency: 84, order: 5, icon: null },
   // Backend
-  { id: "s-6", name: "Node.js", category: "Backend", proficiency: 91, order: 1, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-7", name: "PostgreSQL", category: "Backend", proficiency: 88, order: 2, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-8", name: "Drizzle ORM", category: "Backend", proficiency: 85, order: 3, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-9", name: "Redis", category: "Backend", proficiency: 78, order: 4, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-10", name: "GraphQL", category: "Backend", proficiency: 80, order: 5, icon: null, createdAt: new Date(), updatedAt: new Date() },
+  { id: "s-6", name: "Node.js", category: "Backend", proficiency: 91, order: 1, icon: null },
+  { id: "s-7", name: "PostgreSQL", category: "Backend", proficiency: 88, order: 2, icon: null },
+  { id: "s-8", name: "Drizzle ORM", category: "Backend", proficiency: 85, order: 3, icon: null },
+  { id: "s-9", name: "Redis", category: "Backend", proficiency: 78, order: 4, icon: null },
+  { id: "s-10", name: "GraphQL", category: "Backend", proficiency: 80, order: 5, icon: null },
   // 3D / Graphics
-  { id: "s-11", name: "Three.js", category: "3D/Graphics", proficiency: 87, order: 1, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-12", name: "WebGL / GLSL", category: "3D/Graphics", proficiency: 78, order: 2, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-13", name: "GSAP", category: "3D/Graphics", proficiency: 82, order: 3, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-14", name: "Blender", category: "3D/Graphics", proficiency: 65, order: 4, icon: null, createdAt: new Date(), updatedAt: new Date() },
+  { id: "s-11", name: "Three.js", category: "3D/Graphics", proficiency: 87, order: 1, icon: null },
+  { id: "s-12", name: "WebGL / GLSL", category: "3D/Graphics", proficiency: 78, order: 2, icon: null },
+  { id: "s-13", name: "GSAP", category: "3D/Graphics", proficiency: 82, order: 3, icon: null },
+  { id: "s-14", name: "Blender", category: "3D/Graphics", proficiency: 65, order: 4, icon: null },
   // Tools
-  { id: "s-15", name: "Vite", category: "Tools", proficiency: 92, order: 1, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-16", name: "Docker", category: "Tools", proficiency: 81, order: 2, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-17", name: "GitHub Actions", category: "Tools", proficiency: 86, order: 3, icon: null, createdAt: new Date(), updatedAt: new Date() },
-  { id: "s-18", name: "Figma", category: "Tools", proficiency: 79, order: 4, icon: null, createdAt: new Date(), updatedAt: new Date() },
-] as unknown as Skill[];
+  { id: "s-15", name: "Vite", category: "Tools", proficiency: 92, order: 1, icon: null },
+  { id: "s-16", name: "Docker", category: "Tools", proficiency: 81, order: 2, icon: null },
+  { id: "s-17", name: "GitHub Actions", category: "Tools", proficiency: 86, order: 3, icon: null },
+  { id: "s-18", name: "Figma", category: "Tools", proficiency: 79, order: 4, icon: null },
+];
 
 export const DUMMY_EXPERIENCE: Experience[] = [
   {
@@ -182,7 +175,7 @@ export const DUMMY_EXPERIENCE: Experience[] = [
     order: 4,
     createdAt: new Date(),
   },
-] as unknown as Experience[];
+];
 
 export const DUMMY_TESTIMONIALS: Testimonial[] = [
   {
@@ -197,7 +190,6 @@ export const DUMMY_TESTIMONIALS: Testimonial[] = [
     isVisible: true,
     order: 1,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: "t-2",
@@ -211,7 +203,6 @@ export const DUMMY_TESTIMONIALS: Testimonial[] = [
     isVisible: true,
     order: 2,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: "t-3",
@@ -225,7 +216,6 @@ export const DUMMY_TESTIMONIALS: Testimonial[] = [
     isVisible: true,
     order: 3,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: "t-4",
@@ -239,7 +229,6 @@ export const DUMMY_TESTIMONIALS: Testimonial[] = [
     isVisible: true,
     order: 4,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: "t-5",
@@ -253,7 +242,6 @@ export const DUMMY_TESTIMONIALS: Testimonial[] = [
     isVisible: true,
     order: 5,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: "t-6",
@@ -267,6 +255,5 @@ export const DUMMY_TESTIMONIALS: Testimonial[] = [
     isVisible: true,
     order: 6,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
-] as unknown as Testimonial[];
+];

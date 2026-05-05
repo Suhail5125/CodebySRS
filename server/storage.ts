@@ -376,11 +376,11 @@ export class MockStorage implements IStorage {
     const newProject = {
       ...project,
       id: `p-${Date.now()}`,
+      technologies: JSON.stringify(project.technologies),
       featured: project.featured ?? false,
       order: project.order ?? 0,
       createdAt: new Date(),
-      updatedAt: new Date(),
-    } as Project;
+    } as unknown as Project;
     this.projects.push(newProject);
     return newProject;
   }
@@ -388,7 +388,13 @@ export class MockStorage implements IStorage {
   async updateProject(id: string, project: Partial<InsertProject>): Promise<Project | undefined> {
     const index = this.projects.findIndex((p) => p.id === id);
     if (index === -1) return undefined;
-    this.projects[index] = { ...this.projects[index], ...project, updatedAt: new Date() } as Project;
+    
+    const updatePayload = { ...project } as any;
+    if (project.technologies) {
+      updatePayload.technologies = JSON.stringify(project.technologies);
+    }
+    
+    this.projects[index] = { ...this.projects[index], ...updatePayload } as Project;
     return this.projects[index];
   }
 

@@ -38,6 +38,7 @@ export default function AdminTestimonials() {
     rating: 5,
     avatarUrl: "",
     isVisible: false,
+    order: 0,
   });
   const [searchQuery, setSearchQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -142,6 +143,7 @@ export default function AdminTestimonials() {
         rating: testimonial.rating ?? 5,
         avatarUrl: testimonial.avatarUrl ?? "",
         isVisible: testimonial.isVisible ?? false,
+        order: testimonial.order ?? 0,
       });
     } else {
       setEditingTestimonial(null);
@@ -153,6 +155,7 @@ export default function AdminTestimonials() {
         rating: 5,
         avatarUrl: "",
         isVisible: false,
+        order: 0,
       });
     }
     setIsDialogOpen(true);

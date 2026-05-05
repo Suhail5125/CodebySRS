@@ -1,5 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { Vector2 } from "three";
 import { EffectComposer, Bloom, ChromaticAberration } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import { ParticleField } from "./particle-field";
@@ -49,7 +50,9 @@ export function HeroScene() {
             />
             <ChromaticAberration
               blendFunction={BlendFunction.NORMAL}
-              offset={[0.001, 0.001]}
+              offset={new Vector2(0.001, 0.001)}
+              radialModulation={false}
+              modulationOffset={0}
             />
           </EffectComposer>
         </Suspense>

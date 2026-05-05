@@ -244,7 +244,7 @@ export default function AdminAbout() {
                     <div className="flex gap-2">
                       <Input
                         type="url"
-                        value={formData.avatarUrl}
+                        value={formData.avatarUrl || ""}
                         onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })}
                         placeholder="https://example.com/avatar.jpg"
                         className="h-11 flex-1"
@@ -478,7 +478,7 @@ export default function AdminAbout() {
                     <div>
                       <Label className="text-sm font-medium mb-2 block">Response Time</Label>
                       <Select
-                        value={formData.responseTime}
+                        value={formData.responseTime || "24 hours"}
                         onValueChange={(value) => setFormData({ ...formData, responseTime: value })}
                       >
                         <SelectTrigger className="h-11">
