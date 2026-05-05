@@ -113,8 +113,26 @@ export function SectionHeader({
         className="grid grid-cols-12 items-end gap-x-6 pb-5"
         style={{ borderBottom: `2px solid ${INK}` }}
       >
+        <div className="col-span-12 lg:col-span-4">
+          <div className="font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
+            [ SECTION ]
+          </div>
+          <div className="mt-1 font-mono text-[14px] font-bold uppercase tracking-[0.18em]">
+            / {name}
+          </div>
+        </div>
+        <div className="col-span-12 mt-4 lg:col-span-4 lg:mt-0 lg:text-center">
+          <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] opacity-60">
+            {kicker}
+          </div>
+          {right && (
+            <div className="mt-2 font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
+              {right}
+            </div>
+          )}
+        </div>
         <div
-          className="col-span-3 lg:col-span-1"
+          className="col-span-12 mt-4 lg:col-span-4 lg:mt-0 lg:text-right"
           style={{
             fontFamily: "Inter, sans-serif",
             fontWeight: 800,
@@ -124,29 +142,10 @@ export function SectionHeader({
             letterSpacing: "-0.04em",
           }}
         >
-          {num}
-        </div>
-        <div className="col-span-9 lg:col-span-3">
-          <div
-            className="font-mono text-[11px] uppercase tracking-[0.22em]"
-            style={{ color: ACCENT }}
-          >
-            [ SECTION ]
-          </div>
-          <div className="mt-1 font-mono text-[14px] font-bold uppercase tracking-[0.18em]">
-            / {name}
-          </div>
-          <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] opacity-60">
-            {kicker}
-          </div>
-        </div>
-        <div className="col-span-12 mt-4 lg:col-span-8 lg:mt-0 lg:text-right">
           <h2 style={{ ...HEADLINE_BASE, fontSize: "clamp(36px, 6vw, 84px)" }}>{headline}</h2>
-          {right && (
-            <div className="mt-2 font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
-              {right}
-            </div>
-          )}
+          <div className="mt-2 font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
+            {num}
+          </div>
         </div>
       </header>
     );
