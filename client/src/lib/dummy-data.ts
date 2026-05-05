@@ -4,7 +4,7 @@ export const DUMMY_ABOUT: AboutInfo = {
   id: "dummy-about",
   name: "Studio Codebysrs",
   title: "Full-Stack Engineer · 3D Web Specialist",
-  bio: "I build production-grade web platforms with React, Node and WebGL. Brutalist by design, type-safe by default. Ten years shipping for startups, agencies and Fortune 500 brands.",
+  bio: "",
   avatarUrl: null,
   resumeUrl: "#",
   email: "hello@codebysrs.dev",
