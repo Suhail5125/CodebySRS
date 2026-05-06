@@ -4,7 +4,7 @@ import { Reveal, useReveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
 import type { Project } from "@shared";
 
-const BG  = "#0A0A0A";
+const BG = "#0A0A0A";
 const INK = "#F2EFE6";
 const ACCENT = "#FF3D00";
 
@@ -49,7 +49,7 @@ function useScramble(target: string, ms: number, runKey: number | string, paused
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target, ms, runKey, paused]);
   return out;
 }
@@ -143,17 +143,17 @@ function SectionCursor({ container }: { container: React.RefObject<HTMLElement |
 /* ─── main section ──────────────────────────────────────────────────────── */
 
 export function ProjectsSection({ projects, isLoading }: { projects: Project[]; isLoading: boolean }) {
-  const reduced   = useReducedMotionCheck();
-  const display   = useMemo(() => [...projects].sort((a, b) => a.order - b.order), [projects]);
-  const [hovered, setHovered]   = useState<number | null>(null);
+  const reduced = useReducedMotionCheck();
+  const display = useMemo(() => [...projects].sort((a, b) => a.order - b.order), [projects]);
+  const [hovered, setHovered] = useState<number | null>(null);
   const [imgOffset, setImgOffset] = useState(0);
-  const rowEls    = useRef<(HTMLDivElement | null)[]>([]);
-  const listRef   = useRef<HTMLDivElement | null>(null);
+  const rowEls = useRef<(HTMLDivElement | null)[]>([]);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
 
   const handleEnter = useCallback((i: number) => {
     setHovered(i);
-    const row  = rowEls.current[i];
+    const row = rowEls.current[i];
     const list = listRef.current;
     if (row && list) {
       const rr = row.getBoundingClientRect();
@@ -394,9 +394,9 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
 ) {
   const { ref: revealRef, style: revealStyle } = useReveal({ delay, variant: "slide-left" });
 
-  const num   = `P-${String(index + 1).padStart(3, "0")}`;
-  const link  = project.liveUrl ?? project.githubUrl ?? null;
-  const tech  = parseTech(project.technologies);
+  const num = `P-${String(index + 1).padStart(3, "0")}`;
+  const link = project.liveUrl ?? project.githubUrl ?? null;
+  const tech = parseTech(project.technologies);
   const shown = tech.slice(0, 3);
   const extra = tech.length - shown.length;
 
