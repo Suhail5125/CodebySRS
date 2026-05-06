@@ -290,17 +290,38 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
           {scrambled || "\u00A0"}
         </div>
 
-        {/* ── 7-column full-width grid ── */}
+        {/* ── Flexbox: 3 in a row (mobile), 7 in a row (desktop) ── */}
         <div
+          id="skills-container"
           style={{
             position: "relative",
             zIndex: 5,
-            display: "grid",
-            gridTemplateColumns: "repeat(7, 1fr)",
-            gap: "12px 0",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "28px 24px",
             paddingBottom: 72,
+            justifyContent: "center",
+            margin: "0 auto",
           }}
         >
+          <style>{`
+            #skills-container > div {
+              flex: 0 0 auto;
+              width: 100px;
+            }
+            @media (max-width: 1023px) {
+              #skills-container {
+                max-width: 100% !important;
+                width: 348px !important;
+              }
+            }
+            @media (min-width: 1024px) {
+              #skills-container {
+                gap: 32px 48px !important;
+                max-width: 988px !important;
+              }
+            }
+          `}</style>
           {source.map((skill) => {
             const glowing = glowingIds.has(skill.id);
             const inActiveCat = skill.category === activeCat;

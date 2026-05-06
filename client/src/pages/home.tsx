@@ -26,6 +26,9 @@ export default function Home() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Scroll to top when home page loads
+    window.scrollTo(0, 0);
+    
     document.documentElement.classList.add("snap-sections");
     return () => {
       document.documentElement.classList.remove("snap-sections");

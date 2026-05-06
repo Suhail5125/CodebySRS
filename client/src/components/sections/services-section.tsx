@@ -75,7 +75,7 @@ export function ServicesSection() {
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}`, paddingBottom: "80px" }}
     >
       {/* Header — padded */}
-      <div className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
+      <div className="px-4 py-8 sm:px-6 sm:py-12 lg:px-10 lg:py-16">
         <div className="mx-auto w-full max-w-[1400px]">
           <SectionHeader
             num="04"
@@ -88,10 +88,13 @@ export function ServicesSection() {
         </div>
       </div>
 
-      {/* Slab stack — full bleed, no horizontal constraints */}
+      {/* Slab stack — full bleed, no horizontal constraints, with scroll hint on mobile */}
+      <p className="block text-center font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 mb-4 md:hidden px-4">
+        SCROLL → TO VIEW ALL
+      </p>
       <div
-        className="relative w-full"
-        style={{ overflow: "visible" }}
+        className="relative w-full overflow-x-auto md:overflow-visible"
+        style={{ overflowY: "visible" }}
         onMouseLeave={() => setActive(null)}
       >
         {services.map((svc, i) => (
@@ -184,6 +187,7 @@ function Slab({
         {/* Ghost watermark number */}
         <span
           aria-hidden
+          className="hidden sm:block"
           style={{
             position: "absolute",
             right: "-12px",
@@ -191,7 +195,7 @@ function Slab({
             transform: `translateY(-50%) rotate(${skew * -2}deg)`,
             fontFamily: "Inter, sans-serif",
             fontWeight: 900,
-            fontSize: "clamp(100px, 14vw, 200px)",
+            fontSize: "clamp(80px, 14vw, 200px)",
             lineHeight: 1,
             letterSpacing: "-0.07em",
             color: isActive
@@ -212,7 +216,7 @@ function Slab({
           style={{
             fontFamily: "Inter, sans-serif",
             fontWeight: 900,
-            fontSize: "clamp(40px, 5.5vw, 80px)",
+            fontSize: "clamp(32px, 7vw, 80px)",
             lineHeight: 1,
             letterSpacing: "-0.06em",
             color: palette.text,
@@ -248,7 +252,7 @@ function Slab({
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 900,
-              fontSize: "clamp(24px, 4.2vw, 64px)",
+              fontSize: "clamp(20px, 5vw, 64px)",
               lineHeight: 0.9,
               letterSpacing: "-0.045em",
               textTransform: "uppercase",
@@ -264,7 +268,7 @@ function Slab({
           {/* Revealed description */}
           <div
             style={{
-              maxHeight: isActive ? "120px" : "0px",
+              maxHeight: isActive ? "200px" : "0px",
               overflow: "hidden",
               transition: "max-height 0.42s cubic-bezier(0.16,1,0.3,1)",
             }}
@@ -272,7 +276,7 @@ function Slab({
             <p
               style={{
                 fontFamily: "monospace",
-                fontSize: "12px",
+                fontSize: "clamp(11px, 2vw, 12px)",
                 lineHeight: 1.6,
                 color: palette.text,
                 opacity: isActive ? 0.75 : 0,
@@ -284,12 +288,40 @@ function Slab({
             >
               {svc.description}
             </p>
+
+            {/* Deliverable tags — show on mobile when expanded */}
+            <div
+              className="flex xl:hidden flex-wrap gap-1.5 mt-3"
+              style={{
+                opacity: isActive ? 1 : 0,
+                transition: "opacity 0.3s ease 0.2s",
+              }}
+            >
+              {svc.deliverables.map((d) => (
+                <span
+                  key={d}
+                  style={{
+                    fontFamily: "monospace",
+                    fontSize: "9px",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
+                    padding: "3px 9px",
+                    background: palette.tag,
+                    color: palette.tagText,
+                    whiteSpace: "nowrap",
+                    fontWeight: 600,
+                  }}
+                >
+                  {d}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Deliverable tags — fade in on hover */}
+        {/* Deliverable tags — fade in on hover (desktop only) */}
         <div
-          className="hidden lg:flex"
+          className="hidden xl:flex"
           style={{
             flexDirection: "column",
             gap: "5px",

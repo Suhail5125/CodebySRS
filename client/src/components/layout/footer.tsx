@@ -73,13 +73,13 @@ export function Footer({ aboutInfo }: FooterProps) {
       <div className="mx-auto max-w-[1400px] px-6 lg:px-10">
 
         {/* ── EOF BLOCK ────────────────────────────────────────────────────── */}
-        <div className="py-14 lg:py-20">
+        <div className="py-10 sm:py-14 lg:py-20">
           <h2
             aria-label="SYSTEM_SHUTDOWN"
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 800,
-              fontSize: "clamp(80px, 14vw, 180px)",
+              fontSize: "clamp(60px, 14vw, 180px)",
               lineHeight: 0.88,
               letterSpacing: "-0.035em",
               textTransform: "uppercase",
@@ -90,7 +90,7 @@ export function Footer({ aboutInfo }: FooterProps) {
             <span className="eof-cursor" style={{ color: ACCENT }}>▋</span>
           </h2>
           <div
-            className="mt-4 font-mono text-[11px] uppercase tracking-[0.28em]"
+            className="mt-3 sm:mt-4 font-mono text-[9px] sm:text-[11px] uppercase tracking-[0.28em]"
             style={{ color: ACCENT }}
           >
             // SYSTEM_SHUTDOWN · ALL PROCESSES TERMINATED
@@ -105,12 +105,12 @@ export function Footer({ aboutInfo }: FooterProps) {
 
           {/* ZONE A — PROCESS LOG */}
           <div
-            className="col-span-1 lg:col-span-4 px-5 py-8 border-b-2 border-[#F2EFE6] lg:border-b-0 lg:border-r-2"
+            className="col-span-1 lg:col-span-4 px-4 sm:px-5 py-6 sm:py-8 border-b-2 border-[#F2EFE6] lg:border-b-0 lg:border-r-2"
           >
             <ZoneLabel index="A" label="PROCESS_LOG" />
-            <ul className="mt-5 space-y-2.5" role="log" aria-label="Build process log">
+            <ul className="mt-5 space-y-2.5 overflow-x-auto" role="log" aria-label="Build process log">
               {PROCESS_LOG.map((entry, i) => (
-                <li key={i} className="flex items-baseline gap-2 font-mono text-[11px]">
+                <li key={i} className="flex items-baseline gap-2 font-mono text-[10px] sm:text-[11px] whitespace-nowrap">
                   <span style={{ color: INK, opacity: 0.35, flexShrink: 0 }}>
                     [{entry.time}]
                   </span>
@@ -120,7 +120,7 @@ export function Footer({ aboutInfo }: FooterProps) {
                   >
                     {entry.tag}
                   </span>
-                  <span style={{ opacity: 0.7 }}>{entry.msg}</span>
+                  <span style={{ opacity: 0.7 }} className="truncate">{entry.msg}</span>
                 </li>
               ))}
             </ul>
@@ -128,18 +128,18 @@ export function Footer({ aboutInfo }: FooterProps) {
 
           {/* ZONE B — BRAND SPINE */}
           <div
-            className="col-span-1 lg:col-span-4 px-5 py-8 flex flex-col justify-between gap-8 border-b-2 border-[#F2EFE6] lg:border-b-0 lg:border-r-2"
+            className="col-span-1 lg:col-span-4 px-4 sm:px-5 py-6 sm:py-8 flex flex-col justify-between gap-6 sm:gap-8 border-b-2 border-[#F2EFE6] lg:border-b-0 lg:border-r-2"
           >
             <ZoneLabel index="B" label="BRAND_SPINE" />
             <div
-              className="pl-5 flex flex-col gap-4"
+              className="pl-4 sm:pl-5 flex flex-col gap-4"
               style={{ borderLeft: `4px solid ${ACCENT}` }}
             >
               <div
                 style={{
                   fontFamily: "Inter, sans-serif",
                   fontWeight: 800,
-                  fontSize: "clamp(28px, 3.5vw, 48px)",
+                  fontSize: "clamp(24px, 5vw, 48px)",
                   lineHeight: 0.92,
                   letterSpacing: "-0.03em",
                   textTransform: "uppercase",
@@ -147,12 +147,12 @@ export function Footer({ aboutInfo }: FooterProps) {
               >
                 CodeBy<span style={{ color: ACCENT }}>SRS</span>
               </div>
-              <p className="font-mono text-[12px] leading-snug" style={{ opacity: 0.65, maxWidth: 280 }}>
+              <p className="font-mono text-[11px] sm:text-[12px] leading-snug" style={{ opacity: 0.65, maxWidth: 280 }}>
                 Brutalist engineering — no decoration, only signal. Every line ships or it dies.
               </p>
               <a
                 href="#contact"
-                className="mt-2 self-start inline-flex items-center gap-3 px-5 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
+                className="mt-2 self-start inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-2.5 sm:py-3 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.22em]"
                 style={{ background: INK, color: BG, border: `2px solid ${INK}`, transition: "none" }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = ACCENT;
@@ -166,14 +166,14 @@ export function Footer({ aboutInfo }: FooterProps) {
                 }}
               >
                 <span>OPEN A TICKET</span>
-                <ArrowUpRight className="h-4 w-4" />
+                <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4" />
               </a>
             </div>
           </div>
 
           {/* ZONE C — SIGNAL DATA */}
           <div
-            className="col-span-1 lg:col-span-4 px-5 py-8"
+            className="col-span-1 lg:col-span-4 px-4 sm:px-5 py-6 sm:py-8"
           >
             <ZoneLabel index="C" label="SIGNAL_DATA" />
             <dl className="mt-5 space-y-3">
@@ -265,14 +265,14 @@ export function Footer({ aboutInfo }: FooterProps) {
 
         {/* ── SITEMAP ────────────────────────────────────────────────────────── */}
         <div
-          className="py-6"
+          className="py-4 sm:py-6"
           style={{ borderBottom: `2px solid ${INK}` }}
         >
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] mb-4">
+          <div className="flex items-center gap-2 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em] mb-3 sm:mb-4">
             <span style={{ color: ACCENT }}>[NAV]</span>
             <span style={{ opacity: 0.5 }}>/ SITEMAP</span>
           </div>
-          <nav aria-label="Sitemap" className="flex flex-wrap gap-x-6 gap-y-2">
+          <nav aria-label="Sitemap" className="flex flex-wrap gap-x-4 sm:gap-x-6 gap-y-2">
             {[
               { label: "HOME",     href: "#hero"     },
               { label: "ABOUT",    href: "#about"    },
@@ -283,7 +283,7 @@ export function Footer({ aboutInfo }: FooterProps) {
               <a
                 key={label}
                 href={href}
-                className="font-mono text-[11px] uppercase tracking-[0.2em] inline-flex items-center gap-1.5"
+                className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.2em] inline-flex items-center gap-1.5"
                 style={{ color: INK, transition: "none" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = ACCENT)}
                 onMouseLeave={(e) => (e.currentTarget.style.color = INK)}
@@ -297,7 +297,7 @@ export function Footer({ aboutInfo }: FooterProps) {
 
         {/* ── BOTTOM STATUS BAR ──────────────────────────────────────────────── */}
         <div
-          className="flex flex-col items-start justify-between gap-2 py-4 font-mono text-[10px] uppercase tracking-[0.22em] md:flex-row md:items-center"
+          className="flex flex-col items-start justify-between gap-3 sm:gap-2 py-4 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em] md:flex-row md:items-center"
         >
           <div className="flex flex-wrap items-center gap-3" style={{ opacity: 0.6 }}>
             <span style={{ color: ACCENT }}>▶</span>

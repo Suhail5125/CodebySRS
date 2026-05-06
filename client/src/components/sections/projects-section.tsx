@@ -217,10 +217,10 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
             ))
           )}
 
-          {/* ── floating image preview ── */}
+          {/* ── floating image preview (hidden on mobile/tablet) ── */}
           {activeProject && (
             <div
-              className="absolute hidden lg:block"
+              className="absolute hidden xl:block"
               style={{
                 right: 160,
                 top: imgOffset,
@@ -344,16 +344,16 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
         {/* ── bottom strip ── */}
         {display.length > 0 && (
           <div
-            className="grid grid-cols-3 font-mono text-[11px] uppercase tracking-[0.2em]"
+            className="grid grid-cols-1 sm:grid-cols-3 font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.2em]"
             style={{ border: `2px solid ${INK}`, borderTop: "none" }}
           >
-            <div className="px-4 py-3" style={{ borderRight: `2px solid ${INK}` }}>
+            <div className="px-3 sm:px-4 py-3 border-b sm:border-b-0 sm:border-r-2 border-[#F2EFE6]">
               {display.length} PROJECTS IN FEED
             </div>
-            <div className="px-4 py-3 opacity-50" style={{ borderRight: `2px solid ${INK}` }}>
+            <div className="px-3 sm:px-4 py-3 opacity-50 border-b sm:border-b-0 sm:border-r-2 border-[#F2EFE6]">
               HOVER TO PREVIEW
             </div>
-            <div className="px-4 py-3" style={{ color: ACCENT }}>
+            <div className="px-3 sm:px-4 py-3" style={{ color: ACCENT }}>
               {hovered !== null ? (
                 <>
                   P-<ScrambleText
@@ -419,39 +419,67 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
         cursor: "default",
       }}
     >
-      <div className="flex items-center gap-5 px-5 py-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5 px-4 sm:px-5 py-5 sm:py-6">
 
         {/* number */}
         <span
-          className="w-[68px] shrink-0 font-mono text-[10px] uppercase tracking-[0.22em]"
+          className="w-auto sm:w-[68px] shrink-0 font-mono text-[10px] uppercase tracking-[0.22em]"
           style={{ opacity: isActive ? 0.55 : 0.4 }}
         >
           {num}
         </span>
 
-        {/* title + tech stack stacked */}
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <h3
-            className="min-w-0 truncate"
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 800,
-              fontSize: "clamp(14px, 2vw, 28px)",
-              lineHeight: 1,
-              letterSpacing: "-0.025em",
-              textTransform: "uppercase",
-            }}
-          >
-            {isActive && !reduced ? (
-              <ScrambleText
-                text={project.title.toUpperCase()}
-                runKey={runKey}
-                ms={420}
-              />
-            ) : (
-              project.title.toUpperCase()
+        {/* title + image + tech stack stacked */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2 w-full sm:w-auto">
+          {/* Title with inline image on mobile */}
+          <div className="flex items-center gap-3">
+            <h3
+              className="min-w-0 flex-1"
+              style={{
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 800,
+                fontSize: "clamp(16px, 3vw, 28px)",
+                lineHeight: 1,
+                letterSpacing: "-0.025em",
+                textTransform: "uppercase",
+              }}
+            >
+              {isActive && !reduced ? (
+                <ScrambleText
+                  text={project.title.toUpperCase()}
+                  runKey={runKey}
+                  ms={420}
+                />
+              ) : (
+                project.title.toUpperCase()
+              )}
+            </h3>
+            
+            {/* Mobile Image - Show inline with title on mobile only */}
+            {project.imageUrl && (
+              <div 
+                className="sm:hidden shrink-0" 
+                style={{ 
+                  width: 80, 
+                  height: 80, 
+                  overflow: "hidden", 
+                  border: `2px solid ${isActive ? BG : INK}` 
+                }}
+              >
+                <img
+                  src={project.imageUrl}
+                  alt={project.title}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    filter: "grayscale(8%) contrast(1.05)",
+                  }}
+                />
+              </div>
             )}
-          </h3>
+          </div>
+
           {shown.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
               {shown.map((tag) => (
@@ -485,7 +513,7 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
             href={link}
             target="_blank"
             rel="noopener noreferrer"
-            className="pointer-events-auto inline-flex shrink-0 items-center gap-2 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.22em]"
+            className="pointer-events-auto inline-flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 font-mono text-[10px] uppercase tracking-[0.22em] w-full sm:w-auto justify-center sm:justify-start"
             style={{
               border: `2px solid ${isActive ? BG : INK}`,
               color: isActive ? BG : INK,
@@ -506,7 +534,7 @@ const ProjectRow = forwardRef<HTMLDivElement, ProjectRowProps>(function ProjectR
           </a>
         ) : (
           <span
-            className="inline-flex shrink-0 items-center gap-2 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.22em] opacity-25"
+            className="inline-flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 font-mono text-[10px] uppercase tracking-[0.22em] opacity-25 w-full sm:w-auto justify-center sm:justify-start"
             style={{ border: `2px solid ${isActive ? BG : INK}`, color: isActive ? BG : INK }}
           >
             SOON <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} />

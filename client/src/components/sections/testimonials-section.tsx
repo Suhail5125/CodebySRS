@@ -151,13 +151,13 @@ function Card({ t }: { t: any }) {
     <article
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      className="mx-3 flex w-[360px] shrink-0 flex-col p-5"
+      className="mx-2 sm:mx-3 flex w-[280px] sm:w-[320px] md:w-[360px] shrink-0 flex-col p-4 sm:p-5"
       style={{
         background: hover ? INK : "transparent",
         color: hover ? BG : INK,
         border: `2px solid ${INK}`,
         transition: "none",
-        height: 240,
+        height: 220,
       }}
     >
       <div className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em]">

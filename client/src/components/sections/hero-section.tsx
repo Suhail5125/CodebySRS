@@ -119,30 +119,30 @@ function HeroHeader({ headlineFlown }: { headlineFlown: boolean }) {
 
   return (
     <motion.header
-      className="absolute left-0 top-0 z-[10] flex w-full items-center px-10 lg:px-16"
-      style={{ height: "clamp(80px, 12vh, 120px)" }}
+      className="absolute left-0 top-0 z-[15] flex w-full items-center px-4 sm:px-6 md:px-10 lg:px-16 flex-wrap gap-2 sm:gap-4"
+      style={{ minHeight: "clamp(60px, 10vh, 120px)", paddingTop: "clamp(8px, 2vh, 16px)", paddingBottom: "clamp(8px, 2vh, 16px)" }}
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: EXPO }}
     >
-      <div className="flex flex-col font-mono text-[11px] uppercase tracking-[0.18em]">
+      <div className="hidden sm:flex flex-col font-mono text-[9px] sm:text-[11px] uppercase tracking-[0.18em]">
         <span style={{ color: "rgba(242,239,230,0.45)" }}>Location / Time</span>
         <span style={{ color: ACCENT }}>INDIA (IST) / {time}</span>
       </div>
 
-      <div className="flex flex-1 justify-center">
-        <div className="flex items-center gap-8">
+      <div className="hidden md:flex flex-1 justify-center">
+        <div className="flex items-center gap-4 lg:gap-8">
           {navItems.map((item) => (
             <HeroNavLink key={item.label} {...item} />
           ))}
         </div>
       </div>
 
-      <div className="relative h-full flex items-center justify-end min-w-[200px]">
+      <div className="relative h-full flex items-center justify-end flex-1 md:flex-initial md:min-w-[200px]">
         <motion.div
           className="font-sans font-black uppercase tracking-[-0.05em]"
           style={{
-            fontSize: 72,
+            fontSize: "clamp(32px, 10vw, 72px)",
             lineHeight: 0.8,
             color: INK,
           }}
@@ -564,7 +564,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       {/* Vertical Status Label */}
       <div
         aria-hidden
-        className="pointer-events-none absolute left-0 top-0 z-[5] flex h-full w-12 items-center justify-center"
+        className="pointer-events-none absolute left-0 top-0 z-[5] hidden sm:flex h-full w-12 items-center justify-center"
       >
         <div
           className="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.35em]"
@@ -592,19 +592,25 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       <HeroHeader headlineFlown={headlineFlown} />
 
       <div
-        className="absolute inset-0 z-[5] flex flex-col justify-center"
-        style={{ pointerEvents: "none", paddingLeft: "clamp(48px, 5vw, 80px)" }}
+        className="absolute inset-0 z-[10] flex flex-col justify-center px-4 sm:px-6 md:px-8"
+        style={{ 
+          pointerEvents: "none", 
+          paddingLeft: "clamp(16px, 5vw, 80px)", 
+          paddingRight: "clamp(16px, 5vw, 80px)",
+          paddingTop: "clamp(100px, 20vh, 140px)",
+          paddingBottom: "clamp(120px, 20vh, 160px)"
+        }}
       >
         {isLoading ? (
           <div className="ml-4 space-y-6">
             <div className="h-4 w-36 rounded-sm bg-white/10 animate-pulse" />
-            <div className="h-24 w-[420px] max-w-full rounded-sm bg-white/10 animate-pulse" />
+            <div className="h-24 w-full max-w-[420px] rounded-sm bg-white/10 animate-pulse" />
           </div>
         ) : (
           <div className="max-w-[800px]">
             <motion.h1
               className="font-sans font-black uppercase leading-[0.85] tracking-[-0.04em]"
-              style={{ fontSize: "clamp(1.25rem, 3.125vw, 2.8rem)", color: INK }}
+              style={{ fontSize: "clamp(1.5rem, 6vw, 2.8rem)", color: INK }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8, duration: 0.8, ease: EXPO }}
@@ -618,9 +624,9 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
             </motion.h1>
 
             {/* ACTION ROW: CONNECT LABEL + SOCIALS */}
-            <div className="mt-8 flex items-center gap-6">
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
               <motion.div
-                className="font-mono text-[13px] uppercase tracking-[0.25em]"
+                className="font-mono text-[11px] sm:text-[13px] uppercase tracking-[0.25em]"
                 style={{ color: ACCENT }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -630,7 +636,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
               </motion.div>
 
               <motion.div
-                className="flex items-center gap-3"
+                className="flex items-center gap-2 sm:gap-3 flex-wrap"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1, duration: 0.5, ease: EXPO }}
@@ -647,8 +653,8 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      width: 44,
-                      height: 44,
+                      width: "clamp(36px, 10vw, 44px)",
+                      height: "clamp(36px, 10vw, 44px)",
                       border: `1px solid rgba(242,239,230,0.16)`,
                       color: INK,
                       opacity: 0.5,
@@ -664,7 +670,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
                       el.style.opacity = "0.5"; el.style.color = INK; el.style.borderColor = "rgba(242,239,230,0.16)";
                     }}
                   >
-                    <Icon size={18} strokeWidth={1.5} />
+                    <Icon size={16} strokeWidth={1.5} />
                   </a>
                 ))}
               </motion.div>
@@ -675,7 +681,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
 
       {/* BOTTOM-LEFT CORNER CTAs */}
       <motion.div
-        className="absolute bottom-10 left-[clamp(48px,5vw,80px)] z-[6] flex items-center gap-4"
+        className="absolute bottom-6 sm:bottom-10 left-4 sm:left-[clamp(48px,5vw,80px)] z-[10] flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 1.2, duration: 0.8, ease: EXPO }}
@@ -689,7 +695,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       {/* Vertical Instructional Label (Right) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute right-0 top-0 z-[5] flex h-full w-12 items-center justify-center"
+        className="pointer-events-none absolute right-0 top-0 z-[5] hidden lg:flex h-full w-12 items-center justify-center"
       >
         <div
           className="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.35em]"
@@ -703,7 +709,7 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       </div>
 
       <motion.div
-        className="absolute bottom-10 right-10 z-[6] flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.28em]"
+        className="absolute bottom-6 sm:bottom-10 right-4 sm:right-10 z-[6] flex items-center gap-2 font-mono text-[9px] sm:text-[11px] uppercase tracking-[0.28em]"
         style={{ color: "rgba(242,239,230,0.45)" }}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

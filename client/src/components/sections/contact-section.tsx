@@ -170,22 +170,22 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
 
             {/* ── SUCCESS STATE ──────────────────────────────────────── */}
             {success ? (
-              <div className="flex flex-col items-start gap-6 py-12 pl-2">
+              <div className="flex flex-col items-start gap-6 py-8 sm:py-12 pl-2">
                 <div
-                  className="flex items-center gap-3 px-5 py-4 font-mono text-[13px] uppercase tracking-[0.22em]"
+                  className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-4 font-mono text-[11px] sm:text-[13px] uppercase tracking-[0.22em]"
                   style={{ background: ACCENT, color: BG }}
                 >
-                  <CheckCircle2 className="h-5 w-5" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>TRANSMISSION RECEIVED</span>
                 </div>
-                <p className="max-w-2xl font-mono text-[15px] leading-relaxed" style={{ opacity: 0.7 }}>
+                <p className="max-w-2xl font-mono text-[13px] sm:text-[15px] leading-relaxed px-2" style={{ opacity: 0.7 }}>
                   Your message hit the queue. Expect a reply within 48 hours during EU/NA business hours.
                 </p>
                 <button
                   type="button"
                   data-testid="button-send-another"
                   onClick={() => setSuccess(false)}
-                  className="inline-flex items-center gap-3 px-5 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
+                  className="inline-flex items-center gap-3 px-4 sm:px-5 py-2.5 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.22em] ml-2"
                   style={{ background: "transparent", color: INK, border: `2px solid ${INK}`, transition: "none" }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = ACCENT;
@@ -199,22 +199,22 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
                   }}
                 >
                   <span>SEND ANOTHER</span>
-                  <ArrowUpRight className="h-4 w-4" />
+                  <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </button>
               </div>
             ) : (
               /* ── FORM ─────────────────────────────────────────────── */
               <form onSubmit={form.handleSubmit(submit)}>
-                <div className="px-2 pb-0 pt-8 lg:px-4">
+                <div className="px-2 sm:px-4 pb-0 pt-6 sm:pt-8">
 
                   {/* Line 1: name + email */}
-                  <p className="font-mono text-[17px] leading-[3.2] tracking-wide lg:text-[20px]">
+                  <p className="font-mono text-[14px] sm:text-[17px] lg:text-[20px] leading-[2.8] sm:leading-[3.2] tracking-wide">
                     Hi, I&apos;m{" "}
                     <Blank
                       {...form.register("name")}
                       data-testid="input-name"
                       placeholder="your name"
-                      width="clamp(200px, 24vw, 320px)"
+                      width="clamp(160px, 30vw, 320px)"
                       error={!!errors.name}
                     />
                     {" "}and you can reach me at{" "}
@@ -223,20 +223,20 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
                       data-testid="input-email"
                       type="email"
                       placeholder="your@email.com"
-                      width="clamp(240px, 28vw, 380px)"
+                      width="clamp(180px, 35vw, 380px)"
                       error={!!errors.email}
                     />
                     .
                   </p>
 
                   {/* Line 2: subject + type dropdown */}
-                  <p className="font-mono text-[17px] leading-[3.2] tracking-wide lg:text-[20px]">
+                  <p className="font-mono text-[14px] sm:text-[17px] lg:text-[20px] leading-[2.8] sm:leading-[3.2] tracking-wide">
                     I want to work on{" "}
                     <Blank
                       {...form.register("subject")}
                       data-testid="input-subject"
                       placeholder="project name or idea"
-                      width="clamp(240px, 32vw, 460px)"
+                      width="clamp(180px, 40vw, 460px)"
                       error={!!errors.subject}
                     />
                     {", specifically a "}
@@ -250,7 +250,7 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
                   </p>
 
                   {/* Line 3: message */}
-                  <p className="mb-2 mt-2 font-mono text-[17px] tracking-wide lg:text-[20px]">
+                  <p className="mb-2 mt-2 font-mono text-[14px] sm:text-[17px] lg:text-[20px] tracking-wide">
                     Here&apos;s what I&apos;m thinking:
                   </p>
                   <textarea
@@ -262,7 +262,7 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
                       el.style.height = "44px";
                       el.style.height = el.scrollHeight + "px";
                     }}
-                    className="w-full resize-none bg-transparent pl-6 font-mono text-[15px] outline-none placeholder:opacity-30 lg:text-[17px]"
+                    className="w-full resize-none bg-transparent pl-4 sm:pl-6 font-mono text-[13px] sm:text-[15px] lg:text-[17px] outline-none placeholder:opacity-30"
                     style={{
                       color: ACCENT,
                       caretColor: ACCENT,
@@ -285,12 +285,12 @@ export function ContactSection({ onSubmit, isSubmitting }: ContactSectionProps) 
                 </div>
 
                 {/* ── FOOTER: submit ─────────────────────────────────── */}
-                <div className="flex items-center justify-end px-5 py-3">
+                <div className="flex items-center justify-end px-4 sm:px-5 py-3">
                   <button
                     type="submit"
                     disabled={isSubmitting}
                     data-testid="button-submit-contact"
-                    className="ml-auto inline-flex items-center gap-3 px-6 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
+                    className="ml-auto inline-flex items-center gap-3 px-5 sm:px-6 py-2.5 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.22em]"
                     style={{
                       background: INK,
                       color: BG,

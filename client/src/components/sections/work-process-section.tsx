@@ -533,6 +533,16 @@ function PhaseNode({
     onActivate(next ? step.num : null);
   };
 
+  const handleMouseEnter = () => {
+    setHovered(true);
+    if (!clicked) onActivate(step.num);
+  };
+
+  const handleMouseLeave = () => {
+    setHovered(false);
+    if (!clicked) onActivate(null);
+  };
+
   return (
     <div
       ref={nodeRef as (el: HTMLDivElement | null) => void}
@@ -545,29 +555,29 @@ function PhaseNode({
         color: expanded ? BG : INK,
         transition: "background 0.25s ease, color 0.25s ease",
       }}
-      onMouseEnter={() => { setHovered(true); onActivate(step.num); }}
-      onMouseLeave={() => { setHovered(false); if (!clicked) onActivate(null); }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onClick={handleClick}
     >
       <div
-        className="flex items-center gap-4 px-5 py-4"
+        className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4"
         style={{ borderBottom: expanded ? `2px solid ${BG}` : "none" }}
       >
         <div
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center"
+          className="flex h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 items-center justify-center"
           style={{ background: ACCENT, color: BG }}
         >
-          <Icon className="h-5 w-5" />
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-3">
+          <div className="flex items-baseline gap-2 sm:gap-3">
             <span
-              className="font-mono text-[11px] uppercase tracking-[0.22em]"
+              className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.22em]"
               style={{ color: expanded ? BG : ACCENT }}
             >
               PHASE {step.num}
             </span>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-60">
+            <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.18em] opacity-60">
               {step.duration}
             </span>
           </div>
@@ -575,7 +585,7 @@ function PhaseNode({
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 800,
-              fontSize: "clamp(14px, 2vw, 18px)",
+              fontSize: "clamp(13px, 2.5vw, 18px)",
               lineHeight: 1.1,
               textTransform: "uppercase",
               letterSpacing: "-0.01em",
@@ -591,20 +601,20 @@ function PhaseNode({
 
       <div
         style={{
-          maxHeight: expanded ? 360 : 0,
+          maxHeight: expanded ? 400 : 0,
           overflow: "hidden",
           transition: "max-height 0.4s cubic-bezier(0.85,0,0.15,1)",
         }}
       >
-        <div className="px-5 py-4">
-          <p className="mb-4 text-[13px] leading-relaxed" style={{ opacity: 0.82 }}>
+        <div className="px-4 sm:px-5 py-3 sm:py-4">
+          <p className="mb-3 sm:mb-4 text-[12px] sm:text-[13px] leading-relaxed" style={{ opacity: 0.82 }}>
             {step.description}
           </p>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {(["ACTIVITIES", "DELIVERABLES"] as const).map((col) => (
               <div key={col}>
                 <div
-                  className="mb-2 font-mono text-[10px] uppercase tracking-[0.22em]"
+                  className="mb-2 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em]"
                   style={{ color: ACCENT }}
                 >
                   {col}
@@ -613,7 +623,7 @@ function PhaseNode({
                   {(col === "ACTIVITIES" ? step.activities : step.deliverables).map((item, i) => (
                     <li
                       key={i}
-                      className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.08em]"
+                      className="flex items-baseline gap-2 font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.08em]"
                     >
                       <span style={{ color: ACCENT }}>›</span>
                       <span>{item}</span>
@@ -745,7 +755,7 @@ export function WorkProcessSection() {
   return (
     <section
       id="process"
-      className="snap-screen relative flex min-h-screen flex-col justify-center px-6 py-20 lg:px-10"
+      className="snap-screen relative flex min-h-screen flex-col justify-center px-4 sm:px-6 py-16 sm:py-20 lg:px-10"
       style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
     >
       <style>{`
@@ -767,15 +777,15 @@ export function WorkProcessSection() {
           />
         </Reveal>
 
-        <p className="mt-6 block text-center font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 md:hidden">
-          SCROLL →
+        <p className="mt-4 sm:mt-6 block text-center font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] opacity-40 md:hidden">
+          SCROLL → TO VIEW FULL DIAGRAM
         </p>
 
-        <div className="mt-8" style={{ overflowX: "auto", overflowY: "visible" }}>
+        <div className="mt-6 sm:mt-8" style={{ overflowX: "auto", overflowY: "visible" }}>
           <div
             ref={containerRef}
             className="relative mx-auto flex flex-col"
-            style={{ minWidth: 420, maxWidth: 560, gap: 40 }}
+            style={{ minWidth: "min(100%, 380px)", maxWidth: 560, gap: "clamp(28px, 5vw, 40px)" }}
           >
             <ConnectorOverlay paths={paths} svgSize={svgSize} triggered={triggered} />
 

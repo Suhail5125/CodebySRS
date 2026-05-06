@@ -174,14 +174,13 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
             className="mt-10 flex flex-col lg:flex-row"
             style={{ border: `2px solid ${INK}` }}
           >
-            {/* ── LEFT: Avatar accent block (~25%) ── */}
+            {/* ── LEFT: Avatar accent block (~25% on desktop, full width on mobile) ── */}
             <div
-              className="relative flex shrink-0 items-center justify-center lg:w-[25%]"
+              className="relative flex shrink-0 items-center justify-center w-full lg:w-[25%]"
               style={{
-                minHeight: 340,
+                minHeight: 280,
                 background: ACCENT,
                 color: BG,
-                borderRight: `2px solid ${INK}`,
               }}
             >
               {aboutInfo.avatarUrl ? (
@@ -233,7 +232,8 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
 
             {/* ── MIDDLE: Bio / name / socials ── */}
             <div
-              className="flex flex-1 flex-col justify-between gap-6 px-8 py-10"
+              className="flex flex-1 flex-col justify-between gap-6 px-6 sm:px-8 py-8 sm:py-10"
+              style={{ borderTop: `2px solid ${INK}`, borderLeft: "none" }}
             >
               {/* Engineer label */}
               <div
@@ -279,8 +279,8 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
                 {aboutInfo.bio}
               </p>
 
-              {/* CTA + socials row */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              {/* CTA + socials - stacked on mobile, row on desktop */}
+              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 pt-2">
                 {aboutInfo.resumeUrl && (
                   <a
                     href={aboutInfo.resumeUrl}
@@ -288,7 +288,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
                     rel="noopener noreferrer"
                     download
                     data-testid="button-download-resume"
-                    className="inline-flex items-center gap-2 px-5 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.22em] w-full sm:w-auto"
                     style={{ background: INK, color: BG, border: `2px solid ${INK}`, transition: "none" }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = ACCENT;
@@ -303,16 +303,19 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
                     RESUME.PDF
                   </a>
                 )}
-                {socials.map(({ url, Icon, name, testId }, i) => (
-                  <AboutSocialTile
-                    key={name}
-                    href={url ?? "#"}
-                    Icon={Icon}
-                    label={name}
-                    testId={testId}
-                    index={i}
-                  />
-                ))}
+                {/* Social links grid - 4 columns on mobile, inline on desktop */}
+                <div className="grid grid-cols-4 gap-3 sm:flex sm:flex-wrap w-full sm:w-auto">
+                  {socials.map(({ url, Icon, name, testId }, i) => (
+                    <AboutSocialTile
+                      key={name}
+                      href={url ?? "#"}
+                      Icon={Icon}
+                      label={name}
+                      testId={testId}
+                      index={i}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -322,7 +325,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
         {/* ── Stat strip — bordered left/right/bottom, dividers between cells ── */}
         <Reveal delay={220}>
           <div
-            className="flex flex-wrap items-stretch"
+            className="grid grid-cols-2 sm:grid-cols-4 items-stretch"
             style={{
               borderLeft: `2px solid ${INK}`,
               borderRight: `2px solid ${INK}`,
@@ -417,13 +420,30 @@ function StatNumber({
   total: number;
 }) {
   const [hover, setHover] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  // Determine if we should show right border
+  const showRightBorder = isMobile 
+    ? (index % 2 === 0 && index < total - 1)
+    : (index < total - 1);
+
+  // Determine if we should show bottom border (only on mobile for first 2 items)
+  const showBottomBorder = isMobile && index < 2;
 
   return (
     <div
-      className="relative flex flex-1 flex-col justify-center px-6 py-8"
+      className="relative flex flex-1 flex-col justify-center px-4 sm:px-6 py-6 sm:py-8"
       style={{
-        borderRight: index < total - 1 ? `2px solid ${INK}` : "none",
-        minWidth: 140,
+        borderRight: showRightBorder ? `2px solid ${INK}` : "none",
+        borderBottom: showBottomBorder ? `2px solid ${INK}` : "none",
+        minWidth: 120,
         cursor: "default",
       }}
       onMouseEnter={() => setHover(true)}
@@ -497,7 +517,7 @@ function CareerEntry({
       }}
     >
       <div
-        className="flex flex-col gap-6 lg:flex-row lg:gap-10"
+        className="flex flex-col lg:flex-row gap-4 lg:gap-10"
         style={{ alignItems: "flex-start" }}
       >
         {/* ── Year column — editorial anchor ── */}
@@ -505,49 +525,62 @@ function CareerEntry({
           className="shrink-0 lg:w-[160px]"
           style={{ userSelect: "none" }}
         >
-          {/* End year / PRESENT */}
-          <div
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 900,
-              fontSize: "clamp(18px, 2vw, 36px)",
-              lineHeight: 1,
-              letterSpacing: "-0.04em",
-              color: hover ? ACCENT : INK,
-            }}
-          >
-            {entry.endYear ?? "NOW"}
-          </div>
+          {/* Years in single line on mobile, stacked on desktop */}
+          <div className="flex lg:flex-col items-center lg:items-start gap-2 lg:gap-0">
+            {/* End year / PRESENT */}
+            <div
+              style={{
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 900,
+                fontSize: "clamp(16px, 2vw, 36px)",
+                lineHeight: 1,
+                letterSpacing: "-0.04em",
+                color: hover ? ACCENT : INK,
+              }}
+            >
+              {entry.endYear ?? "NOW"}
+            </div>
 
-          {/* Connecting spine */}
-          <div
-            style={{
-              width: 2,
-              height: 28,
-              background: hover ? ACCENT : INK,
-              opacity: hover ? 0.6 : 0.2,
-              margin: "8px 0 8px 4px",
-            }}
-          />
+            {/* Connecting spine - horizontal on mobile, vertical on desktop */}
+            <div
+              className="lg:hidden"
+              style={{
+                width: 20,
+                height: 2,
+                background: hover ? ACCENT : INK,
+                opacity: hover ? 0.6 : 0.2,
+              }}
+            />
+            <div
+              className="hidden lg:block"
+              style={{
+                width: 2,
+                height: 28,
+                background: hover ? ACCENT : INK,
+                opacity: hover ? 0.6 : 0.2,
+                margin: "8px 0 8px 4px",
+              }}
+            />
 
-          {/* Start year */}
-          <div
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 900,
-              fontSize: "clamp(14px, 1.5vw, 28px)",
-              lineHeight: 1,
-              letterSpacing: "-0.04em",
-              opacity: hover ? 0.7 : 0.35,
-              color: hover ? ACCENT : INK,
-            }}
-          >
-            {entry.startYear}
+            {/* Start year */}
+            <div
+              style={{
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 900,
+                fontSize: "clamp(14px, 1.5vw, 28px)",
+                lineHeight: 1,
+                letterSpacing: "-0.04em",
+                opacity: hover ? 0.7 : 0.35,
+                color: hover ? ACCENT : INK,
+              }}
+            >
+              {entry.startYear}
+            </div>
           </div>
 
           {/* Index tag */}
           <div
-            className="mt-4 font-mono text-[10px] uppercase tracking-[0.22em]"
+            className="mt-2 lg:mt-4 font-mono text-[10px] uppercase tracking-[0.22em]"
             style={{ opacity: 0.3, color: INK }}
           >
             E-{String(index + 1).padStart(3, "0")}
