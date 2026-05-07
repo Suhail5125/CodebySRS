@@ -592,12 +592,12 @@ export function HeroSection({ aboutInfo, isLoading }: HeroSectionProps) {
       <HeroHeader headlineFlown={headlineFlown} />
 
       <div
-        className="absolute inset-0 z-[10] flex flex-col justify-center px-4 sm:px-6 md:px-8"
+        className="absolute inset-0 z-[10] flex flex-col justify-center"
         style={{ 
           pointerEvents: "none", 
-          paddingLeft: "clamp(16px, 5vw, 80px)", 
-          paddingRight: "clamp(16px, 5vw, 80px)",
-          paddingTop: "clamp(100px, 20vh, 140px)",
+          paddingLeft: "clamp(24px, 5vw, 80px)", 
+          paddingRight: "clamp(24px, 5vw, 80px)",
+          paddingTop: "clamp(120px, 20vh, 160px)",
           paddingBottom: "clamp(120px, 20vh, 160px)"
         }}
       >

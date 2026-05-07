@@ -1,6 +1,9 @@
 /* Brutalist / Dev-OS Cursor */
-*, *::before, *::after {
-  cursor: none !important;
+/* Only hide cursor on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  *, *::before, *::after {
+    cursor: none !important;
+  }
 }
 
 .custom-cursor {

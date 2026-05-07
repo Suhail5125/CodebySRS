@@ -28,20 +28,7 @@ function NoiseOverlay() {
   );
 }
 
-/* ─── Grid Lines ────────────────────────────────────────────────────────── */
-function GridLines() {
-  return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-[1]">
-      {[16.66, 33.33, 50, 66.66, 83.33].map((x) => (
-        <div
-          key={x}
-          className="absolute inset-y-0 w-px"
-          style={{ left: `${x}%`, background: "rgba(242,239,230,0.025)" }}
-        />
-      ))}
-    </div>
-  );
-}
+
 
 export function LegalLayout({ children, title, subtitle }: LegalLayoutProps) {
   const isTerms = title.includes("TERMS");
@@ -56,7 +43,6 @@ export function LegalLayout({ children, title, subtitle }: LegalLayoutProps) {
     <div className="min-h-screen w-full flex flex-col relative" style={{ background: BG, color: INK }}>
       {/* Background layers */}
       <NoiseOverlay />
-      <GridLines />
 
       <Navigation />
       

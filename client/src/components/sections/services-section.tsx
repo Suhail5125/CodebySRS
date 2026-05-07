@@ -71,11 +71,21 @@ export function ServicesSection() {
   return (
     <section
       id="services"
-      className="snap-screen relative flex min-h-screen flex-col justify-center"
-      style={{ background: BG, color: INK, borderTop: `2px solid ${INK}`, paddingBottom: "80px" }}
+      className="snap-screen relative flex min-h-screen flex-col justify-center overflow-hidden"
+      style={{ 
+        background: BG, 
+        color: INK, 
+        borderTop: `2px solid ${INK}`,
+        paddingTop: "clamp(80px, 12vh, 120px)",
+        paddingBottom: "clamp(80px, 12vh, 120px)"
+      }}
     >
       {/* Header — padded */}
-      <div className="px-4 py-8 sm:px-6 sm:py-12 lg:px-10 lg:py-16">
+      <div style={{
+        paddingLeft: "clamp(24px, 5vw, 80px)",
+        paddingRight: "clamp(24px, 5vw, 80px)",
+        paddingBottom: "clamp(32px, 6vh, 64px)"
+      }}>
         <div className="mx-auto w-full max-w-[1400px]">
           <SectionHeader
             num="04"
@@ -88,13 +98,12 @@ export function ServicesSection() {
         </div>
       </div>
 
-      {/* Slab stack — full bleed, no horizontal constraints, with scroll hint on mobile */}
-      <p className="block text-center font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 mb-4 md:hidden px-4">
-        SCROLL → TO VIEW ALL
-      </p>
+      {/* Slab stack — full bleed, no horizontal constraints */}
       <div
-        className="relative w-full overflow-x-auto md:overflow-visible"
-        style={{ overflowY: "visible" }}
+        className="relative w-full"
+        style={{ 
+          overflow: "visible",
+        }}
         onMouseLeave={() => setActive(null)}
       >
         {services.map((svc, i) => (
@@ -108,6 +117,7 @@ export function ServicesSection() {
             isActive={active === i}
             isDimmed={active !== null && active !== i}
             onEnter={() => setActive(i)}
+            onTap={() => setActive(active === i ? null : i)}
           />
         ))}
       </div>
@@ -125,6 +135,7 @@ function Slab({
   isActive,
   isDimmed,
   onEnter,
+  onTap,
 }: {
   svc: (typeof services)[number];
   index: number;
@@ -134,6 +145,7 @@ function Slab({
   isActive: boolean;
   isDimmed: boolean;
   onEnter: () => void;
+  onTap: () => void;
 }) {
   const { ref, style: revealStyle } = useReveal({
     delay: index * 80,
@@ -149,10 +161,23 @@ function Slab({
   /* First slab has no top overlap */
   const marginTop = index === 0 ? 0 : -OVERLAP;
 
+  const handleTap = (e: React.MouseEvent | React.TouchEvent) => {
+    onTap();
+  };
+
+  const handleMouseEnter = () => {
+    // Only handle hover on non-touch devices
+    if (window.matchMedia('(hover: hover)').matches) {
+      onEnter();
+    }
+  };
+
   return (
     <div
       ref={ref}
-      onMouseEnter={onEnter}
+      onMouseEnter={handleMouseEnter}
+      onClick={handleTap}
+      onTouchStart={handleTap}
       style={{
         position: "relative",
         zIndex: isActive ? 20 : index + 1,
@@ -166,7 +191,12 @@ function Slab({
           "transform 0.45s cubic-bezier(0.16,1,0.3,1), " +
           "opacity 0.3s ease",
         opacity: isDimmed ? 0.35 : 1,
-        cursor: "default",
+        cursor: "pointer",
+        width: "100%",
+        maxWidth: "100vw",
+        WebkitTapHighlightColor: 'transparent',
+        userSelect: 'none',
+        touchAction: 'manipulation',
         ...revealStyle,
       }}
     >
@@ -176,18 +206,22 @@ function Slab({
           background: palette.bg,
           /* Extra top/bottom padding compensates for the skew so content
              doesn't clip — the excess is hidden behind adjacent slabs */
-          padding: `${OVERLAP + 20}px 32px ${OVERLAP + 20}px 28px`,
+          padding: `${OVERLAP + 20}px 12px ${OVERLAP + 20}px 12px`,
           display: "flex",
           alignItems: "center",
-          gap: "28px",
+          gap: "clamp(8px, 2.5vw, 28px)",
           position: "relative",
           overflow: "hidden",
+          width: "100%",
+          boxSizing: "border-box",
+          pointerEvents: 'none',
         }}
+        className="sm:px-6 md:px-8"
       >
         {/* Ghost watermark number */}
         <span
           aria-hidden
-          className="hidden sm:block"
+          className="hidden lg:block"
           style={{
             position: "absolute",
             right: "-12px",
@@ -216,13 +250,14 @@ function Slab({
           style={{
             fontFamily: "Inter, sans-serif",
             fontWeight: 900,
-            fontSize: "clamp(32px, 7vw, 80px)",
+            fontSize: "clamp(20px, 5.5vw, 80px)",
             lineHeight: 1,
             letterSpacing: "-0.06em",
             color: palette.text,
             flexShrink: 0,
-            minWidth: "2ch",
+            minWidth: "clamp(1.2ch, 1.8ch, 2ch)",
             opacity: 0.95,
+            pointerEvents: 'auto',
           }}
         >
           {num}
@@ -241,26 +276,29 @@ function Slab({
             transform: "rotate(180deg)",
             flexShrink: 0,
             lineHeight: 1,
+            pointerEvents: 'auto',
           }}
         >
           SVC_{svc.code}
         </div>
 
         {/* Title + revealed description */}
-        <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+        <div style={{ flex: 1, minWidth: 0, overflow: "visible", maxWidth: "100%", pointerEvents: 'auto' }}>
           <h3
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 900,
-              fontSize: "clamp(20px, 5vw, 64px)",
-              lineHeight: 0.9,
+              fontSize: "clamp(14px, 3.8vw, 64px)",
+              lineHeight: 0.95,
               letterSpacing: "-0.045em",
               textTransform: "uppercase",
               color: palette.text,
-              whiteSpace: "nowrap",
+              whiteSpace: "normal",
               overflow: "hidden",
-              textOverflow: "ellipsis",
+              wordBreak: "break-word",
+              hyphens: "auto",
             }}
+            className="md:whitespace-nowrap"
           >
             {svc.title}
           </h3>
@@ -268,15 +306,15 @@ function Slab({
           {/* Revealed description */}
           <div
             style={{
-              maxHeight: isActive ? "200px" : "0px",
-              overflow: "hidden",
+              maxHeight: isActive ? "500px" : "0px",
+              overflow: "visible",
               transition: "max-height 0.42s cubic-bezier(0.16,1,0.3,1)",
             }}
           >
             <p
               style={{
                 fontFamily: "monospace",
-                fontSize: "clamp(11px, 2vw, 12px)",
+                fontSize: "clamp(10px, 2vw, 12px)",
                 lineHeight: 1.6,
                 color: palette.text,
                 opacity: isActive ? 0.75 : 0,
@@ -284,6 +322,7 @@ function Slab({
                 transition: "opacity 0.3s ease 0.15s, transform 0.3s ease 0.15s",
                 marginTop: "10px",
                 maxWidth: "52ch",
+                wordWrap: "break-word",
               }}
             >
               {svc.description}

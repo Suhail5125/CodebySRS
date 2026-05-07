@@ -148,7 +148,7 @@ export function Footer({ aboutInfo }: FooterProps) {
                 CodeBy<span style={{ color: ACCENT }}>SRS</span>
               </div>
               <p className="font-mono text-[11px] sm:text-[12px] leading-snug" style={{ opacity: 0.65, maxWidth: 280 }}>
-                Brutalist engineering — no decoration, only signal. Every line ships or it dies.
+                Great solutions shouldn't feel complicated. We build mobile apps and enterprise systems that are powerful yet simple.
               </p>
               <a
                 href="#contact"

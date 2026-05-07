@@ -49,8 +49,16 @@ export function TestimonialsSection({
   return (
     <section
       id="testimonials"
-      className="snap-screen relative flex min-h-screen flex-col justify-center overflow-hidden px-6 py-20 lg:px-10"
-      style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
+      className="snap-screen relative flex min-h-screen flex-col justify-center overflow-hidden"
+      style={{ 
+        background: BG, 
+        color: INK, 
+        borderTop: `2px solid ${INK}`,
+        paddingLeft: "clamp(24px, 5vw, 80px)",
+        paddingRight: "clamp(24px, 5vw, 80px)",
+        paddingTop: "clamp(80px, 12vh, 120px)",
+        paddingBottom: "clamp(80px, 12vh, 120px)"
+      }}
     >
       <div className="mx-auto w-full max-w-[1400px]">
         <Reveal>

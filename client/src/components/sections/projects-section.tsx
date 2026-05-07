@@ -77,19 +77,7 @@ function NoiseOverlay() {
   );
 }
 
-function GridLines() {
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-[1]">
-      {[16.66, 33.33, 50, 66.66, 83.33].map((x) => (
-        <div
-          key={x}
-          className="absolute inset-y-0 w-px"
-          style={{ left: `${x}%`, background: "rgba(242,239,230,0.035)" }}
-        />
-      ))}
-    </div>
-  );
-}
+
 
 function SectionCursor({ container }: { container: React.RefObject<HTMLElement | null> }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -169,12 +157,19 @@ export function ProjectsSection({ projects, isLoading }: { projects: Project[]; 
     <section
       ref={sectionRef}
       id="projects"
-      className="relative min-h-screen overflow-hidden px-6 py-20 lg:px-10"
-      style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
+      className="relative min-h-screen overflow-hidden"
+      style={{ 
+        background: BG, 
+        color: INK, 
+        borderTop: `2px solid ${INK}`,
+        paddingLeft: "clamp(24px, 5vw, 80px)",
+        paddingRight: "clamp(24px, 5vw, 80px)",
+        paddingTop: "clamp(80px, 12vh, 120px)",
+        paddingBottom: "clamp(80px, 12vh, 120px)"
+      }}
     >
       {/* ── background layers ── */}
       <NoiseOverlay />
-      <GridLines />
       {!reduced && <SectionCursor container={sectionRef} />}
 
       {/* ── content ── */}

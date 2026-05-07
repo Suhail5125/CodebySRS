@@ -241,12 +241,16 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
   return (
     <section
       id="skills"
-      className="relative flex min-h-screen flex-col justify-center overflow-hidden px-6 py-20 lg:px-10"
+      className="relative flex min-h-screen flex-col justify-center overflow-hidden"
       style={{
         background: BG,
         color: INK,
         borderTop: `2px solid ${INK}`,
         position: "relative",
+        paddingLeft: "clamp(24px, 5vw, 80px)",
+        paddingRight: "clamp(24px, 5vw, 80px)",
+        paddingTop: "clamp(80px, 12vh, 120px)",
+        paddingBottom: "clamp(80px, 12vh, 120px)"
       }}
     >
       {/* ── Section header ── */}
@@ -309,12 +313,22 @@ export function SkillsSection({ skills, isLoading }: { skills: Skill[]; isLoadin
               flex: 0 0 auto;
               width: 100px;
             }
+            /* Mobile: min 3 icons per row, considering min screen 336px */
             @media (max-width: 1023px) {
               #skills-container {
                 max-width: 100% !important;
-                width: 348px !important;
+                width: 100% !important;
+                gap: clamp(12px, 3vw, 20px) clamp(8px, 2vw, 16px) !important;
+              }
+              #skills-container > div {
+                /* Calculate width to fit 3 icons minimum with gaps */
+                /* Formula: (100% - (2 * gap)) / 3 */
+                width: calc((100% - (2 * clamp(8px, 2vw, 16px))) / 3);
+                max-width: 90px;
+                min-width: 80px;
               }
             }
+            /* Desktop: 7 icons per row */
             @media (min-width: 1024px) {
               #skills-container {
                 gap: 32px 48px !important;

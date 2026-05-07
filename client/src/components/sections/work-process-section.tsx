@@ -429,17 +429,17 @@ function ForkBarNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void })
   return (
     <div
       ref={nodeRef as (el: HTMLDivElement | null) => void}
-      className="w-full"
+      className="w-full px-2"
       style={{ maxWidth: 520, margin: "0 auto" }}
     >
       <div className="flex items-center justify-between mb-1.5 px-0.5">
-        <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.16em", color: INK, opacity: 0.45 }}>
+        <span className="font-mono uppercase" style={{ fontSize: "clamp(7px, 1.8vw, 8px)", letterSpacing: "0.16em", color: INK, opacity: 0.45 }}>
           ← FRONTEND
         </span>
-        <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.18em", color: ACCENT, opacity: 0.7 }}>
+        <span className="font-mono uppercase" style={{ fontSize: "clamp(7px, 1.8vw, 8px)", letterSpacing: "0.18em", color: ACCENT, opacity: 0.7 }}>
           «fork»
         </span>
-        <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.16em", color: INK, opacity: 0.45 }}>
+        <span className="font-mono uppercase" style={{ fontSize: "clamp(7px, 1.8vw, 8px)", letterSpacing: "0.16em", color: INK, opacity: 0.45 }}>
           BACKEND →
         </span>
       </div>
@@ -452,12 +452,12 @@ function JoinBarNode({ nodeRef }: { nodeRef: (el: HTMLElement | null) => void })
   return (
     <div
       ref={nodeRef as (el: HTMLDivElement | null) => void}
-      className="w-full"
+      className="w-full px-2"
       style={{ maxWidth: 520, margin: "0 auto" }}
     >
       <div style={{ height: 4, background: INK }} />
       <div className="flex items-center justify-center mt-1.5">
-        <span className="font-mono uppercase" style={{ fontSize: "8px", letterSpacing: "0.18em", color: ACCENT, opacity: 0.7 }}>
+        <span className="font-mono uppercase text-center" style={{ fontSize: "clamp(7px, 1.8vw, 8px)", letterSpacing: "0.18em", color: ACCENT, opacity: 0.7 }}>
           «join» — SYNCHRONIZE TRACKS
         </span>
       </div>
@@ -485,14 +485,14 @@ function DecisionNode({
       <div
         ref={nodeRef as (el: HTMLDivElement | null) => void}
         className="relative flex items-center justify-center"
-        style={{ width: 240, height: 148 }}
+        style={{ width: "min(240px, 100%)", height: 148 }}
       >
         {/* Diamond shape */}
         <div
           className="absolute"
           style={{
-            width: 104,
-            height: 104,
+            width: "min(104px, 28vw)",
+            height: "min(104px, 28vw)",
             transform: "rotate(45deg)",
             border: `2px solid ${ACCENT}`,
             background: BG,
@@ -502,8 +502,8 @@ function DecisionNode({
 
         {/* Label inside diamond */}
         <div
-          className="relative z-10 text-center font-mono uppercase"
-          style={{ fontSize: "9px", letterSpacing: "0.12em", color: ACCENT, maxWidth: 88, lineHeight: 1.4 }}
+          className="relative z-10 text-center font-mono uppercase px-2"
+          style={{ fontSize: "clamp(8px, 2vw, 9px)", letterSpacing: "0.12em", color: ACCENT, maxWidth: "min(88px, 24vw)", lineHeight: 1.4 }}
         >
           {label}
         </div>
@@ -524,7 +524,15 @@ function PhaseNode({
 }) {
   const [hovered, setHovered] = useState(false);
   const [clicked, setClicked] = useState(false);
-  const expanded = hovered || clicked;
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  
+  // Detect if device supports touch
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+  
+  // On touch devices, only use click state; on desktop, use hover OR click
+  const expanded = isTouchDevice ? clicked : (hovered || clicked);
   const Icon = step.icon;
 
   const handleClick = () => {
@@ -534,13 +542,17 @@ function PhaseNode({
   };
 
   const handleMouseEnter = () => {
-    setHovered(true);
-    if (!clicked) onActivate(step.num);
+    if (!isTouchDevice) {
+      setHovered(true);
+      if (!clicked) onActivate(step.num);
+    }
   };
 
   const handleMouseLeave = () => {
-    setHovered(false);
-    if (!clicked) onActivate(null);
+    if (!isTouchDevice) {
+      setHovered(false);
+      if (!clicked) onActivate(null);
+    }
   };
 
   return (
@@ -560,24 +572,24 @@ function PhaseNode({
       onClick={handleClick}
     >
       <div
-        className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4"
+        className="flex items-center gap-2 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4"
         style={{ borderBottom: expanded ? `2px solid ${BG}` : "none" }}
       >
         <div
-          className="flex h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 items-center justify-center"
+          className="flex h-7 w-7 sm:h-10 sm:w-10 flex-shrink-0 items-center justify-center"
           style={{ background: ACCENT, color: BG }}
         >
-          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+          <Icon className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 sm:gap-3">
+          <div className="flex items-baseline gap-1.5 sm:gap-3 flex-wrap">
             <span
-              className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.22em]"
+              className="font-mono text-[9px] sm:text-[11px] uppercase tracking-[0.22em]"
               style={{ color: expanded ? BG : ACCENT }}
             >
               PHASE {step.num}
             </span>
-            <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.18em] opacity-60">
+            <span className="font-mono text-[8px] sm:text-[10px] uppercase tracking-[0.18em] opacity-60">
               {step.duration}
             </span>
           </div>
@@ -585,7 +597,7 @@ function PhaseNode({
             style={{
               fontFamily: "Inter, sans-serif",
               fontWeight: 800,
-              fontSize: "clamp(13px, 2.5vw, 18px)",
+              fontSize: "clamp(11px, 3vw, 18px)",
               lineHeight: 1.1,
               textTransform: "uppercase",
               letterSpacing: "-0.01em",
@@ -606,15 +618,15 @@ function PhaseNode({
           transition: "max-height 0.4s cubic-bezier(0.85,0,0.15,1)",
         }}
       >
-        <div className="px-4 sm:px-5 py-3 sm:py-4">
-          <p className="mb-3 sm:mb-4 text-[12px] sm:text-[13px] leading-relaxed" style={{ opacity: 0.82 }}>
+        <div className="px-3 sm:px-5 py-3 sm:py-4">
+          <p className="mb-3 sm:mb-4 text-[11px] sm:text-[13px] leading-relaxed" style={{ opacity: 0.82 }}>
             {step.description}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {(["ACTIVITIES", "DELIVERABLES"] as const).map((col) => (
               <div key={col}>
                 <div
-                  className="mb-2 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em]"
+                  className="mb-2 font-mono text-[8px] sm:text-[10px] uppercase tracking-[0.22em]"
                   style={{ color: ACCENT }}
                 >
                   {col}
@@ -623,7 +635,7 @@ function PhaseNode({
                   {(col === "ACTIVITIES" ? step.activities : step.deliverables).map((item, i) => (
                     <li
                       key={i}
-                      className="flex items-baseline gap-2 font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.08em]"
+                      className="flex items-baseline gap-2 font-mono text-[9px] sm:text-[11px] uppercase tracking-[0.08em]"
                     >
                       <span style={{ color: ACCENT }}>›</span>
                       <span>{item}</span>
@@ -690,7 +702,6 @@ function renderNode(
 
 export function WorkProcessSection() {
   const [triggered, setTriggered] = useState(false);
-  const [activePhase, setActivePhase] = useState<string | null>(null);
   const [paths, setPaths] = useState<PathData[]>([]);
   const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
 
@@ -748,15 +759,23 @@ export function WorkProcessSection() {
     return () => { obs.disconnect(); clearTimeout(fallback); };
   }, []);
 
-  const handleActivate = useCallback((num: string | null) => setActivePhase(num), []);
-
-  const currentPhase = activePhase ? STEPS.find((s) => s.num === activePhase) : null;
+  const handleActivate = useCallback(() => {
+    // Phase activation handler - currently unused but kept for future interactivity
+  }, []);
 
   return (
     <section
       id="process"
-      className="snap-screen relative flex min-h-screen flex-col justify-center px-4 sm:px-6 py-16 sm:py-20 lg:px-10"
-      style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
+      className="snap-screen relative flex min-h-screen flex-col justify-center"
+      style={{ 
+        background: BG, 
+        color: INK, 
+        borderTop: `2px solid ${INK}`,
+        paddingLeft: "clamp(24px, 5vw, 80px)",
+        paddingRight: "clamp(24px, 5vw, 80px)",
+        paddingTop: "clamp(80px, 12vh, 120px)",
+        paddingBottom: "clamp(80px, 12vh, 120px)"
+      }}
     >
       <style>{`
         @keyframes diamond-pulse {
@@ -777,15 +796,11 @@ export function WorkProcessSection() {
           />
         </Reveal>
 
-        <p className="mt-4 sm:mt-6 block text-center font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] opacity-40 md:hidden">
-          SCROLL → TO VIEW FULL DIAGRAM
-        </p>
-
-        <div className="mt-6 sm:mt-8" style={{ overflowX: "auto", overflowY: "visible" }}>
+        <div className="mt-6 sm:mt-8">
           <div
             ref={containerRef}
             className="relative mx-auto flex flex-col"
-            style={{ minWidth: "min(100%, 380px)", maxWidth: 560, gap: "clamp(28px, 5vw, 40px)" }}
+            style={{ width: "100%", maxWidth: 560, gap: "clamp(28px, 5vw, 40px)" }}
           >
             <ConnectorOverlay paths={paths} svgSize={svgSize} triggered={triggered} />
 
@@ -803,21 +818,5 @@ export function WorkProcessSection() {
 
       </div>
     </section>
-  );
-}
-
-function StatusCell({ k, v, border }: { k: string; v: string; border?: boolean }) {
-  return (
-    <div
-      className="flex items-center justify-between px-4 py-3"
-      style={{
-        borderLeft: border ? `2px solid ${INK}` : "none",
-        borderRight: border ? `2px solid ${INK}` : "none",
-        transition: "color 0.2s ease",
-      }}
-    >
-      <span className="opacity-60">{k}</span>
-      <span style={{ color: ACCENT }}>{v}</span>
-    </div>
   );
 }

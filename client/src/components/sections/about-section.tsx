@@ -25,19 +25,7 @@ function NoiseOverlay() {
   );
 }
 
-function GridLines() {
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-[1]">
-      {[16.66, 33.33, 50, 66.66, 83.33].map((x) => (
-        <div
-          key={x}
-          className="absolute inset-y-0 w-px"
-          style={{ left: `${x}%`, background: "rgba(242,239,230,0.03)" }}
-        />
-      ))}
-    </div>
-  );
-}
+
 
 /* ─── scramble hook ─────────────────────────────────────────────────────── */
 function useScramble(target: string, ms: number, active: boolean) {
@@ -126,11 +114,18 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
   return (
     <section
       id="about"
-      className="snap-screen relative min-h-screen overflow-hidden px-6 py-20 lg:px-10"
-      style={{ background: BG, color: INK, borderTop: `2px solid ${INK}` }}
+      className="snap-screen relative min-h-screen overflow-hidden"
+      style={{ 
+        background: BG, 
+        color: INK, 
+        borderTop: `2px solid ${INK}`,
+        paddingLeft: "clamp(24px, 5vw, 80px)",
+        paddingRight: "clamp(24px, 5vw, 80px)",
+        paddingTop: "clamp(80px, 12vh, 120px)",
+        paddingBottom: "clamp(80px, 12vh, 120px)"
+      }}
     >
       <NoiseOverlay />
-      <GridLines />
 
       {/* Ghost watermark */}
       <div

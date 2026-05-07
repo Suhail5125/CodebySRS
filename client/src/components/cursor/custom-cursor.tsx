@@ -5,8 +5,24 @@ export function CustomCursor() {
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isHovering, setIsHovering] = useState(false);
     const [isClicking, setIsClicking] = useState(false);
+    const [isTouchDevice, setIsTouchDevice] = useState(false);
 
     useEffect(() => {
+        // Detect if device supports touch
+        const checkTouchDevice = () => {
+            return (
+                'ontouchstart' in window ||
+                navigator.maxTouchPoints > 0 ||
+                window.matchMedia('(pointer: coarse)').matches
+            );
+        };
+
+        setIsTouchDevice(checkTouchDevice());
+
+        // Don't set up cursor on touch devices
+        if (checkTouchDevice()) {
+            return;
+        }
         const updateCursorPosition = (e: MouseEvent) => {
             setPosition({ x: e.clientX, y: e.clientY });
         };
@@ -32,6 +48,11 @@ export function CustomCursor() {
             window.removeEventListener('mouseup', handleMouseUp);
         };
     }, []);
+
+    // Don't render custom cursor on touch devices
+    if (isTouchDevice) {
+        return null;
+    }
 
     const cursorClass = [
         'custom-cursor',
