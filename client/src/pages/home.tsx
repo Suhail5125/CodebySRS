@@ -10,6 +10,7 @@ import { TestimonialsSection } from "@/components/sections/testimonials-section"
 import { ContactSection } from "@/components/sections/contact-section";
 import { Footer } from "@/components/layout/footer";
 import { SEO } from "@/components/seo";
+import { getPageSEO } from "@/lib/seo-config";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Project, Skill, AboutInfo, InsertContactMessage, Testimonial } from "@shared";
@@ -24,6 +25,7 @@ import {
 
 export default function Home() {
   const { toast } = useToast();
+  const homeSEO = getPageSEO("home");
 
   useEffect(() => {
     // Scroll to top when home page loads
@@ -83,7 +85,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background relative">
-      <SEO />
+      <SEO 
+        title={homeSEO.title}
+        description={homeSEO.description}
+        keywords={homeSEO.keywords}
+      />
       <ScrollIndicator />
 
       <SideHeader />

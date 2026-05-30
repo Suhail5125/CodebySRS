@@ -11,6 +11,16 @@ export const insertProjectSchema = z.object({
   technologies: z.array(z.string()).min(1, "At least one technology is required"),
   featured: z.boolean().default(false),
   order: z.number().int().default(0),
+  // Case Study fields
+  overview: z.string().nullable().optional(),
+  challenge: z.string().nullable().optional(),
+  solution: z.string().nullable().optional(),
+  results: z.string().nullable().optional(),
+  duration: z.string().nullable().optional(),
+  role: z.string().nullable().optional(),
+  client: z.string().nullable().optional(),
+  year: z.number().int().nullable().optional(),
+  gallery: z.array(z.string()).nullable().optional(),
 });
 
 // ─── Skill Schema ──────────────────────────────────────────────

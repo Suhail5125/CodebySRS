@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { ExternalLink, Github, ArrowUpRight } from "lucide-react";
 import type { Project } from "@shared";
 
@@ -12,7 +13,7 @@ interface ProjectCardProps {
   onSelect?: () => void;
 }
 
-export function ProjectCard({ project, index, onSelect }: ProjectCardProps) {
+export function ProjectCard({ project, index }: ProjectCardProps) {
   const technologies: string[] = Array.isArray(project.technologies)
     ? (project.technologies as string[])
     : typeof project.technologies === "string"
@@ -26,28 +27,19 @@ export function ProjectCard({ project, index, onSelect }: ProjectCardProps) {
   const cardFg = hover ? BG : INK;
 
   return (
-    <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onClick={onSelect}
-      onKeyDown={(e) => {
-        if (!onSelect) return;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect();
-        }
-      }}
-      role={onSelect ? "button" : undefined}
-      tabIndex={onSelect ? 0 : undefined}
-      data-testid={`card-project-${project.id}`}
-      className="group relative flex h-[440px] flex-col cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
-      style={{
-        background: cardBg,
-        color: cardFg,
-        border: `2px solid ${INK}`,
-        transition: "none",
-      }}
-    >
+    <Link href={`/projects/${project.id}`}>
+      <div
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        data-testid={`card-project-${project.id}`}
+        className="group relative flex h-[440px] flex-col cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
+        style={{
+          background: cardBg,
+          color: cardFg,
+          border: `2px solid ${INK}`,
+          transition: "none",
+        }}
+      >
       {/* Top telemetry */}
       <div
         className="flex items-center justify-between px-3 py-2 font-mono text-[10px] uppercase tracking-[0.18em]"
@@ -210,5 +202,6 @@ export function ProjectCard({ project, index, onSelect }: ProjectCardProps) {
         </div>
       </div>
     </div>
+    </Link>
   );
 }

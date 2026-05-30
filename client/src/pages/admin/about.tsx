@@ -18,6 +18,7 @@ export default function AdminAbout() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<InsertAboutInfo>({
     name: "",
     title: "",
@@ -39,6 +40,7 @@ export default function AdminAbout() {
     yearsExperience: 0,
     technologiesCount: 0,
   });
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
 
   const { data: aboutInfo, isLoading } = useQuery<AboutInfo>({
     queryKey: ["/api/about"],
@@ -98,6 +100,92 @@ export default function AdminAbout() {
         setFormData({ ...formData, avatarUrl: result });
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF, DOC, or DOCX file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Resume file must be less than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingResume(true);
+    const formData = new FormData();
+    formData.append('resume', file);
+
+    try {
+      const response = await fetch('/api/upload/resume', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload resume');
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, resumeUrl: data.resumeUrl }));
+      toast({
+        title: "Resume uploaded successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to upload resume",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingResume(false);
+    }
+  };
+
+  const handleDeleteResume = async () => {
+    if (!formData.resumeUrl) return;
+
+    try {
+      const response = await fetch('/api/resume', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ resumeUrl: formData.resumeUrl }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete resume');
+      }
+
+      setFormData(prev => ({ ...prev, resumeUrl: "" }));
+      toast({
+        title: "Resume deleted successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to delete resume",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
     }
   };
 
@@ -579,21 +667,77 @@ export default function AdminAbout() {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="resumeUrl" className="text-sm font-medium mb-2 block">Resume/Portfolio PDF</Label>
-                      <div className="relative">
-                        <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="resumeUrl"
-                          type="url"
-                          value={formData.resumeUrl ?? ""}
-                          onChange={(e) => setFormData({ ...formData, resumeUrl: e.target.value })}
-                          className="pl-10 h-11"
-                          placeholder="https://example.com/resume.pdf"
-                        />
+                  <div>
+                    <Label htmlFor="resumeUrl" className="text-sm font-medium mb-2 block">Resume/Portfolio PDF</Label>
+                    {formData.resumeUrl ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 p-3 rounded-lg border border-border/50 bg-muted/30">
+                          <FileText className="h-5 w-5 text-chart-1 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">Resume uploaded</p>
+                            <a 
+                              href={formData.resumeUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-muted-foreground hover:text-foreground truncate block"
+                            >
+                              {formData.resumeUrl}
+                            </a>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={handleDeleteResume}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                        <div className="relative">
+                          <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="resumeUrl"
+                            type="url"
+                            value={formData.resumeUrl ?? ""}
+                            onChange={(e) => setFormData({ ...formData, resumeUrl: e.target.value })}
+                            className="pl-10 h-11"
+                            placeholder="Or paste resume URL"
+                          />
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <Input
+                            id="resumeUrl"
+                            type="url"
+                            value={formData.resumeUrl ?? ""}
+                            onChange={(e) => setFormData({ ...formData, resumeUrl: e.target.value })}
+                            className="h-11 flex-1"
+                            placeholder="https://example.com/resume.pdf"
+                          />
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => resumeInputRef.current?.click()}
+                            disabled={isUploadingResume}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            {isUploadingResume ? "Uploading..." : "Upload"}
+                          </Button>
+                        </div>
+                        <input
+                          ref={resumeInputRef}
+                          type="file"
+                          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          onChange={handleResumeUpload}
+                          className="hidden"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Upload PDF, DOC, or DOCX (max 10MB) or paste URL
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </Card>

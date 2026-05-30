@@ -2,15 +2,111 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <!-- Preconnect to external resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-    <title>CodebySRS | Futuristic Developer Portfolio</title>
-    <meta name="description" content="An immersive 3D portfolio showcasing cutting-edge web development projects with WebGL, Three.js, and modern web technologies.">
-    <meta property="og:title" content="CodebySRS | Futuristic Developer Portfolio">
-    <meta property="og:description" content="Explore an immersive 3D portfolio featuring advanced web development projects and interactive experiences.">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Primary Meta Tags -->
+    <title>CodebySRS - Professional Web Development & 3D Solutions</title>
+    <meta name="title" content="CodebySRS - Professional Web Development & 3D Solutions">
+    <meta name="description" content="CodebySRS delivers cutting-edge web development, 3D web experiences, and full-stack solutions. Expert in React, Three.js, WebGL, Node.js, and modern web technologies. Transform your digital presence with immersive, high-performance web applications.">
+    <meta name="keywords" content="web development, web developer, full stack developer, React developer, Three.js developer, WebGL developer, 3D web development, Node.js developer, TypeScript developer, frontend developer, backend developer, UI/UX developer, portfolio website, web design services, CodebySRS">
+    <meta name="author" content="CodebySRS">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="googlebot" content="index, follow">
+    <meta name="language" content="English">
+    <meta name="revisit-after" content="7 days">
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://codebysrs.com/">
+    <meta property="og:site_name" content="CodebySRS">
+    <meta property="og:title" content="CodebySRS - Professional Web Development & 3D Solutions">
+    <meta property="og:description" content="CodebySRS delivers cutting-edge web development, 3D web experiences, and full-stack solutions. Expert in React, Three.js, WebGL, and modern web technologies.">
+    <meta property="og:image" content="https://codebysrs.com/og-image.jpg">
+    <meta property="og:image:alt" content="CodebySRS Portfolio">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://codebysrs.com/">
+    <meta name="twitter:title" content="CodebySRS - Professional Web Development & 3D Solutions">
+    <meta name="twitter:description" content="CodebySRS delivers cutting-edge web development, 3D web experiences, and full-stack solutions.">
+    <meta name="twitter:image" content="https://codebysrs.com/og-image.jpg">
+    <meta name="twitter:image:alt" content="CodebySRS Portfolio">
+    <meta name="twitter:creator" content="@codebysrs">
+    <meta name="twitter:site" content="@codebysrs">
+    
+    <!-- Theme & Mobile -->
+    <meta name="theme-color" content="#FF3D00">
+    <meta name="msapplication-TileColor" content="#FF3D00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CodebySRS">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://codebysrs.com/">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "CodebySRS",
+      "url": "https://codebysrs.com",
+      "logo": "https://codebysrs.com/logo.png",
+      "description": "Professional web development and 3D solutions",
+      "sameAs": [
+        "https://github.com/codebysrs",
+        "https://linkedin.com/in/codebysrs",
+        "https://twitter.com/codebysrs"
+      ]
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "CodebySRS",
+      "url": "https://codebysrs.com",
+      "jobTitle": "Full Stack Developer & 3D Web Specialist",
+      "description": "Professional web developer specializing in React, Three.js, and modern web technologies",
+      "sameAs": [
+        "https://github.com/codebysrs",
+        "https://linkedin.com/in/codebysrs",
+        "https://twitter.com/codebysrs"
+      ]
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "CodebySRS",
+      "url": "https://codebysrs.com",
+      "description": "Professional web development portfolio showcasing cutting-edge projects and 3D web experiences",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://codebysrs.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,27 @@
+# robots.txt for CodebySRS
+# Allow all crawlers to access all content except admin routes
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://codebysrs.com/sitemap.xml
+
+# Crawl-delay for specific bots (optional)
+User-agent: Googlebot
+Crawl-delay: 0
+
+User-agent: Bingbot
+Crawl-delay: 0
+
+# Block bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /

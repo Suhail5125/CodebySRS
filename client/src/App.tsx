@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { SEO } from "@/components/seo";
+import { getPageSEO } from "@/lib/seo-config";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import ProjectDetail from "@/pages/project-detail";
@@ -19,6 +21,8 @@ import AdminTestimonials from "@/pages/admin/testimonials";
 import AdminMessages from "@/pages/admin/messages";
 import AdminAbout from "@/pages/admin/about";
 import AdminExperience from "@/pages/admin/experience";
+import AdminPrivacyPolicy from "@/pages/admin/privacy-policy";
+import AdminTermsOfService from "@/pages/admin/terms-of-service";
 import { CustomCursor } from "@/components/cursor";
 
 function withAuth(Component: ComponentType<any>): ComponentType<any> {
@@ -50,9 +54,6 @@ function withAuth(Component: ComponentType<any>): ComponentType<any> {
   return ProtectedComponent;
 }
 
-import AdminPrivacyPolicy from "@/pages/admin/privacy-policy";
-import AdminTermsOfService from "@/pages/admin/terms-of-service";
-
 const ProtectedAdminDashboard = withAuth(AdminDashboard);
 const ProtectedAdminProjects = withAuth(AdminProjects);
 const ProtectedAdminSkills = withAuth(AdminSkills);
@@ -67,11 +68,29 @@ function Router() {
   const [location] = useLocation();
   const isAdminRoute = location.startsWith("/admin");
 
+  // Update page title based on route
+  useEffect(() => {
+    if (isAdminRoute && location !== "/admin/login") {
+      document.title = "CodebySRS | Admin";
+    } else if (location === "/") {
+      document.title = "CodebySRS";
+    }
+  }, [location, isAdminRoute]);
+
   return (
     <ThemeProvider
       defaultTheme="dark"
       storageKey={isAdminRoute ? "admin-theme" : "client-theme"}
     >
+      {/* SEO for admin routes */}
+      {isAdminRoute && location !== "/admin/login" && (
+        <SEO
+          title="CodebySRS | Admin"
+          description="Admin dashboard for CodebySRS portfolio management"
+          noindex={true}
+        />
+      )}
+      
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/projects/:id" component={ProjectDetail} />

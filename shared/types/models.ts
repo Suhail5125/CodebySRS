@@ -12,6 +12,16 @@ export const projects = pgTable("projects", {
   featured: boolean("featured").default(false).notNull(),
   order: integer("order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  // Case Study fields
+  overview: text("overview"), // Detailed project overview
+  challenge: text("challenge"), // Problem/challenge faced
+  solution: text("solution"), // Solution implemented
+  results: text("results"), // Results/outcomes achieved
+  duration: text("duration"), // Project duration (e.g., "3 months")
+  role: text("role"), // Your role in the project
+  client: text("client"), // Client name
+  year: integer("year"), // Project year
+  gallery: text("gallery"), // JSON stringified array of image URLs
 });
 
 // Skills table for skill visualization

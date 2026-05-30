@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,12 +61,22 @@ export default function AdminProjects() {
     liveUrl: "",
     featured: false,
     order: 0,
+    // Case study fields
+    overview: "",
+    challenge: "",
+    solution: "",
+    results: "",
+    duration: "",
+    role: "",
+    client: "",
+    year: new Date().getFullYear(),
+    gallery: [] as string[],
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [techInput, setTechInput] = useState("");
+  const [galleryInput, setGalleryInput] = useState("");
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [viewProject, setViewProject] = useState<Project | null>(null);
   const dialogHistoryRef = useRef(false);
 
   const handleCloseDeleteDialog = () => {
@@ -76,16 +87,6 @@ export default function AdminProjects() {
   const handleOpenDeleteDialog = (project: Project) => {
     setProjectToDelete(project);
     setIsDeleteDialogOpen(true);
-  };
-
-  const handleOpenViewDialog = (project: Project) => {
-    setViewProject(project);
-    // Push state to history so back button works
-    window.history.pushState({ viewingProject: true }, "");
-  };
-
-  const handleCloseViewDialog = () => {
-    setViewProject(null);
   };
 
   const { data: projects = [], isLoading } = useQuery<Project[]>({
@@ -149,6 +150,7 @@ export default function AdminProjects() {
   const handleOpenDialog = (project?: Project) => {
     if (project) {
       setEditingProject(project);
+      const projectAny = project as any;
       setFormData({
         title: project.title,
         description: project.description,
@@ -158,6 +160,16 @@ export default function AdminProjects() {
         liveUrl: project.liveUrl || "",
         featured: project.featured,
         order: project.order ?? 0,
+        // Case study fields
+        overview: projectAny.overview || "",
+        challenge: projectAny.challenge || "",
+        solution: projectAny.solution || "",
+        results: projectAny.results || "",
+        duration: projectAny.duration || "",
+        role: projectAny.role || "",
+        client: projectAny.client || "",
+        year: projectAny.year || new Date().getFullYear(),
+        gallery: parseGallery(projectAny.gallery),
       });
     } else {
       setEditingProject(null);
@@ -170,9 +182,32 @@ export default function AdminProjects() {
         liveUrl: "",
         featured: false,
         order: 0,
+        // Case study fields
+        overview: "",
+        challenge: "",
+        solution: "",
+        results: "",
+        duration: "",
+        role: "",
+        client: "",
+        year: new Date().getFullYear(),
+        gallery: [],
       });
     }
     setIsDialogOpen(true);
+  };
+
+  const parseGallery = (value: string | null | undefined): string[] => {
+    if (!value) return [];
+    if (typeof value === "string" && value.trim()) {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
   };
 
   const handleCloseDialog = () => {
@@ -283,6 +318,23 @@ export default function AdminProjects() {
     });
   };
 
+  const handleAddGalleryImage = () => {
+    if (galleryInput.trim() && !formData.gallery?.includes(galleryInput.trim())) {
+      setFormData({
+        ...formData,
+        gallery: [...(formData.gallery || []), galleryInput.trim()],
+      });
+      setGalleryInput("");
+    }
+  };
+
+  const handleRemoveGalleryImage = (imageUrl: string) => {
+    setFormData({
+      ...formData,
+      gallery: formData.gallery?.filter((url) => url !== imageUrl) || [],
+    });
+  };
+
   const handleConfirmDelete = () => {
     if (!projectToDelete) {
       return;
@@ -312,42 +364,6 @@ export default function AdminProjects() {
       dialogHistoryRef.current = false;
     };
   }, [isDialogOpen]);
-
-  // Handle browser back button for view details
-  useEffect(() => {
-    if (!viewProject) {
-      return;
-    }
-    
-    const handlePopState = () => {
-      handleCloseViewDialog();
-    };
-    
-    window.addEventListener("popstate", handlePopState);
-    
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [viewProject]);
-
-  // View Project Details Page
-  if (viewProject) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-chart-1/10 mb-6">
-            <Eye className="h-10 w-10 text-chart-1" />
-          </div>
-          <h2 className="font-display text-4xl font-bold mb-4 gradient-text-cyan-magenta">
-            Coming Soon
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            Project detail view is under construction. We're designing an amazing experience to showcase your projects!
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   if (isDialogOpen) {
     return (
@@ -541,6 +557,150 @@ export default function AdminProjects() {
               </div>
             </Card>
 
+            {/* Case Study Details */}
+            <Card className="p-6 glass border-border/50">
+              <h2 className="font-display text-lg font-bold mb-6 flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-chart-1"></div>
+                Case Study Details (Optional)
+              </h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="client">Client Name</Label>
+                    <Input
+                      id="client"
+                      value={formData.client || ""}
+                      onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+                      placeholder="Acme Corp"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="role">Your Role</Label>
+                    <Input
+                      id="role"
+                      value={formData.role || ""}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      placeholder="Lead Developer"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="duration">Project Duration</Label>
+                    <Input
+                      id="duration"
+                      value={formData.duration || ""}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                      placeholder="3 months"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="year">Year</Label>
+                    <Input
+                      id="year"
+                      type="number"
+                      min="2000"
+                      max="2100"
+                      value={formData.year || new Date().getFullYear()}
+                      onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) || new Date().getFullYear() })}
+                      placeholder="2024"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="overview">Project Overview</Label>
+                  <Textarea
+                    id="overview"
+                    value={formData.overview || ""}
+                    onChange={(e) => setFormData({ ...formData, overview: e.target.value })}
+                    rows={4}
+                    placeholder="Detailed overview of the project, its goals, and context..."
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="challenge">The Challenge</Label>
+                  <Textarea
+                    id="challenge"
+                    value={formData.challenge || ""}
+                    onChange={(e) => setFormData({ ...formData, challenge: e.target.value })}
+                    rows={4}
+                    placeholder="What problems or challenges did this project address?"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="solution">The Solution</Label>
+                  <Textarea
+                    id="solution"
+                    value={formData.solution || ""}
+                    onChange={(e) => setFormData({ ...formData, solution: e.target.value })}
+                    rows={4}
+                    placeholder="How did you solve the challenges? What approach did you take?"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="results">Results & Impact</Label>
+                  <Textarea
+                    id="results"
+                    value={formData.results || ""}
+                    onChange={(e) => setFormData({ ...formData, results: e.target.value })}
+                    rows={4}
+                    placeholder="What were the outcomes? Include metrics, feedback, or achievements..."
+                  />
+                </div>
+              </div>
+            </Card>
+
+            {/* Project Gallery */}
+            <Card className="p-6 glass border-border/50">
+              <h2 className="font-display text-lg font-bold mb-6 flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-chart-2"></div>
+                Project Gallery (Optional)
+              </h2>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    value={galleryInput}
+                    onChange={(e) => setGalleryInput(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddGalleryImage())}
+                    placeholder="Enter image URL"
+                    className="flex-1"
+                  />
+                  <Button type="button" onClick={handleAddGalleryImage} variant="outline">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+                {formData.gallery && formData.gallery.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {formData.gallery.map((imageUrl, index) => (
+                      <div key={index} className="relative group aspect-video rounded border overflow-hidden">
+                        <img
+                          src={imageUrl}
+                          alt={`Gallery ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveGalleryImage(imageUrl)}
+                          className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Add additional images to showcase different aspects of your project
+                </p>
+              </div>
+            </Card>
+
             <div className="flex justify-end gap-3 pt-4 border-t border-border/50">
               <Button type="button" variant="outline" onClick={handleCloseDialog}>
                 Cancel
@@ -674,15 +834,16 @@ export default function AdminProjects() {
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-2 pt-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleOpenViewDialog(project)}
-                            className="flex-1"
-                          >
-                            <Eye className="h-3.5 w-3.5 mr-2" />
-                            View Details
-                          </Button>
+                          <Link href={`/projects/${project.id}`} className="flex-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full"
+                            >
+                              <Eye className="h-3.5 w-3.5 mr-2" />
+                              View Details
+                            </Button>
+                          </Link>
                           <Button
                             size="sm"
                             variant="default"

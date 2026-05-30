@@ -1,5 +1,5 @@
 import { type Express, type Request } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import cors from 'cors';
 import { config } from '../config';
 import { logger } from '../logger';
@@ -10,12 +10,15 @@ import { logger } from '../logger';
 function getClientIp(req: Request): string {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string') {
-    return forwarded.split(',')[0].trim();
+    const ip = forwarded.split(',')[0].trim();
+    return ipKeyGenerator(req, ip);
   }
   if (Array.isArray(forwarded) && forwarded.length > 0) {
-    return forwarded[0].split(',')[0].trim();
+    const ip = forwarded[0].split(',')[0].trim();
+    return ipKeyGenerator(req, ip);
   }
-  return req.ip || req.socket.remoteAddress || 'unknown';
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  return ipKeyGenerator(req, ip);
 }
 
 // Security headers middleware

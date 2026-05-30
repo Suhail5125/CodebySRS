@@ -4,7 +4,6 @@ import { Github, Linkedin, Twitter, Instagram, Download, ArrowUpRight } from "lu
 import { Reveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
 import { useQuery } from "@tanstack/react-query";
-import { DUMMY_EXPERIENCE } from "@/lib/dummy-data";
 
 const BG     = "#0A0A0A";
 const INK    = "#F2EFE6";
@@ -70,7 +69,7 @@ export function AboutSection({ aboutInfo, isLoading }: AboutSectionProps) {
     queryKey: ["/api/experience"],
   });
 
-  const experienceEntries = [...(rawExperience.length > 0 ? rawExperience : DUMMY_EXPERIENCE)].sort(
+  const experienceEntries = [...rawExperience].sort(
     (a, b) => {
       const aEnd = a.endYear ?? 9999;
       const bEnd = b.endYear ?? 9999;

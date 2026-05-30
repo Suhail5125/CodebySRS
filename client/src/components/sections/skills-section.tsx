@@ -7,12 +7,13 @@ import {
   SiDocker, SiFigma, SiBlender, SiGit, SiVite,
   SiMongodb, SiMysql, SiPython, SiPrisma, SiSvelte,
   SiAstro, SiLinux, SiRust, SiGo, SiGreensock,
-  SiCss3, SiHtml5, SiGithub,
+  SiHtml5, SiGithub,
   SiVuedotjs, SiAngular, SiFlutter, SiDart,
   SiKubernetes, SiTerraform, SiNginx, SiWebpack,
-  SiFirebase, SiSupabase, SiAmazonwebservices, SiVercel,
+  SiFirebase, SiSupabase, SiVercel,
   SiSass, SiRedux, SiJest, SiSwift, SiCplusplus, SiPhp,
 } from "react-icons/si";
+import { FaCss3Alt } from "react-icons/fa";
 import { Reveal } from "@/components/reveal";
 import { SectionHeader } from "@/components/section-header";
 
@@ -82,8 +83,8 @@ const ICON_MAP: Record<string, IconEntry> = {
   "Rust":          { Icon: SiRust,                 color: "#CE412B" },
   "Go":            { Icon: SiGo,                   color: "#00ADD8" },
   "Golang":        { Icon: SiGo,                   color: "#00ADD8" },
-  "CSS":           { Icon: SiCss3,                 color: "#1572B6" },
-  "CSS3":          { Icon: SiCss3,                 color: "#1572B6" },
+  "CSS":           { Icon: FaCss3Alt,              color: "#1572B6" },
+  "CSS3":          { Icon: FaCss3Alt,              color: "#1572B6" },
   "HTML":          { Icon: SiHtml5,                color: "#E34F26" },
   "HTML5":         { Icon: SiHtml5,                color: "#E34F26" },
   "Vue.js":        { Icon: SiVuedotjs,             color: "#4FC08D" },
@@ -97,7 +98,6 @@ const ICON_MAP: Record<string, IconEntry> = {
   "Webpack":       { Icon: SiWebpack,              color: "#8DD6F9" },
   "Firebase":      { Icon: SiFirebase,             color: "#FFCA28" },
   "Supabase":      { Icon: SiSupabase,             color: "#3ECF8E" },
-  "AWS":           { Icon: SiAmazonwebservices,    color: "#FF9900" },
   "Vercel":        { Icon: SiVercel,               color: "#C8C8C8" },
   "Sass":          { Icon: SiSass,                 color: "#CC6699" },
   "Redux":         { Icon: SiRedux,                color: "#764ABC" },
